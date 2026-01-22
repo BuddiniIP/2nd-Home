@@ -9,6 +9,7 @@ import StudentRegister from "../pages/StudentRegister";
 import OwnerRegister from "../pages/OwnerRegister";
 import Listing from "../pages/Listing.jsx";
 import ListingDetails from "../pages/ListingDetails.jsx";
+import Contact from "../pages/contact.jsx";
 
 // Dashboards
 import StudentDashboard from "../pages/Dashboard/StudentDashboard.jsx";
@@ -29,6 +30,7 @@ export default function AppRoutes() {
         <Route path="/register/owner" element={<OwnerRegister />} />
         <Route path="/listings" element={<Listing />} />
         <Route path="/listing/:id" element={<ListingDetails />} />
+        <Route path="/contact" element={<Contact />} />
 
         {/* Dashboards (temporary open access) */}
         <Route path="/student" element={<StudentDashboard />} />

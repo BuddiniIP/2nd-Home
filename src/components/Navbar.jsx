@@ -19,7 +19,7 @@ export default function Navbar() {
             <ul className="hidden md:flex space-x-6 text-gray-700 font-medium">
               <li><a href="#features" className="hover:text-blue-600">How It Works</a></li>
               <li><a href="#universities" className="hover:text-blue-600">Universities</a></li>
-              <li><a href="#contact" className="hover:text-blue-600">Contact</a></li>
+              <li><Link to="/contact" className="hover:text-blue-600">Contact</Link></li>
             </ul>
 
             <div className="hidden md:flex space-x-3">
@@ -58,6 +58,7 @@ export default function Navbar() {
           <button className="absolute top-4 right-4 text-2xl" onClick={() => setOpen(false)}>✕</button>
           <a href="#features" onClick={() => setOpen(false)}>How It Works</a>
           <a href="#universities" onClick={() => setOpen(false)}>Universities</a>
+          <Link to="/contact" onClick={() => setOpen(false)}>Contact</Link>
           {!user ? (
             <>
               <Link to="/login" onClick={() => setOpen(false)}>Login</Link>

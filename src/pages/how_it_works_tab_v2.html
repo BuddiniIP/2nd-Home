@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - 2nd Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a5fb4;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff9800;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        .main-nav a {
+            color: #555;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 1rem;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            color: #1a5fb4;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #1a5fb4;
+            border: 2px solid #1a5fb4;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0f7ff;
+        }
+
+        .btn-primary {
+            background-color: #1a5fb4;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0f4a97;
+        }
+
+        .btn-secondary {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e68900;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(rgba(26, 95, 180, 0.85), rgba(26, 95, 180, 0.8)), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, #f9f9f9);
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .page-header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* User Type Selection */
+        .user-type-tabs {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .user-tab {
+            background-color: white;
+            padding: 25px 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+            width: 250px;
+            margin: 0 15px;
+            border: 2px solid transparent;
+        }
+
+        .user-tab.active {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-bottom: 4px solid #ff9800;
+            border-color: #e8f2ff;
+        }
+
+        .user-tab i {
+            font-size: 2.5rem;
+            color: #1a5fb4;
+        }
+
+        .user-tab h3 {
+            font-size: 1.4rem;
+            color: #1a5fb4;
+            text-align: center;
+        }
+
+        .user-tab p {
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Steps Container */
+        .steps-section {
+            padding: 60px 0 80px;
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: #1a5fb4;
+            margin-bottom: 15px;
+        }
+
+        .section-title p {
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+
+        .steps-container {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Vertical Timeline for Student Steps */
+        .student-steps {
+            display: none;
+        }
+
+        .student-steps.active {
+            display: block;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 50px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #1a5fb4, #2d87e0);
+            border-radius: 2px;
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 50px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .step:hover {
+            transform: translateX(10px);
+        }
+
+        .step-number {
+            position: absolute;
+            left: -70px;
+            top: 0;
+            width: 60px;
+            height: 60px;
+            background-color: #1a5fb4;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            box-shadow: 0 5px 15px rgba(26, 95, 180, 0.3);
+            z-index: 2;
+        }
+
+        .step-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            float: left;
+            margin-right: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .step:hover .step-image img {
+            transform: scale(1.05);
+        }
+
+        .step-content {
+            overflow: hidden;
+        }
+
+        .step-content h3 {
+            font-size: 1.5rem;
+            color: #1a5fb4;
+            margin-bottom: 10px;
+        }
+
+        .step-content p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .step-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .feature-tag {
+            background-color: #f0f7ff;
+            color: #1a5fb4;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Owner Steps Grid */
+        .owner-steps {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .owner-steps.active {
+            display: grid;
+        }
+
+        .owner-step-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .owner-step-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .owner-step-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #ff9800, #ffb74d);
+        }
+
+        .owner-step-image {
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .owner-step-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .owner-step-card:hover .owner-step-image img {
+            transform: scale(1.05);
+        }
+
+        .owner-step-content {
+            padding: 30px;
+        }
+
+        .owner-step-number {
+            width: 50px;
+            height: 50px;
+            background-color: #ff9800;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: -25px auto 20px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .owner-step-card h3 {
+            font-size: 1.4rem;
+            color: #1a5fb4;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .owner-step-card p {
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Verification Process */
+        .verification-section {
+            background: linear-gradient(rgba(240, 247, 255, 0.9), rgba(240, 247, 255, 0.9)), url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 100px 0;
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .verification-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .verification-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .verification-content h2 {
+            font-size: 2.2rem;
+            color: #1a5fb4;
+            margin-bottom: 20px;
+        }
+
+        .verification-content p {
+            color: #555;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .verification-list {
+            list-style: none;
+        }
+
+        .verification-list li {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .verification-list i {
+            color: #4caf50;
+            font-size: 1.2rem;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .verification-list strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .verification-image {
+            text-align: center;
+        }
+
+        .verification-image img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            border: 5px solid white;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .benefit-card {
+            text-align: center;
+            padding: 40px 30px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            transition: transform 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-10px);
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .benefit-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #1a5fb4, #2d87e0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+        }
+
+        .benefit-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.4rem;
+            color: #1a5fb4;
+            margin-bottom: 15px;
+        }
+
+        .benefit-card p {
+            color: #666;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            background: linear-gradient(rgba(26, 95, 180, 0.9), rgba(26, 95, 180, 0.85)), url('https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+        }
+
+        .cta-box {
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 15px;
+            padding: 60px 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .cta-box h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #1a5fb4;
+        }
+
+        .cta-box p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #0f2c55;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-logo i {
+            color: #ff9800;
+        }
+
+        .footer-description {
+            opacity: 0.8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .footer-links h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #ff9800;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ddd;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #ff9800;
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .header-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .main-nav {
+                order: 3;
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .user-type-tabs {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .user-tab {
+                width: 100%;
+                max-width: 400px;
+                margin: 0;
+            }
+            
+            .verification-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .timeline {
+                padding-left: 40px;
+            }
+            
+            .step-number {
+                left: -55px;
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .page-header {
+                padding: 70px 0 50px;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .page-header p {
+                font-size: 1.1rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .step {
+                padding: 25px;
+            }
+            
+            .step-image {
+                float: none;
+                margin: 0 auto 20px;
+                display: block;
+                width: 100%;
+                height: 200px;
+            }
+            
+            .step-content {
+                text-align: center;
+            }
+            
+            .step-features {
+                justify-content: center;
+            }
+            
+            .owner-steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .cta-box {
+                padding: 40px 25px;
+            }
+            
+            .cta-box h2 {
+                font-size: 2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .step-number {
+                left: -45px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            
+            .timeline {
+                padding-left: 30px;
+            }
+            
+            .timeline::before {
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-home"></i>
+                2nd Home
+            </a>
+            <nav class="main-nav">
+                <a href="#">Home</a>
+                <a href="#">About</a>
+                <a href="#" class="active">How It Works</a>
+                <a href="#">Contact</a>
+            </nav>
+            <div class="auth-buttons">
+                <a href="#" class="btn btn-outline">Login</a>
+                <a href="#" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>How 2nd Home Works</h1>
+            <p>Simple, safe, and reliable process for students and boarding owners to connect</p>
+        </div>
+    </div>
+
+    <!-- User Type Selection -->
+    <div class="container">
+        <div class="user-type-tabs">
+            <div class="user-tab active" id="student-tab">
+                <i class="fas fa-user-graduate"></i>
+                <h3>For Students</h3>
+                <p>Find verified boarding near your university in 6 easy steps</p>
+            </div>
+            <div class="user-tab" id="owner-tab">
+                <i class="fas fa-user-tie"></i>
+                <h3>For Boarding Owners</h3>
+                <p>List and manage your property with our secure platform</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Steps for Students -->
+    <section class="steps-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Find Your Perfect Boarding</h2>
+                <p>Follow these simple steps to secure safe, verified accommodation near your university</p>
+            </div>
+            
+            <div class="student-steps active" id="student-steps-container">
+                <div class="steps-container">
+                    <div class="timeline">
+                        <!-- Step 1 -->
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1557426272-fc759fdf7a8d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Student registration">
+                            </div>
+                            <div class="step-content">
+                                <h3>Create Your Student Profile</h3>
+                                <p>Sign up with your university email and create a detailed profile. Include your university, course details, and accommodation preferences to get personalized recommendations.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">University Verification</span>
+                                    <span class="feature-tag">Profile Setup</span>
+                                    <span class="feature-tag">Preference Selection</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2 -->
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w-800&q=80" alt="Search and filter">
+                            </div>
+                            <div class="step-content">
+                                <h3>Search & Filter Boardings</h3>
+                                <p>Use our advanced search filters to find boardings near your university. Filter by location, price range, amenities, room type, and distance from campus.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">Location Search</span>
+                                    <span class="feature-tag">Price Filters</span>
+                                    <span class="feature-tag">Amenity Selection</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3 -->
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1560184897-67f4a3f9a7fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="View listings">
+                            </div>
+                            <div class="step-content">
+                                <h3>Browse Verified Listings</h3>
+                                <p>View detailed information about each boarding facility including photos, amenities, house rules, and reviews from other students. All listings are physically verified by our team.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">Verified Photos</span>
+                                    <span class="feature-tag">Student Reviews</span>
+                                    <span class="feature-tag">Safety Checklist</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4 -->
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Schedule a visit">
+                            </div>
+                            <div class="step-content">
+                                <h3>Schedule a Visit</h3>
+                                <p>Contact boarding owners through our secure messaging system to schedule a visit. View available time slots and book appointments that fit your schedule.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">Secure Messaging</span>
+                                    <span class="feature-tag">Visit Scheduling</span>
+                                    <span class="feature-tag">Owner Contact</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 5 -->
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Booking process">
+                            </div>
+                            <div class="step-content">
+                                <h3>Complete Booking Process</h3>
+                                <p>Once you've found the perfect boarding, complete the booking process through our secure platform. Review and sign the rental agreement digitally.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">Digital Agreement</span>
+                                    <span class="feature-tag">Secure Payment</span>
+                                    <span class="feature-tag">Booking Confirmation</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 6 -->
+                        <div class="step">
+                            <div class="step-number">6</div>
+                            <div class="step-image">
+                                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Move in and review">
+                            </div>
+                            <div class="step-content">
+                                <h3>Move In & Leave Review</h3>
+                                <p>Move into your new accommodation and start your university journey. After your stay, leave a review to help other students find great boarding options.</p>
+                                <div class="step-features">
+                                    <span class="feature-tag">Move-in Support</span>
+                                    <span class="feature-tag">Review System</span>
+                                    <span class="feature-tag">Ongoing Support</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Steps for Owners -->
+            <div class="owner-steps" id="owner-steps-container">
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1556157382-2eda3e8a9944?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Create owner account">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">1</div>
+                        <h3>Create Owner Account</h3>
+                        <p>Register as a boarding owner with your personal and property details. Complete identity verification for security purposes.</p>
+                    </div>
+                </div>
+                
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="List property">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">2</div>
+                        <h3>List Your Property</h3>
+                        <p>Add detailed information about your boarding facility including photos, amenities, pricing, availability, and house rules.</p>
+                    </div>
+                </div>
+                
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Verification process">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">3</div>
+                        <h3>Verification Process</h3>
+                        <p>Our team will contact you to schedule a physical verification of your property to ensure safety and quality standards.</p>
+                    </div>
+                </div>
+                
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Receive inquiries">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">4</div>
+                        <h3>Receive Student Inquiries</h3>
+                        <p>Start receiving inquiries from verified university students looking for accommodation near their campus.</p>
+                    </div>
+                </div>
+                
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Manage bookings">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">5</div>
+                        <h3>Manage Bookings</h3>
+                        <p>Use our dashboard to manage bookings, schedule visits, communicate with students, and update availability.</p>
+                    </div>
+                </div>
+                
+                <div class="owner-step-card">
+                    <div class="owner-step-image">
+                        <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Secure payments">
+                    </div>
+                    <div class="owner-step-content">
+                        <div class="owner-step-number">6</div>
+                        <h3>Secure Payments</h3>
+                        <p>Receive payments through our secure payment system with transparent fees and automated reminders.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Benefits of Using 2nd Home</h2>
+                <p>Why thousands of students and boarding owners trust our platform</p>
+            </div>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Verified & Safe</h3>
+                    <p>All boarding facilities are physically verified by our professional checkers to ensure safety standards.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h3>University Proximity</h3>
+                    <p>Find accommodation close to your university campus, saving time and transportation costs.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3>Trusted Community</h3>
+                    <p>Connect with verified students and property owners in a secure, reliable environment.</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Direct Communication</h3>
+                    <p>Communicate directly with boarding owners or students through our secure

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boarding Owner Registration - 2nd Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4a6baf;
+            --secondary: #ff7e5f;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --success: #28a745;
+        }
+
+        body {
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5a9f;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 20px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mobile-menu {
+            display: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--dark);
+        }
+
+        /* Main Content Layout */
+        .main-content {
+            display: flex;
+            flex: 1;
+            margin-top: 60px;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Left Side - Space for Image */
+        .image-side {
+            flex: 1;
+            background: 
+                /* Background image option 1 - Property management */
+                url(bluedoor.jpg)
+                
+                /* Background image option 2 - Real estate */
+                /* url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') */
+                
+                /* Background image option 3 - Modern apartment */
+                /* url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80') */
+                
+                no-repeat center center;
+            background-size: cover;
+            display: block; /* Hidden by default, show when you add image */
+        }
+
+        /* Right Side - Form */
+        .form-side {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Registration Section */
+        .registration-section {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .registration-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .registration-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .registration-header h1 {
+            font-size: 1.8rem;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .registration-header p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        /* Form Styles */
+        .registration-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .form-label.required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: border 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(74, 107, 175, 0.2);
+        }
+
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            color: var(--gray);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 10px 0;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .mobile-nav.active {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-links {
+            list-style: none;
+            text-align: center;
+        }
+
+        .mobile-nav-links li {
+            margin: 15px 0;
+        }
+
+        .mobile-nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .mobile-nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--dark);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 25px 0 12px;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .footer-column h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+
+        .footer-links a {
+            color: #b0b7c3;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #b0b7c3;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Styles */
+        @media (min-width: 992px) {
+            .image-side {
+                display: block;
+            }
+            
+            .registration-container {
+                max-height: 85vh;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .nav-links, .auth-buttons {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .image-side {
+                display: none;
+            }
+            
+            .form-side {
+                padding: 15px;
+            }
+            
+            .registration-container {
+                max-height: none;
+                overflow-y: visible;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .registration-container {
+                padding: 25px 20px;
+            }
+
+            .registration-header h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .registration-container {
+                padding: 20px 15px;
+            }
+
+            .registration-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <a href="landingpage.html" class="logo">2nd Home</a>
+                <ul class="nav-links">
+                    <li><a href="landingpage.html">Home</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">How It Works</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+                <div class="auth-buttons">
+                    <a href="login page.html" class="btn btn-outline">Login</a>
+                </div>
+                <div class="mobile-menu">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul class="mobile-nav-links">
+            <li><a href="landingpage.html">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">How It Works</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+        <div class="mobile-nav-buttons">
+            <a href="loginpage.html" class="btn btn-outline">Login</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Side - For Image -->
+        <div class="image-side">
+            <!-- Image will be set via CSS background -->
+        </div>
+        
+        <!-- Right Side - Form -->
+        <div class="form-side">
+            <section class="registration-section">
+                <div class="registration-container">
+                    <div class="registration-header">
+                        <h1>Boarding Owner Registration</h1>
+                        <p>Create your 2nd Home owner account</p>
+                    </div>
+                    
+                    <form class="registration-form" id="ownerForm">
+                        <!-- Profile Picture Section -->
+                        <div class="form-group">
+                            <h3 style="font-size: 1.1rem; color: var(--dark); margin-bottom: 10px;">Profile Picture</h3>
+                            <div class="file-upload" id="fileUpload">
+                                <div class="file-upload-icon">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <div class="file-upload-text">Choose File</div>
+                                <div class="file-name" id="fileName">No file chosen</div>
+                                <input type="file" id="profilePicture" class="file-input" accept="image/*">
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <!-- Form Fields -->
+                        <div class="form-group">
+                            <label for="fullName" class="form-label required">Full Name</label>
+                            <input type="text" id="fullName" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username" class="form-label required">Username</label>
+                            <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label required">Password</label>
+                            <input type="password" id="password" class="form-control" placeholder="Create a password" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label required">Confirm Password</label>
+                            <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nicNumber" class="form-label required">NIC Number</label>
+                            <input type="text" id="nicNumber" class="form-control" placeholder="Enter your NIC number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contactNumber" class="form-label required">Contact Number</label>
+                            <input type="tel" id="contactNumber" class="form-control" placeholder="Enter contact number" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label required">Email</label>
+                            <input type="email" id="email" class="form-control" placeholder="Enter email address" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="whatsappNumber" class="form-label required">WhatsApp Account</label>
+                            <input type="tel" id="whatsappNumber" class="form-control" placeholder="Enter WhatsApp number" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary submit-btn">Create Account</button>
+                    </form>
+
+                    <div class="login-link">
+                        Already have an account? <a href="loginpage.html">Login</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>2nd Home</h3>
+                    <p>Connecting university students with verified boarding facilities.</p>
+                </div>
+                <div class="footer-column">
+                    <h3>For Students</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Search Boarding</a></li>
+                        <li><a href="#">How it Works</a></li>
+                        <li><a href="#">Safety Tips</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>For Owners</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">List Your Property</a></li>
+                        <li><a href="#">Verification Process</a></li>
+                        <li><a href="#">Owner Guidelines</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 2nd Home. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu functionality
+        const mobileMenuBtn = document.querySelector('.mobile-menu');
+        const closeMenuBtn = document.querySelector('.close-menu');
+        const mobileNav = document.querySelector('.mobile-nav');
+
+        mobileMenuBtn.addEventListener('click', function() {
+            mobileNav.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        closeMenuBtn.addEventListener('click', function() {
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.mobile-nav-links a').forEach(link => {
+            link.addEventListener('click', function() {
+                mobileNav.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+        });
+
+        // File upload functionality
+        const fileUpload = document.getElementById('fileUpload');
+        const fileInput = document.getElementById('profilePicture');
+        const fileName = document.getElementById('fileName');
+
+        fileUpload.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+            } else {
+                fileName.textContent = 'No file chosen';
+            }
+        });
+
+        // Form validation
+        document.getElementById('ownerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const nicNumber = document.getElementById('nicNumber').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            // Basic NIC validation (Sri Lankan format)
+            const nicRegex = /^([0-9]{9}[xXvV]|[0-9]{12})$/;
+            if (!nicRegex.test(nicNumber)) {
+                alert('Please enter a valid NIC number (9 digits with X/V or 12 digits)');
+                return;
+            }
+            
+            // If validation passes, submit the form
+            alert('Boarding Owner account created successfully!');
+            // In a real application, you would send the data to a server here
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+            } else {
+                header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            }
+        });
+    </script>
+</body>
+</html>

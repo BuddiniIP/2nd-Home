@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - 2nd Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a5fb4;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #ff9800;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        .main-nav a {
+            color: #555;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 1rem;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            color: #1a5fb4;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #1a5fb4;
+            border: 2px solid #1a5fb4;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0f7ff;
+        }
+
+        .btn-primary {
+            background-color: #1a5fb4;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0f4a97;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(rgba(26, 95, 180, 0.9), rgba(26, 95, 180, 0.85)), url('https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Contact Content */
+        section {
+            padding: 80px 0;
+        }
+
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+
+        .contact-info {
+            background-color: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .contact-info h2 {
+            color: #1a5fb4;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f7ff;
+        }
+
+        .contact-method {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .contact-method:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #e8f2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        .contact-icon i {
+            font-size: 1.2rem;
+            color: #1a5fb4;
+        }
+
+        .contact-details h3 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .contact-details p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .contact-details a {
+            color: #1a5fb4;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-details a:hover {
+            color: #0f4a97;
+            text-decoration: underline;
+        }
+
+        .business-hours {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        .contact-form-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .contact-form-container h2 {
+            color: #1a5fb4;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f7ff;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: 'Open Sans', sans-serif;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #1a5fb4;
+            box-shadow: 0 0 0 3px rgba(26, 95, 180, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+
+        .submit-btn:hover {
+            background-color: #e68900;
+        }
+
+        /* Map Section */
+        .map-section {
+            padding-top: 0;
+        }
+
+        .map-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            height: 400px;
+            position: relative;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background-color: #e8f2ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #1a5fb4;
+        }
+
+        .map-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .map-placeholder h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .map-placeholder p {
+            color: #666;
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .map-btn {
+            background-color: #1a5fb4;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .map-btn:hover {
+            background-color: #0f4a97;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background-color: #f0f7ff;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .section-title h2 {
+            font-size: 2.2rem;
+            color: #1a5fb4;
+            margin-bottom: 15px;
+        }
+
+        .section-title p {
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .faq-question {
+            padding: 20px 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+
+        .faq-question:hover {
+            background-color: #f9f9f9;
+        }
+
+        .faq-question i {
+            color: #1a5fb4;
+            transition: transform 0.3s;
+        }
+
+        .faq-answer {
+            padding: 0 25px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-answer.active {
+            padding: 0 25px 25px;
+            max-height: 500px;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        /* Footer */
+        footer {
+            background-color: #0f2c55;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-logo i {
+            color: #ff9800;
+        }
+
+        .footer-description {
+            opacity: 0.8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .footer-links h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #ff9800;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ddd;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #ff9800;
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .header-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .main-nav {
+                order: 3;
+                margin-top: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .page-header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .contact-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .page-header {
+                padding: 60px 0 40px;
+            }
+            
+            .page-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .page-header p {
+                font-size: 1rem;
+            }
+            
+            .contact-info, .contact-form-container {
+                padding: 25px;
+            }
+            
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+            
+            .map-placeholder h3 {
+                font-size: 1.3rem;
+            }
+            
+            .map-placeholder i {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-home"></i>
+                2nd Home
+            </a>
+            <nav class="main-nav">
+                <a href="#">Home</a>
+                <a href="#">About</a>
+                <a href="#">How It Works</a>
+                <a href="#" class="active">Contact</a>
+            </nav>
+            <div class="auth-buttons">
+                <a href="#" class="btn btn-outline">Login</a>
+                <a href="#" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>Contact Us</h1>
+            <p>We're here to help! Get in touch with our support team for any questions about 2nd Home.</p>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <section>
+        <div class="container">
+            <div class="contact-container">
+                <!-- Contact Form -->
+                <div class="contact-form-container">
+                    <h2>Send Us a Message</h2>
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" id="name" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" class="form-control" placeholder="Enter your email address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subject *</label>
+                            <input type="text" id="subject" class="form-control" placeholder="What is your message about?" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message *</label>
+                            <textarea id="message" class="form-control" placeholder="Please provide details about your inquiry..." required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="contact-info">
+                    <h2>Contact Information</h2>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Email Address</h3>
+                            <p><a href="mailto:support@2nd Home.com">support@2nd Home.com</a></p>
+                            <p><a href="mailto:info@2nd Home.com">info@2nd Home.com</a></p>
+                            <p class="business-hours">Response time: Within 24 hours</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Phone Number</h3>
+                            <p><a href="tel:+94112345678">+94 11 234 5678</a> (Office)</p>
+                            <p><a href="tel:+94771234567">+94 77 123 4567</a> (Student Support)</p>
+                            <p><a href="tel:+94771234568">+94 77 123 4568</a> (Owner Support)</p>
+                            <p class="business-hours">Monday - Friday: 9:00 AM - 6:00 PM</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Office Location</h3>
+                            <p>2nd Home Headquarters</p>
+                            <p>123 University Avenue, Colombo 03</p>
+                            <p>Sri Lanka</p>
+                            <p class="business-hours">Visits by appointment only</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-method">
+                        <div class="contact-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div class="contact-details">
+                            <h3>Live Chat Support</h3>
+                            <p>Available on our website during business hours</p>
+                            <p>Look for the chat icon in the bottom right corner</p>
+                            <p class="business-hours">Monday - Friday: 9:00 AM - 5:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Find Our Office</h2>
+                <p>Located in the heart of Colombo, close to major universities</p>
+            </div>
+            
+            <div class="map-container">
+                <!-- In a real implementation, you would embed Google Maps here -->
+                <div class="map-placeholder">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>Our Location in Colombo</h3>
+                    <p>2nd Home Headquarters is located at 123 University Avenue, Colombo 03, Sri Lanka. We're conveniently situated near University of Colombo and other educational institutions.</p>
+                    <a href="https://maps.google.com/?q=123+University+Avenue,+Colombo+03,+Sri+Lanka" target="_blank" class="map-btn">
+                        <i class="fas fa-directions"></i> Open in Google Maps
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Frequently Asked Questions</h2>
+                <p>Quick answers to common questions about 2nd Home</p>
+            </div>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How do I verify my boarding facility?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>After listing your property, our verification team will contact you within 24-48 hours to schedule a physical inspection. The verification process includes checking safety features, amenities, and location accuracy.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        What should I do if I have issues with my boarding owner?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Contact our student support team immediately at <a href="mailto:support@2nd Home.com">support@2nd Home.com</a> or call +94 77 123 4567. We'll mediate the situation and help find a resolution within 48 hours.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        How long does it take to get a response to my inquiry?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We respond to all inquiries within 24 hours during business days. For urgent matters, please call our support lines directly for faster assistance.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        Can I visit boarding facilities before booking?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! We encourage students to visit boarding facilities before making a decision. Use our messaging system to schedule a visit directly with the property owner.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        What safety measures are in place for verified boardings?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>All verified boardings must pass our safety checklist which includes: fire safety equipment, secure locks, emergency exits, proper lighting, and verified ownership documentation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <i class="fas fa-home"></i>
+                        2nd Home
+                    </div>
+                    <p class="footer-description">Connecting university students with verified boarding facilities since 2005. Your safety and comfort are our priority. We're here to help you find the perfect accommodation near your university.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>For Students</h4>
+                    <ul>
+                        <li><a href="#">Search Boarding</a></li>
+                        <li><a href="#">How it Works</a></li>
+                        <li><a href="#">Safety Tips</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>For Owners</h4>
+                    <ul>
+                        <li><a href="#">List Your Property</a></li>
+                        <li><a href="#">Verification Process</a></li>
+                        <li><a href="#">Owner Guidelines</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#" class="active">Contact Us</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                © 2005 2nd Home. All rights reserved. | support@2nd Home.com | +94 11 234 5678
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ Toggle Functionality
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                const answer = faqItem.querySelector('.faq-answer');
+                
+                // Close all other FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    if (item !== faqItem) {
+                        item.classList.remove('active');
+                        item.querySelector('.faq-answer').classList.remove('active');
+                    }
+                });
+                
+                // Toggle current FAQ item
+                faqItem.classList.toggle('active');
+                answer.classList.toggle('active');
+            });
+        });
+        
+        // Contact Form Submission
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            
+            // In a real application, you would send this data to a server
+            // For demo purposes, we'll just show a success message
+            alert(`Thank you ${name}! Your message about "${subject}" has been sent. We'll respond to ${email} within 24 hours.`);
+            
+            // Reset form
+            this.reset();
+        });
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if(targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if(targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

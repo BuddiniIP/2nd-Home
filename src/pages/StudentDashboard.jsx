@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import SkeletonCard from "../components/SkeletonCard";
 
 const StudentDashboard = () => {
   const { currentUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <div className="bg-[#f5f7fa] min-h-screen font-sans">
@@ -98,53 +107,62 @@ const StudentDashboard = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[25px]">
-                {/* Listing 1 */}
-                <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-[0_5px_15px_rgba(0,0,0,0.05)] hover:-translate-y-[5px] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
-                  <div className="h-[160px] bg-cover bg-center relative" style={{backgroundImage: "url('https://colomborealtors.lk/wp-content/uploads/2022/09/malabe-modern-house-office-best-rent-lease-sri-lanka-sl-colombo-realtors-lk.jpg')"}}>
-                    <div className="absolute top-[15px] right-[15px] bg-white w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.1)] text-[#ff5252] text-[1.1rem]">
-                      <i className="fas fa-heart"></i>
+                {isLoading ? (
+                  <>
+                    <SkeletonCard />
+                    <SkeletonCard />
+                  </>
+                ) : (
+                  <>
+                    {/* Listing 1 */}
+                    <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-[0_5px_15px_rgba(0,0,0,0.05)] hover:-translate-y-[5px] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+                      <div className="h-[160px] bg-cover bg-center relative" style={{backgroundImage: "url('https://colomborealtors.lk/wp-content/uploads/2022/09/malabe-modern-house-office-best-rent-lease-sri-lanka-sl-colombo-realtors-lk.jpg')"}}>
+                        <div className="absolute top-[15px] right-[15px] bg-white w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.1)] text-[#ff5252] text-[1.1rem]">
+                          <i className="fas fa-heart"></i>
+                        </div>
+                      </div>
+                      <div className="p-[20px]">
+                        <h4 className="text-[1.2rem] font-semibold text-[#1a5fb4] mb-[8px]">Green Valley Hostel</h4>
+                        <div className="text-[#666] text-[0.9rem] mb-[10px] flex items-center gap-[8px]">
+                          <i className="fas fa-map-marker-alt text-[#ff9800]"></i> 2km from University of Sri Jayewardenepura
+                        </div>
+                        <div className="flex justify-between text-[0.9rem] mb-[15px] text-[#555]">
+                          <div className="flex items-center gap-[5px]"><i className="fas fa-bed text-[#1a5fb4]"></i> Single Room</div>
+                          <div className="flex items-center gap-[5px]"><i className="fas fa-wifi text-[#1a5fb4]"></i> No WiFi</div>
+                        </div>
+                        <div className="text-[1.3rem] font-bold text-[#ff9800] mb-[15px]">Rs.10000 <span className="text-[0.9rem] font-normal text-[#777]">/month</span></div>
+                        <div className="flex gap-[10px]">
+                          <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#1a5fb4] text-white hover:bg-[#0f4a97] transition-colors">View Details</a>
+                          <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#f5f5f5] text-[#666] border border-[#ddd] hover:bg-[#eee] transition-colors">Remove</a>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-[20px]">
-                    <h4 className="text-[1.2rem] font-semibold text-[#1a5fb4] mb-[8px]">Green Valley Hostel</h4>
-                    <div className="text-[#666] text-[0.9rem] mb-[10px] flex items-center gap-[8px]">
-                      <i className="fas fa-map-marker-alt text-[#ff9800]"></i> 2km from University of Sri Jayewardenepura
+                    
+                    {/* Listing 2 */}
+                    <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-[0_5px_15px_rgba(0,0,0,0.05)] hover:-translate-y-[5px] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
+                      <div className="h-[160px] bg-cover bg-center relative" style={{backgroundImage: "url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80')"}}>
+                        <div className="absolute top-[15px] right-[15px] bg-white w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.1)] text-[#ff5252] text-[1.1rem]">
+                          <i className="fas fa-heart"></i>
+                        </div>
+                      </div>
+                      <div className="p-[20px]">
+                        <h4 className="text-[1.2rem] font-semibold text-[#1a5fb4] mb-[8px]">Campus Comfort</h4>
+                        <div className="text-[#666] text-[0.9rem] mb-[10px] flex items-center gap-[8px]">
+                          <i className="fas fa-map-marker-alt text-[#ff9800]"></i> Near Faculty of Engineering
+                        </div>
+                        <div className="flex justify-between text-[0.9rem] mb-[15px] text-[#555]">
+                          <div className="flex items-center gap-[5px]"><i className="fas fa-bed text-[#1a5fb4]"></i> Double Room</div>
+                          <div className="flex items-center gap-[5px]"><i className="fas fa-utensils text-[#1a5fb4]"></i> Bills Included</div>
+                        </div>
+                        <div className="text-[1.3rem] font-bold text-[#ff9800] mb-[15px]">Rs.10000 <span className="text-[0.9rem] font-normal text-[#777]">/month</span></div>
+                        <div className="flex gap-[10px]">
+                          <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#1a5fb4] text-white hover:bg-[#0f4a97] transition-colors">View Details</a>
+                          <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#f5f5f5] text-[#666] border border-[#ddd] hover:bg-[#eee] transition-colors">Remove</a>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-[0.9rem] mb-[15px] text-[#555]">
-                      <div className="flex items-center gap-[5px]"><i className="fas fa-bed text-[#1a5fb4]"></i> Single Room</div>
-                      <div className="flex items-center gap-[5px]"><i className="fas fa-wifi text-[#1a5fb4]"></i> No WiFi</div>
-                    </div>
-                    <div className="text-[1.3rem] font-bold text-[#ff9800] mb-[15px]">Rs.10000 <span className="text-[0.9rem] font-normal text-[#777]">/month</span></div>
-                    <div className="flex gap-[10px]">
-                      <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#1a5fb4] text-white hover:bg-[#0f4a97] transition-colors">View Details</a>
-                      <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#f5f5f5] text-[#666] border border-[#ddd] hover:bg-[#eee] transition-colors">Remove</a>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Listing 2 */}
-                <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-[0_5px_15px_rgba(0,0,0,0.05)] hover:-translate-y-[5px] hover:shadow-[0_10px_25px_rgba(0,0,0,0.1)] transition-all duration-300">
-                  <div className="h-[160px] bg-cover bg-center relative" style={{backgroundImage: "url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80')"}}>
-                    <div className="absolute top-[15px] right-[15px] bg-white w-[36px] h-[36px] rounded-full flex items-center justify-center cursor-pointer shadow-[0_3px_10px_rgba(0,0,0,0.1)] text-[#ff5252] text-[1.1rem]">
-                      <i className="fas fa-heart"></i>
-                    </div>
-                  </div>
-                  <div className="p-[20px]">
-                    <h4 className="text-[1.2rem] font-semibold text-[#1a5fb4] mb-[8px]">Campus Comfort</h4>
-                    <div className="text-[#666] text-[0.9rem] mb-[10px] flex items-center gap-[8px]">
-                      <i className="fas fa-map-marker-alt text-[#ff9800]"></i> Near Faculty of Engineering
-                    </div>
-                    <div className="flex justify-between text-[0.9rem] mb-[15px] text-[#555]">
-                      <div className="flex items-center gap-[5px]"><i className="fas fa-bed text-[#1a5fb4]"></i> Double Room</div>
-                      <div className="flex items-center gap-[5px]"><i className="fas fa-utensils text-[#1a5fb4]"></i> Bills Included</div>
-                    </div>
-                    <div className="text-[1.3rem] font-bold text-[#ff9800] mb-[15px]">Rs.10000 <span className="text-[0.9rem] font-normal text-[#777]">/month</span></div>
-                    <div className="flex gap-[10px]">
-                      <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#1a5fb4] text-white hover:bg-[#0f4a97] transition-colors">View Details</a>
-                      <a href="#" className="flex-1 text-center py-[10px] rounded-[6px] font-medium text-[0.9rem] bg-[#f5f5f5] text-[#666] border border-[#ddd] hover:bg-[#eee] transition-colors">Remove</a>
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             </div>
 

@@ -1,3 +1,46 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply antialiased text-gray selection:bg-primary selection:text-white;
+  }
+
+  /* Custom Scrollbar for a premium feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; 
+  }
+}
+
+@layer components {
+  /* Global Button active state effect */
+  button, .btn-active-scale {
+    @apply active:scale-95 transition-transform duration-150;
+  }
+
+  /* Refined Focus styles for accessibility */
+  input:focus, select:focus, textarea:focus {
+    @apply outline-none ring-2 ring-primary/20 border-primary transition-all duration-300;
+  }
+  
+  /* Smooth card hover generic class */
+  .hover-card {
+    @apply hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ease-out;
+  }
+}

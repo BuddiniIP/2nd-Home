@@ -4,7 +4,7 @@ const About = () => {
   return (
     <div className="bg-[#f9f9f9] min-h-screen font-sans">
       {/* Page Header */}
-      <div className="bg-[linear-gradient(rgba(26,95,180,0.85),rgba(26,95,180,0.8)),url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center text-white py-[80px] md:py-[100px] text-center">
+      <div className="bg-[linear-gradient(rgba(44,62,80,0.8),rgba(44,62,80,0.8)),url('https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center text-white py-[80px] md:py-[100px] text-center">
         <div className="container mx-auto px-[20px]">
           <h1 className="text-[2.5rem] md:text-[3.2rem] font-bold font-poppins mb-[15px]">About 2nd Home</h1>
           <p className="text-[1.1rem] md:text-[1.3rem] opacity-90 max-w-[800px] mx-auto">Connecting university students with safe, verified, and comfortable boarding facilities since 2005.</p>

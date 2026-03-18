@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { properties } from "../data/mockData";
+import SkeletonCard from "../components/SkeletonCard";
 
 const Search = () => {
   const location = useLocation();
@@ -14,9 +15,11 @@ const Search = () => {
   });
   
   const [sortBy, setSortBy] = useState("recommended");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Read initial filters from URL when the component mounts
   useEffect(() => {
+    setIsLoading(true);
     const searchParams = new URLSearchParams(location.search);
     const uniParam = searchParams.get('university');
     if (uniParam) {
@@ -31,6 +34,12 @@ const Search = () => {
       
       setFilters(prev => ({ ...prev, university: normalizedQuery }));
     }
+    
+    // Simulate fake network request delay on initial mount
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
   }, [location.search]);
 
   const handleFilterChange = (e) => {
@@ -58,6 +67,7 @@ const Search = () => {
     } else {
       setFilters(prev => ({ ...prev, [id]: value }));
     }
+    triggerLoadingState();
   };
 
   const clearFilters = () => {
@@ -74,6 +84,12 @@ const Search = () => {
     document.getElementById('university').value = "";
     document.getElementById('minPrice').value = "";
     document.getElementById('maxPrice').value = "";
+    triggerLoadingState();
+  };
+
+  const triggerLoadingState = () => {
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 800);
   };
 
   const filteredAndSortedBoardings = useMemo(() => {
@@ -118,16 +134,20 @@ const Search = () => {
   };
 
   return (
-    <section className="py-[120px] pb-[40px]">
-      <div className="w-[90%] max-w-[1200px] mx-auto px-[15px]">
-        <div className="text-center mb-[40px]">
-          <h1 className="text-[2.5rem] md:text-[2rem] text-dark font-bold mb-[15px]">Find Your Perfect Boarding Place</h1>
-          <p className="text-gray text-[1.1rem] max-w-[600px] mx-auto">
+    <div className="bg-[#f5f7fa] min-h-screen font-sans">
+      {/* Page Header */}
+      <div className="bg-[linear-gradient(rgba(26,95,180,0.9),rgba(26,95,180,0.85)),url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center text-white pt-[120px] pb-[60px] text-center mb-[40px]">
+        <div className="container mx-auto px-[20px]">
+          <h1 className="text-[2.5rem] md:text-[3rem] font-bold font-poppins mb-[15px]">Find Your Perfect Boarding Place</h1>
+          <p className="text-[1.1rem] md:text-[1.2rem] opacity-90 max-w-[800px] mx-auto">
             Search through verified boarding facilities with advanced filters to find exactly what you need
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-[30px]">
+      <section className="pb-[40px]">
+        <div className="w-[90%] max-w-[1200px] mx-auto px-[15px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-[30px]">
           {/* Filters Sidebar */}
           <div className="bg-white rounded-[12px] p-[25px] shadow-[0_5px_15px_rgba(0,0,0,0.08)] h-fit lg:sticky lg:top-[100px]">
             <div className="flex justify-between items-center mb-[25px] pb-[15px] border-b-2 border-light">
@@ -230,9 +250,9 @@ const Search = () => {
               </div>
               <div>
                 <select 
-                  className="p-[10px_15px] border border-[#ddd] rounded-[6px] bg-white text-dark focus:outline-none"
+                  className="p-[10px_15px] border border-[#ddd] rounded-[6px] bg-white text-dark focus:outline-none focus:border-primary transition-colors cursor-pointer"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => { setSortBy(e.target.value); triggerLoadingState(); }}
                 >
                   <option value="recommended">Sort by: Recommended</option>
                   <option value="price-low">Price: Low to High</option>
@@ -243,7 +263,13 @@ const Search = () => {
               </div>
             </div>
 
-            {filteredAndSortedBoardings.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-[25px]">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <SkeletonCard key={idx} />
+                ))}
+              </div>
+            ) : filteredAndSortedBoardings.length === 0 ? (
               <div className="text-center py-[60px] px-[20px] w-full">
                 <i className="fas fa-search text-[4rem] text-gray mb-[20px]"></i>
                 <h3 className="text-dark text-[1.5rem] font-bold mb-[10px]">No boardings found</h3>
@@ -321,6 +347,7 @@ const Search = () => {
         </div>
       </div>
     </section>
+  </div>
   );
 };
 

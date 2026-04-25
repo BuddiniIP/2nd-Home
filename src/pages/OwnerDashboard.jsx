@@ -1,408 +1,633 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { properties as allProperties } from "../data/mockData";
 
 const OwnerDashboard = () => {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
-  const [ownerProperties, setOwnerProperties] = useState([]);
+  const [activeTab, setActiveTab] = useState('properties');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // My Properties State
+  const [properties, setProperties] = useState([
+    { id: 1, title: 'Greenwood Student Annex', location: 'Gangodawila, Nugegoda', distance: '500m to USJ', price: 12000, rating: 4.5, reviews: 23, verified: true, available: true, tenants: 8, capacity: 10, image: 'https://images.unsplash.com/photo-1522771731470-ea457fbe51f5?q=80&w=600&auto=format&fit=crop' },
+    { id: 2, title: 'Nugegoda Ladies Annex', location: 'Nugegoda', distance: '1km to USJ', price: 14000, rating: 4.6, reviews: 31, verified: true, available: true, tenants: 12, capacity: 12, image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=600&auto=format&fit=crop' },
+    { id: 3, title: 'Campus View Rooms', location: 'Gangodawila', distance: '200m to USJ', price: 15000, rating: 4.1, reviews: 7, verified: false, available: false, tenants: 0, capacity: 6, image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=600&auto=format&fit=crop' },
+  ]);
+  const [isAddingProperty, setIsAddingProperty] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    title: "",
-    type: "Boarding House",
-    location: "",
-    price: "",
-    bedrooms: "1",
-    bathrooms: "1",
-    amenities: "",
-    description: "",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-    available: true
+  // Property Form State
+  const [propertyForm, setPropertyForm] = useState({
+    title: '',
+    description: '',
+    address: '',
+    nearestUniversity: '',
+    monthlyFee: '',
+    distance: '',
+    availability: 'available',
+    gender: 'any',
+    capacity: '',
+    bankName: '',
+    bankBranch: '',
+    accountNumber: '',
+    accountName: '',
+  });
+  const [facilities, setFacilities] = useState(new Set());
+  const [images, setImages] = useState([]);
+  const [submittedProperty, setSubmittedProperty] = useState(false);
+
+  // Tenants State
+  const [tenantRequests, setTenantRequests] = useState([
+    { id: 1, student: 'Amal Perera', email: 'amal@sjp.ac.lk', phone: '+94 77 111 2222', university: 'Univ. of Sri Jayewardenepura', property: 'Greenwood Student Annex', requestDate: '2026-04-20', avatar: 'AP' },
+    { id: 2, student: 'Nethmi Rajapaksha', email: 'nethmi@cmb.ac.lk', phone: '+94 77 333 4444', university: 'Univ. of Colombo', property: 'Nugegoda Ladies Annex', requestDate: '2026-04-18', avatar: 'NR' },
+    { id: 3, student: 'Dasun Kumara', email: 'dasun@sjp.ac.lk', phone: '+94 77 555 6666', university: 'Univ. of Sri Jayewardenepura', property: 'Greenwood Student Annex', requestDate: '2026-04-15', avatar: 'DK' },
+  ]);
+  const CURRENT_TENANTS = [
+    { id: 1, student: 'Sachini Fernando', email: 'sachini@sjp.ac.lk', university: 'USJ', property: 'Greenwood Student Annex', since: 'Jan 2026', paid: true, avatar: 'SF' },
+    { id: 2, student: 'Kavinda Silva', email: 'kavinda@sjp.ac.lk', university: 'USJ', property: 'Greenwood Student Annex', since: 'Feb 2026', paid: true, avatar: 'KS' },
+    { id: 3, student: 'Nimali Jayawardena', email: 'nimali@sjp.ac.lk', university: 'USJ', property: 'Nugegoda Ladies Annex', since: 'Jan 2026', paid: false, avatar: 'NJ' },
+    { id: 4, student: 'Tharindu Wickrama', email: 'tharindu@sjp.ac.lk', university: 'USJ', property: 'Greenwood Student Annex', since: 'Mar 2026', paid: true, avatar: 'TW' },
+  ];
+
+  // Payments State
+  const PAYMENT_LEDGER = [
+    { id: 1, student: 'Sachini Fernando', property: 'Greenwood Student Annex', month: 'April 2026', amount: 12000, status: 'Paid', date: '2026-04-03' },
+    { id: 2, student: 'Kavinda Silva', property: 'Greenwood Student Annex', month: 'April 2026', amount: 12000, status: 'Paid', date: '2026-04-05' },
+    { id: 3, student: 'Nimali Jayawardena', property: 'Nugegoda Ladies Annex', month: 'April 2026', amount: 14000, status: 'Pending', date: '—' },
+    { id: 4, student: 'Tharindu Wickrama', property: 'Greenwood Student Annex', month: 'April 2026', amount: 12000, status: 'Paid', date: '2026-04-01' },
+  ];
+
+  // Profile State
+  const [profileForm, setProfileForm] = useState({
+    fullName: currentUser?.name || 'Kamal Silva',
+    email: currentUser?.email || 'kamal@unistay.lk',
+    phone: '+94 77 234 5678',
+    nic: '198712345678',
+    address: 'No. 45, Gangodawila, Nugegoda',
+    bio: 'Experienced boarding owner managing student accommodations near USJ since 2020. Committed to providing clean, safe, and affordable living spaces.',
   });
 
+  const FACILITIES_OPTIONS = [
+    'WiFi', 'Air Conditioning', 'Parking', 'Meals Included', 'Laundry',
+    'Study Room', 'Kitchen Access', 'Hot Water', 'CCTV', 'Generator Backup',
+  ];
+  const UNIVERSITIES = [
+    'University of Sri Jayewardenepura', 'University of Colombo',
+    'University of Moratuwa', 'University of Kelaniya', 'University of Peradeniya',
+  ];
+
   useEffect(() => {
-    // If no user or wrong role, redirect or handle state gracefully
-    if (!currentUser) return;
-    
-    // Fetch properties belonging to this owner
-    const myProperties = allProperties.filter(p => p.ownerId === currentUser.id);
-    setOwnerProperties(myProperties);
-  }, [currentUser]);
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [activeTab, isAddingProperty]);
 
-  const handleOpenModal = (property = null) => {
-    if (property) {
-      setEditingId(property.id);
-      setFormData({
-        title: property.title,
-        type: property.type,
-        location: property.location,
-        price: property.price.toString(),
-        bedrooms: property.bedrooms.toString(),
-        bathrooms: property.bathrooms.toString(),
-        amenities: property.amenities.join(", "),
-        description: property.description,
-        image: property.image,
-        available: property.available
+  const navItems = [
+    { id: 'properties', label: 'My Properties', icon: 'fas fa-building' },
+    { id: 'tenants', label: 'Tenant Requests', icon: 'fas fa-users' },
+    { id: 'payments', label: 'Payments Received', icon: 'fas fa-wallet' },
+    { id: 'profile', label: 'Profile', icon: 'fas fa-user-circle' },
+  ];
+
+  const handleOpenAddProperty = (id = null) => {
+    setEditingId(id);
+    if (id) {
+      const p = properties.find(x => x.id === id);
+      setPropertyForm({
+        title: p.title, description: 'Modern facility near university.', address: p.location, nearestUniversity: 'University of Sri Jayewardenepura',
+        monthlyFee: p.price.toString(), distance: '500', availability: p.available ? 'available' : 'full', gender: 'any', capacity: p.capacity.toString(),
+        bankName: 'Commercial Bank', bankBranch: 'Nugegoda', accountNumber: '1234567890', accountName: 'Kamal Silva'
       });
+      setFacilities(new Set(['WiFi', 'Parking']));
     } else {
-      setEditingId(null);
-      setFormData({
-        title: "",
-        type: "Boarding House",
-        location: "",
-        price: "",
-        bedrooms: "1",
-        bathrooms: "1",
-        amenities: "",
-        description: "",
-        image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-        available: true
+      setPropertyForm({
+        title: '', description: '', address: '', nearestUniversity: '', monthlyFee: '', distance: '', availability: 'available', gender: 'any', capacity: '',
+        bankName: '', bankBranch: '', accountNumber: '', accountName: ''
       });
+      setFacilities(new Set());
     }
-    setIsModalOpen(true);
+    setIsAddingProperty(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
-  };
-
-  const handleSaveProperty = (e) => {
-    e.preventDefault();
-    
-    const formattedData = {
-      ...formData,
-      price: Number(formData.price),
-      bedrooms: Number(formData.bedrooms),
-      bathrooms: Number(formData.bathrooms),
-      amenities: formData.amenities.split(",").map(item => item.trim()).filter(item => item !== "")
-    };
-
-    if (editingId) {
-      // Update existing property in global array and local state
-      const globalIndex = allProperties.findIndex((p) => p.id === editingId);
-      if (globalIndex !== -1) {
-        allProperties[globalIndex] = { ...allProperties[globalIndex], ...formattedData };
-      }
-      setOwnerProperties(ownerProperties.map((p) => (p.id === editingId ? { ...p, ...formattedData } : p)));
-    } else {
-      // Create new property
-      const newProperty = {
-        id: `p${Date.now()}`,
-        ownerId: currentUser.id,
-        rating: 0,
-        reviews: 0,
-        ...formattedData
-      };
-      allProperties.push(newProperty);
-      setOwnerProperties([...ownerProperties, newProperty]);
+  const renderAddEditProperty = () => {
+    if (submittedProperty) {
+      return (
+        <div className="flex items-center justify-center min-h-[60vh] animate-[fadeIn_0.3s_ease-in-out]">
+          <div className="text-center">
+            <div className="w-[80px] h-[80px] bg-[#ecfdf5] rounded-full flex items-center justify-center mx-auto mb-[20px]">
+              <i className="fas fa-check-circle text-[2.5rem] text-[#10b981]"></i>
+            </div>
+            <p className="text-[#333] font-bold text-[1.5rem] mb-[10px]">Property {editingId ? 'Updated' : 'Added'} Successfully!</p>
+            <p className="text-[#666] text-[1rem]">Redirecting to your properties...</p>
+          </div>
+        </div>
+      );
     }
-    
-    handleCloseModal();
+
+    return (
+      <div className="max-w-[800px] mx-auto animate-[fadeIn_0.3s_ease-in-out]">
+        <div className="flex items-center gap-[15px] mb-[30px]">
+          <button onClick={() => setIsAddingProperty(false)} className="text-[#666] hover:text-[#333] transition-colors"><i className="fas fa-arrow-left"></i></button>
+          <i className="fas fa-plus-circle text-[2rem] text-[#10b981]"></i>
+          <h1 className="text-[1.8rem] font-bold text-[#333]">{editingId ? 'Edit Property' : 'Add New Property'}</h1>
+        </div>
+
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          setSubmittedProperty(true);
+          setTimeout(() => {
+            setSubmittedProperty(false);
+            setIsAddingProperty(false);
+          }, 1500);
+        }} className="space-y-[30px]">
+          
+          <div className="bg-white border border-[#eee] rounded-[15px] p-[30px] space-y-[20px] shadow-sm">
+            <h2 className="font-bold text-[1.3rem] text-[#333] border-b border-[#eee] pb-[15px]">Property Details</h2>
+            <div>
+              <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Property Title</label>
+              <input type="text" value={propertyForm.title} onChange={e => setPropertyForm({...propertyForm, title: e.target.value})} required className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20" />
+            </div>
+            <div>
+              <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Description</label>
+              <textarea value={propertyForm.description} onChange={e => setPropertyForm({...propertyForm, description: e.target.value})} required rows={4} className="w-full px-[20px] py-[15px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 resize-none" />
+            </div>
+            <div>
+              <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Address</label>
+              <input type="text" value={propertyForm.address} onChange={e => setPropertyForm({...propertyForm, address: e.target.value})} required className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[20px]">
+              <div>
+                <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Nearest University</label>
+                <select value={propertyForm.nearestUniversity} onChange={e => setPropertyForm({...propertyForm, nearestUniversity: e.target.value})} required className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 appearance-none">
+                  <option value="" disabled>Select university</option>
+                  {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Distance (meters)</label>
+                <input type="number" value={propertyForm.distance} onChange={e => setPropertyForm({...propertyForm, distance: e.target.value})} required className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-[20px]">
+              <div>
+                <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Monthly Fee (Rs.)</label>
+                <input type="number" value={propertyForm.monthlyFee} onChange={e => setPropertyForm({...propertyForm, monthlyFee: e.target.value})} required className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20" />
+              </div>
+              <div>
+                <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Availability</label>
+                <select value={propertyForm.availability} onChange={e => setPropertyForm({...propertyForm, availability: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 appearance-none">
+                  <option value="available">Available</option>
+                  <option value="full">Currently Full</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Gender</label>
+                <select value={propertyForm.gender} onChange={e => setPropertyForm({...propertyForm, gender: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 appearance-none">
+                  <option value="any">Any</option>
+                  <option value="boys">Boys Only</option>
+                  <option value="girls">Girls Only</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Total Capacity (beds)</label>
+              <input type="number" value={propertyForm.capacity} onChange={e => setPropertyForm({...propertyForm, capacity: e.target.value})} required className="w-full max-w-[200px] px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20" />
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#eee] rounded-[15px] p-[30px] shadow-sm">
+            <h2 className="font-bold text-[1.3rem] text-[#333] border-b border-[#eee] pb-[15px] mb-[20px]">Facilities</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-[15px]">
+              {FACILITIES_OPTIONS.map(f => (
+                <label key={f} className={`flex items-center gap-[10px] px-[15px] py-[12px] border rounded-[8px] cursor-pointer transition-all text-[0.9rem] font-medium ${
+                  facilities.has(f) ? 'border-[#10b981] bg-[#ecfdf5] text-[#059669]' : 'border-[#ddd] hover:border-[#ccc] text-[#666]'
+                }`}>
+                  <input type="checkbox" checked={facilities.has(f)} onChange={() => {
+                    const next = new Set(facilities);
+                    next.has(f) ? next.delete(f) : next.add(f);
+                    setFacilities(next);
+                  }} className="accent-[#10b981]" />
+                  {f}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-[15px] pt-[15px]">
+            <button type="submit" className="bg-[#10b981] text-white px-[35px] py-[15px] text-[0.85rem] uppercase tracking-widest font-bold rounded-[8px] hover:bg-[#059669] transition-colors shadow-md">
+              {editingId ? 'Save Changes' : 'Add Property'}
+            </button>
+            <button type="button" onClick={() => setIsAddingProperty(false)} className="bg-white border border-[#ddd] text-[#666] px-[35px] py-[15px] text-[0.85rem] uppercase tracking-widest font-bold rounded-[8px] hover:bg-[#f9f9f9] transition-colors">
+              Cancel
+            </button>
+          </div>
+
+        </form>
+      </div>
+    );
   };
 
-  const handleDeleteProperty = (id) => {
-    if (window.confirm("Are you sure you want to delete this property? This action cannot be undone.")) {
-      const globalIndex = allProperties.findIndex((p) => p.id === id);
-      if (globalIndex !== -1) {
-        allProperties.splice(globalIndex, 1);
-      }
-      setOwnerProperties(ownerProperties.filter((p) => p.id !== id));
-    }
-  };
+  const renderProperties = () => (
+    <div className="bg-transparent animate-[fadeIn_0.3s_ease-in-out]">
+      <div className="flex items-center justify-between mb-[30px] bg-white p-[20px_25px] rounded-[10px] shadow-sm border border-[#eee]">
+        <div className="flex items-center gap-[15px]">
+          <i className="fas fa-building text-[1.8rem] text-[#10b981]"></i>
+          <h1 className="text-[1.6rem] font-bold text-[#333]">My Properties</h1>
+          <span className="text-[0.75rem] bg-[#f9f9f9] border border-[#ddd] text-[#666] px-[12px] py-[4px] rounded-full font-bold">{properties.length} listings</span>
+        </div>
+        <button onClick={() => handleOpenAddProperty()} className="bg-[#10b981] text-white px-[20px] py-[10px] text-[0.8rem] uppercase tracking-widest font-bold rounded-[8px] hover:bg-[#059669] transition-colors shadow-sm flex items-center gap-[8px]">
+          <i className="fas fa-plus"></i> Add Property
+        </button>
+      </div>
+
+      <div className="space-y-[20px]">
+        {properties.map(p => (
+          <div key={p.id} className="bg-white border border-[#eee] rounded-[10px] overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow">
+            <div className="sm:w-[260px] h-[200px] sm:h-auto flex-shrink-0 relative">
+              <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+              {p.verified && (
+                <div className="absolute top-[15px] left-[15px] bg-white/95 backdrop-blur-sm px-[10px] py-[5px] flex items-center gap-[5px] rounded-[6px] shadow-sm">
+                  <i className="fas fa-shield-alt text-[#4caf50] text-[0.8rem]"></i>
+                  <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#333]">Verified</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 p-[25px] flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between mb-[5px]">
+                  <h3 className="font-bold text-[1.4rem] text-[#333]">{p.title}</h3>
+                  <div className="flex items-center gap-[5px] text-[0.85rem] text-[#666] font-bold">
+                    <i className="fas fa-star text-[#ffc107]"></i>{p.rating} ({p.reviews})
+                  </div>
+                </div>
+                <p className="text-[0.85rem] text-[#666] flex items-center gap-[5px] mb-[10px] font-medium"><i className="fas fa-map-marker-alt text-[#10b981]"></i>{p.location} • {p.distance}</p>
+                <p className="text-[#10b981] font-bold text-[1.1rem]">Rs. {p.price.toLocaleString()} <span className="text-[#888] font-medium text-[0.85rem]">/ mo</span></p>
+              </div>
+
+              <div className="flex items-center justify-between mt-[20px] pt-[15px] border-t border-[#f0f0f0]">
+                <div className="flex items-center gap-[20px] text-[0.85rem] text-[#666]">
+                  <span>Tenants: <strong className="text-[#333]">{p.tenants}/{p.capacity}</strong></span>
+                  <button onClick={() => {
+                    setProperties(prev => prev.map(item => item.id === p.id ? { ...item, available: !item.available } : item));
+                  }} className="flex items-center gap-[8px] font-bold">
+                    {p.available ? (
+                      <><i className="fas fa-toggle-on text-[1.4rem] text-[#10b981]"></i><span className="text-[#10b981]">Available</span></>
+                    ) : (
+                      <><i className="fas fa-toggle-off text-[1.4rem] text-[#ccc]"></i><span className="text-[#888]">Unavailable</span></>
+                    )}
+                  </button>
+                </div>
+                <div className="flex gap-[10px]">
+                  <button onClick={() => handleOpenAddProperty(p.id)} className="flex items-center gap-[8px] text-[0.85rem] font-bold text-[#555] hover:text-[#10b981] px-[15px] py-[8px] border border-[#ddd] rounded-[6px] hover:border-[#10b981] transition-colors">
+                    <i className="fas fa-edit"></i> Edit
+                  </button>
+                  <Link to={`/search`} className="flex items-center gap-[8px] text-[0.85rem] font-bold text-[#555] hover:text-[#0ea5e9] px-[15px] py-[8px] border border-[#ddd] rounded-[6px] hover:border-[#0ea5e9] transition-colors">
+                    <i className="fas fa-eye"></i> View
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderTenants = () => (
+    <div className="bg-transparent animate-[fadeIn_0.3s_ease-in-out]">
+      <div className="flex items-center gap-[15px] mb-[30px] bg-white p-[20px_25px] rounded-[10px] shadow-sm border border-[#eee]">
+        <i className="fas fa-users text-[1.8rem] text-[#10b981]"></i>
+        <h1 className="text-[1.6rem] font-bold text-[#333]">Tenant Management</h1>
+      </div>
+
+      <div className="mb-[40px]">
+        <h2 className="font-bold text-[1.3rem] text-[#333] mb-[15px] flex items-center gap-[10px]">
+          Pending Booking Requests
+          {tenantRequests.length > 0 && (
+            <span className="text-[0.65rem] bg-[#fff8e1] text-[#f57f17] px-[10px] py-[3px] rounded-full font-bold uppercase tracking-widest">{tenantRequests.length} New</span>
+          )}
+        </h2>
+
+        {tenantRequests.length === 0 ? (
+          <div className="bg-white border border-[#eee] rounded-[10px] p-[40px] text-center shadow-sm">
+            <i className="fas fa-check-circle text-[3rem] text-[#ddd] mb-[15px]"></i>
+            <p className="text-[#888] font-medium text-[1rem]">No pending requests</p>
+          </div>
+        ) : (
+          <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#f9f9f9] border-b border-[#eee]">
+                    <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Student</th>
+                    <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Contact</th>
+                    <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Property</th>
+                    <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Date</th>
+                    <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantRequests.map(r => (
+                    <tr key={r.id} className="border-b border-[#eee] last:border-none hover:bg-[#f9f9f9] transition-colors">
+                      <td className="p-[15px_20px]">
+                        <div className="flex items-center gap-[12px]">
+                          <div className="w-[35px] h-[35px] rounded-full bg-[#ecfdf5] flex items-center justify-center text-[#10b981] font-bold text-[0.8rem]">{r.avatar}</div>
+                          <div>
+                            <p className="font-bold text-[#333] text-[0.9rem]">{r.student}</p>
+                            <p className="text-[0.75rem] text-[#888] flex items-center gap-[5px] mt-[2px]"><i className="fas fa-graduation-cap"></i>{r.university}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-[15px_20px]">
+                        <p className="text-[0.8rem] text-[#666] flex items-center gap-[5px] mb-[2px] font-medium"><i className="fas fa-envelope text-[#aaa]"></i>{r.email}</p>
+                        <p className="text-[0.8rem] text-[#666] flex items-center gap-[5px] font-medium"><i className="fas fa-phone text-[#aaa]"></i>{r.phone}</p>
+                      </td>
+                      <td className="p-[15px_20px]">
+                        <p className="text-[0.85rem] text-[#333] font-medium flex items-center gap-[5px]"><i className="fas fa-map-marker-alt text-[#aaa]"></i>{r.property}</p>
+                      </td>
+                      <td className="p-[15px_20px] text-[0.8rem] text-[#888] font-medium">{r.requestDate}</td>
+                      <td className="p-[15px_20px]">
+                        <div className="flex items-center justify-end gap-[10px]">
+                          <button onClick={() => setTenantRequests(prev => prev.filter(x => x.id !== r.id))} className="flex items-center gap-[5px] px-[12px] py-[6px] bg-[#ecfdf5] text-[#10b981] rounded-[6px] text-[0.75rem] font-bold hover:bg-[#d1fae5] transition-colors">
+                            <i className="fas fa-check"></i> Accept
+                          </button>
+                          <button onClick={() => setTenantRequests(prev => prev.filter(x => x.id !== r.id))} className="flex items-center gap-[5px] px-[12px] py-[6px] bg-[#fef2f2] text-[#ef4444] rounded-[6px] text-[0.75rem] font-bold hover:bg-[#fee2e2] transition-colors">
+                            <i className="fas fa-times"></i> Decline
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="font-bold text-[1.3rem] text-[#333] mb-[15px]">Current Tenants</h2>
+        <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#f9f9f9] border-b border-[#eee]">
+                  <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Tenant</th>
+                  <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Property</th>
+                  <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Since</th>
+                  <th className="p-[15px_20px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">This Month</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CURRENT_TENANTS.map(t => (
+                  <tr key={t.id} className="border-b border-[#eee] last:border-none hover:bg-[#f9f9f9] transition-colors">
+                    <td className="p-[15px_20px]">
+                      <div className="flex items-center gap-[12px]">
+                        <div className="w-[35px] h-[35px] rounded-full bg-[#f0f0f0] flex items-center justify-center text-[#666] font-bold text-[0.8rem]">{t.avatar}</div>
+                        <div>
+                          <p className="font-bold text-[#333] text-[0.9rem]">{t.student}</p>
+                          <p className="text-[0.75rem] text-[#888] font-medium">{t.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-[15px_20px] text-[0.85rem] text-[#555] font-medium flex items-center gap-[5px]">
+                      <i className="fas fa-map-marker-alt text-[#aaa]"></i>{t.property}
+                    </td>
+                    <td className="p-[15px_20px] text-[0.8rem] text-[#888] font-medium">{t.since}</td>
+                    <td className="p-[15px_20px]">
+                      <span className={`inline-flex items-center gap-[5px] px-[10px] py-[4px] rounded-[6px] text-[0.75rem] font-bold uppercase tracking-wider ${t.paid ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'bg-[#ffebee] text-[#c62828]'}`}>
+                        <i className={t.paid ? "fas fa-check-circle" : "fas fa-times-circle"}></i>
+                        {t.paid ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPayments = () => (
+    <div className="bg-transparent animate-[fadeIn_0.3s_ease-in-out]">
+      <div className="flex items-center justify-between mb-[30px] bg-white p-[20px_25px] rounded-[10px] shadow-sm border border-[#eee]">
+        <div className="flex items-center gap-[15px]">
+          <i className="fas fa-wallet text-[1.8rem] text-[#10b981]"></i>
+          <h1 className="text-[1.6rem] font-bold text-[#333]">Payments Received</h1>
+        </div>
+        <button className="flex items-center gap-[8px] px-[15px] py-[8px] border border-[#ddd] rounded-[8px] text-[0.8rem] text-[#555] hover:border-[#10b981] hover:text-[#10b981] transition-colors font-bold shadow-sm bg-[#f9f9f9]">
+          <i className="fas fa-download"></i> Export CSV
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-[20px] mb-[30px]">
+        <div className="bg-white border border-[#eee] rounded-[10px] p-[25px] shadow-sm">
+          <p className="text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Total Received</p>
+          <p className="text-[1.8rem] font-bold text-[#10b981]">Rs. 84,000</p>
+        </div>
+        <div className="bg-white border border-[#eee] rounded-[10px] p-[25px] shadow-sm">
+          <p className="text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Pending</p>
+          <p className="text-[1.8rem] font-bold text-[#f57f17]">Rs. 14,000</p>
+        </div>
+        <div className="bg-white border border-[#eee] rounded-[10px] p-[25px] shadow-sm">
+          <p className="text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">This Month</p>
+          <p className="text-[1.8rem] font-bold text-[#333]">3/4 <span className="text-[0.9rem] text-[#888] font-medium">collected</span></p>
+        </div>
+      </div>
+
+      <div className="bg-white border border-[#eee] rounded-[10px] overflow-hidden shadow-sm">
+        <div className="p-[20px_25px] border-b border-[#eee] bg-[#fcfcfc]">
+          <h2 className="font-bold text-[1.2rem] text-[#333]">Payment Ledger</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#f9f9f9] border-b border-[#eee]">
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Student</th>
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Property</th>
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Month</th>
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Amount</th>
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Date</th>
+                <th className="p-[15px_25px] text-[0.7rem] uppercase tracking-widest text-[#888] font-bold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PAYMENT_LEDGER.map(p => (
+                <tr key={p.id} className="border-b border-[#eee] last:border-none hover:bg-[#f9f9f9] transition-colors">
+                  <td className="p-[15px_25px] font-bold text-[#333] text-[0.9rem]">{p.student}</td>
+                  <td className="p-[15px_25px] text-[0.85rem] text-[#666] font-medium">{p.property}</td>
+                  <td className="p-[15px_25px] text-[0.85rem] text-[#666] font-medium">{p.month}</td>
+                  <td className="p-[15px_25px] font-bold text-[#333] text-[0.95rem]">Rs. {p.amount.toLocaleString()}</td>
+                  <td className="p-[15px_25px] text-[0.8rem] text-[#888] font-medium">{p.date}</td>
+                  <td className="p-[15px_25px]">
+                    <span className={`inline-flex items-center gap-[5px] px-[10px] py-[4px] rounded-[6px] text-[0.75rem] font-bold uppercase tracking-wider ${
+                      p.status === 'Paid' ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'bg-[#fff8e1] text-[#f57f17]'
+                    }`}>
+                      <i className={p.status === 'Paid' ? "fas fa-check-circle" : "fas fa-clock"}></i>
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div className="bg-white rounded-[15px] p-[40px] shadow-[0_5px_20px_rgba(0,0,0,0.05)] border border-[#eee] max-w-[800px] mx-auto animate-[fadeIn_0.3s_ease-in-out]">
+      <div className="flex items-center gap-[15px] mb-[40px] pb-[20px] border-b border-[#eee]">
+        <i className="fas fa-user-circle text-[2rem] text-[#10b981]"></i>
+        <h1 className="text-[1.8rem] font-bold text-[#333]">Owner Profile</h1>
+      </div>
+
+      <div className="flex items-center gap-[25px] mb-[40px] bg-[#fcfcfc] p-[20px] rounded-[10px] border border-[#f0f0f0]">
+        <div className="relative">
+          <div className="w-[100px] h-[100px] rounded-full bg-[#ecfdf5] border-[4px] border-white shadow-md flex items-center justify-center text-[#10b981] font-bold text-[2.5rem]">
+            {profileForm.fullName.split(' ').map(n => n[0]).join('')}
+          </div>
+          <button className="absolute bottom-[0] right-[0] w-[32px] h-[32px] bg-[#10b981] rounded-full flex items-center justify-center text-white shadow-md hover:bg-[#059669] transition-colors border-[2px] border-white cursor-pointer">
+            <i className="fas fa-camera text-[0.8rem]"></i>
+          </button>
+        </div>
+        <div>
+          <p className="font-bold text-[1.6rem] text-[#333] mb-[5px]">{profileForm.fullName}</p>
+          <p className="text-[0.9rem] text-[#666] font-medium bg-[#f0f0f0] px-[12px] py-[4px] rounded-full inline-flex">
+            Boarding Owner • Member since 2023
+          </p>
+        </div>
+      </div>
+
+      <form className="space-y-[25px]" onSubmit={(e) => { e.preventDefault(); alert('Profile saved successfully!'); }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-[20px]">
+          <div>
+            <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Full Name</label>
+            <input type="text" value={profileForm.fullName} onChange={e => setProfileForm({...profileForm, fullName: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 transition-all" />
+          </div>
+          <div>
+            <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">NIC</label>
+            <input type="text" value={profileForm.nic} readOnly className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f0f0f0] text-[#666] font-medium rounded-[8px] cursor-not-allowed" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Email Address</label>
+          <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 transition-all" />
+        </div>
+        <div>
+          <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Phone Number</label>
+          <input type="tel" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 transition-all" />
+        </div>
+        <div>
+          <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Address</label>
+          <input type="text" value={profileForm.address} onChange={e => setProfileForm({...profileForm, address: e.target.value})} className="w-full px-[20px] py-[12px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 transition-all" />
+        </div>
+        <div>
+          <label className="block text-[0.75rem] uppercase tracking-widest text-[#888] font-bold mb-[8px]">Professional Bio</label>
+          <textarea value={profileForm.bio} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} rows={4} className="w-full px-[20px] py-[15px] border border-[#ddd] bg-[#f9f9f9] text-[#333] font-medium rounded-[8px] focus:outline-none focus:border-[#10b981] focus:ring-[2px] focus:ring-[#10b981]/20 transition-all resize-none" />
+        </div>
+        <div className="pt-[15px] border-t border-[#eee]">
+          <button type="submit" className="bg-[#1e1b2e] text-white px-[35px] py-[15px] text-[0.85rem] uppercase tracking-widest font-bold rounded-[8px] hover:bg-[#111] transition-colors shadow-md flex items-center justify-center gap-[10px]">
+            <i className="fas fa-save"></i> Save Profile Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 
   if (!currentUser) {
     return (
-      <div className="bg-[#f5f7fa] min-h-screen py-[60px] md:py-[80px] font-sans">
-        <div className="w-[90%] max-w-[1200px] mx-auto text-center">
-          <h2 className="text-[2rem] text-[#2c3e50] font-bold mb-[20px]">Access Denied</h2>
-          <p className="text-gray-600 mb-[30px]">Please log in as an owner to view this dashboard.</p>
-          <Link to="/login" className="bg-[#4a6baf] text-white px-[24px] py-[12px] rounded-[4px] font-semibold hover:bg-[#3a5a9f] transition-all">Go to Login</Link>
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-[#f5f7fa]">
+        <div className="text-center bg-white p-[50px] rounded-[15px] shadow-sm">
+          <h2 className="text-[2rem] text-[#333] font-bold mb-[20px]">Access Denied</h2>
+          <p className="text-[#666] mb-[30px]">Please log in as an owner to view this dashboard.</p>
+          <Link to="/login" className="bg-[#10b981] text-white px-[30px] py-[12px] rounded-[8px] font-bold hover:bg-[#059669] transition-all inline-block">Go to Login</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#f5f7fa] min-h-screen py-[60px] md:py-[80px] font-sans relative">
-      <div className="w-[90%] max-w-[1200px] mx-auto">
-        
-        {/* Welcome Section */}
-        <div className="bg-white rounded-[15px] p-[30px] md:p-[40px] shadow-[0_10px_30px_rgba(0,0,0,0.05)] mb-[40px] flex flex-col md:flex-row justify-between items-center md:items-start gap-[20px] bg-[linear-gradient(to_right,rgba(255,255,255,0.9),rgba(255,255,255,0.9)),url('https://images.unsplash.com/photo-1560518846-1ea11a123f81?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')] bg-cover bg-center">
-          <div>
-            <h1 className="text-[2rem] md:text-[2.5rem] font-bold text-[#2c3e50] mb-[10px]">Welcome back, {currentUser.name}! 👋</h1>
-            <p className="text-gray-600 text-[1.1rem]">Manage your properties, view applications, and track your performance.</p>
+    <div className="flex bg-[#f5f7fa] min-h-[calc(100vh-80px)] font-sans relative">
+      {/* Sidebar Overlay (Mobile) */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-[30] lg:hidden backdrop-blur-sm" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`w-[280px] bg-[#1a1f2e] text-white flex flex-col fixed h-[calc(100vh-80px)] top-[80px] transition-all duration-300 z-[40] ${isSidebarOpen ? 'left-0' : '-left-[280px] lg:left-0'}`}>
+        <div className="p-[25px] border-b border-white/10 flex items-center justify-between bg-[#111827]">
+          <div className="flex items-center gap-[15px]">
+            <div className="w-[45px] h-[45px] bg-[rgba(16,185,129,0.2)] rounded-full flex items-center justify-center text-[#10b981] font-bold text-[1.2rem] shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              {currentUser?.name?.charAt(0) || 'K'}
+            </div>
+            <div>
+              <div className="font-bold text-white text-[1rem] tracking-wide">{currentUser?.name || 'Kamal Silva'}</div>
+              <div className="text-[0.75rem] text-[#10b981] font-semibold uppercase tracking-wider mt-[2px]">Boarding Owner</div>
+            </div>
           </div>
-          <button className="bg-[#ff7e5f] text-white px-[24px] py-[12px] rounded-[6px] font-semibold hover:bg-[#ff6b4a] hover:-translate-y-[2px] shadow-lg transition-all whitespace-nowrap" onClick={() => handleOpenModal()}>
-            <i className="fas fa-plus mr-2"></i> Add New Property
+          <button className="lg:hidden text-gray-400 w-[30px] h-[30px] flex items-center justify-center rounded-full hover:bg-white/10" onClick={() => setIsSidebarOpen(false)}>
+            <i className="fas fa-times"></i>
           </button>
         </div>
-
-        {/* Quick Stats */}
-        <div className="mb-[40px]">
-          <h2 className="text-[1.5rem] font-bold text-[#2c3e50] mb-[20px] pl-[10px] border-l-[4px] border-[#4a6baf]">Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[20px]">
-            <div className="bg-white p-[25px] rounded-[10px] shadow-[0_5px_15px_rgba(0,0,0,0.05)] flex items-center gap-[20px] hover:-translate-y-[5px] transition-transform">
-              <div className="w-[60px] h-[60px] rounded-full bg-[#e8f0fe] text-[#4a6baf] flex items-center justify-center text-[1.8rem]">
-                <i className="fas fa-home"></i>
-              </div>
-              <div>
-                <div className="text-[1.8rem] font-bold text-[#2c3e50]">{ownerProperties.length}</div>
-                <div className="text-gray-500 font-medium text-[0.9rem]">Total Properties</div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-[25px] rounded-[10px] shadow-[0_5px_15px_rgba(0,0,0,0.05)] flex items-center gap-[20px] hover:-translate-y-[5px] transition-transform">
-              <div className="w-[60px] h-[60px] rounded-full bg-[#fef0e8] text-[#ff7e5f] flex items-center justify-center text-[1.8rem]">
-                <i className="fas fa-users"></i>
-              </div>
-              <div>
-                <div className="text-[1.8rem] font-bold text-[#2c3e50]">
-                  {ownerProperties.length > 0 ? (ownerProperties.length * 3) + 2 : 0}
-                </div>
-                <div className="text-gray-500 font-medium text-[0.9rem]">Active Tenancies</div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-[25px] rounded-[10px] shadow-[0_5px_15px_rgba(0,0,0,0.05)] flex items-center gap-[20px] hover:-translate-y-[5px] transition-transform">
-              <div className="w-[60px] h-[60px] rounded-full bg-[#e6f4ea] text-[#28a745] flex items-center justify-center text-[1.8rem]">
-                <i className="fas fa-eye"></i>
-              </div>
-              <div>
-                <div className="text-[1.8rem] font-bold text-[#2c3e50]">{ownerProperties.length > 0 ? '1,245' : '0'}</div>
-                <div className="text-gray-500 font-medium text-[0.9rem]">Profile Views</div>
-              </div>
-            </div>
-            
-            <div className="bg-white p-[25px] rounded-[10px] shadow-[0_5px_15px_rgba(0,0,0,0.05)] flex items-center gap-[20px] hover:-translate-y-[5px] transition-transform">
-              <div className="w-[60px] h-[60px] rounded-full bg-[#fff8e1] text-[#ffc107] flex items-center justify-center text-[1.8rem]">
-                <i className="fas fa-envelope-open-text"></i>
-              </div>
-              <div>
-                <div className="text-[1.8rem] font-bold text-[#2c3e50]">12</div>
-                <div className="text-gray-500 font-medium text-[0.9rem]">New Applications</div>
-              </div>
-            </div>
-          </div>
+        
+        <div className="flex-1 overflow-y-auto p-[20px] flex flex-col gap-[8px]">
+          {navItems.map(item => (
+            <button 
+              key={item.id}
+              onClick={() => { setActiveTab(item.id); setIsAddingProperty(false); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-[15px] w-full text-left p-[14px_18px] rounded-[10px] font-semibold transition-all ${(!isAddingProperty && activeTab === item.id) ? 'bg-[rgba(16,185,129,0.15)] text-[#10b981] translate-x-[5px] border-l-[3px] border-[#10b981]' : 'text-gray-400 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent'}`}
+            >
+              <i className={`${item.icon} w-[24px] text-center text-[1.1rem]`}></i>
+              {item.label}
+            </button>
+          ))}
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-[30px]">
-          {/* Main Content Area (My Properties) */}
-          <div className="lg:col-span-2 space-y-[30px]">
-            
-            {/* Properties List */}
-            <div className="bg-white rounded-[15px] p-[25px] md:p-[35px] shadow-[0_5px_20px_rgba(0,0,0,0.03)] border border-[#f0f0f0]">
-              <div className="flex justify-between items-center mb-[25px] border-b border-[#f0f0f0] pb-[15px]">
-                <h3 className="text-[1.4rem] font-bold text-[#2c3e50] m-0"><i className="fas fa-building text-[#4a6baf] mr-2"></i> My Properties</h3>
-              </div>
-
-              {ownerProperties.length === 0 ? (
-                <div className="text-center py-[40px] px-[20px] bg-[#f8f9fa] rounded-[10px] border border-dashed border-[#ddd]">
-                  <div className="w-[70px] h-[70px] bg-white rounded-full flex items-center justify-center mx-auto mb-[15px] text-[2rem] text-[#ccc] shadow-sm">
-                    <i className="fas fa-home"></i>
-                  </div>
-                  <h4 className="text-[1.2rem] text-[#2c3e50] font-semibold mb-[10px]">No properties listed yet</h4>
-                  <p className="text-gray-500 mb-[20px]">You haven't added any properties to your profile. Start adding places to get students applying!</p>
-                  <button className="bg-[#4a6baf] text-white px-[20px] py-[10px] rounded-[4px] font-semibold hover:bg-[#3a5a9f] transition-colors" onClick={() => handleOpenModal()}>
-                    <i className="fas fa-plus mr-2"></i> Add Your First Property
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-[20px]">
-                  {ownerProperties.map(property => (
-                    <div key={property.id} className="flex flex-col sm:flex-row gap-[20px] p-[15px] border border-[#f0f0f0] rounded-[10px] hover:shadow-[0_5px_15px_rgba(0,0,0,0.05)] transition-all group">
-                      <div className="w-full sm:w-[150px] h-[120px] rounded-[8px] overflow-hidden flex-shrink-0 relative">
-                        <img src={property.image} alt={property.title} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500" />
-                        <div className={`absolute top-[10px] left-[10px] text-[0.75rem] font-bold px-[10px] py-[4px] rounded-[20px] text-white ${property.available ? 'bg-[rgba(40,167,69,0.9)]' : 'bg-[rgba(220,53,69,0.9)]'}`}>
-                          {property.available ? 'Available' : 'Occupied'}
-                        </div>
-                      </div>
-                      <div className="flex flex-col justify-between flex-1 py-[5px]">
-                        <div>
-                          <div className="flex justify-between items-start mb-[5px]">
-                            <h4 className="text-[1.2rem] font-bold text-[#2c3e50] leading-tight">
-                              <Link to={`/search?university=${encodeURIComponent(property.location)}`} className="hover:text-[#4a6baf] transition-colors">{property.title}</Link>
-                            </h4>
-                            <div className="text-[1.2rem] font-bold text-[#4a6baf]">LKR {property.price.toLocaleString()}</div>
-                          </div>
-                          <div className="text-gray-500 text-[0.9rem] mb-[10px]">
-                            <i className="fas fa-map-marker-alt text-[#ff9800] mr-[5px]"></i> {property.location}
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center mt-auto border-t border-[#f8f9fa] pt-[10px]">
-                          <div className="flex gap-[15px] text-[0.85rem] text-gray-500">
-                            <span><i className="fas fa-bed mr-[5px]"></i> {property.bedrooms} Bed</span>
-                            <span><i className="fas fa-eye mr-[5px]"></i> {property.reviews * 14} Views</span>
-                          </div>
-                          <div className="flex gap-[10px]">
-                            <button className="text-[#4a6baf] bg-[#e8f0fe] w-[35px] h-[35px] rounded-full hover:bg-[rgba(74,107,175,0.2)] transition-colors flex items-center justify-center cursor-pointer border-none" title="Edit Property" onClick={() => handleOpenModal(property)}>
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button className="text-[#dc3545] bg-[#fdf2f2] w-[35px] h-[35px] rounded-full hover:bg-[rgba(220,53,69,0.2)] transition-colors flex items-center justify-center cursor-pointer border-none" title="Delete Property" onClick={() => handleDeleteProperty(property.id)}>
-                              <i className="fas fa-trash-alt"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar Area */}
-          <div className="space-y-[30px]">
-            
-            {/* Recent Applications */}
-            <div className="bg-white rounded-[15px] p-[25px] shadow-[0_5px_20px_rgba(0,0,0,0.03)] border border-[#f0f0f0]">
-              <div className="flex justify-between items-center mb-[20px] border-b border-[#f0f0f0] pb-[10px]">
-                <h3 className="text-[1.2rem] font-bold text-[#2c3e50] m-0">Recent Applications</h3>
-                <span className="bg-[#ffc107] text-[#856404] text-[0.8rem] px-[8px] py-[2px] rounded-[10px] font-bold">12 New</span>
-              </div>
-              
-              <div className="flex flex-col gap-[15px]">
-                {[1, 2, 3].map((num) => (
-                  <div key={num} className="flex gap-[15px] items-center p-[10px] hover:bg-[#f8f9fa] rounded-[8px] transition-colors cursor-pointer">
-                    <div className="w-[45px] h-[45px] rounded-full bg-[#4a6baf] text-white flex justify-center items-center font-bold text-[1.1rem] flex-shrink-0 shadow-sm">
-                      S{num}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-[#2c3e50] truncate">Student Application #{num}</div>
-                      <div className="text-[0.85rem] text-gray-500 truncate">For {ownerProperties[0]?.title || 'Property'}</div>
-                    </div>
-                    <div className="w-[30px] h-[30px] rounded-full bg-[#e8f0fe] text-[#4a6baf] flex justify-center items-center">
-                      <i className="fas fa-chevron-right text-[0.8rem]"></i>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="mt-[20px] text-center">
-                <Link to="#" className="text-[#4a6baf] font-semibold text-[0.95rem] hover:underline">View All Applications</Link>
-              </div>
-            </div>
-
-            {/* Performance Review */}
-            <div className="bg-gradient-to-br from-[#1a5fb4] to-[#4a6baf] rounded-[15px] p-[25px] text-white shadow-[0_10px_20px_rgba(26,95,180,0.2)]">
-              <h3 className="text-[1.2rem] font-bold mb-[15px] flex items-center">
-                <i className="fas fa-chart-line mr-[10px]"></i> Performance Rank
-              </h3>
-              <div className="flex items-center gap-[20px] mb-[20px]">
-                <div className="text-[4rem] text-[#ffc107]"><i className="fas fa-medal"></i></div>
-                <div>
-                  <div className="text-[1.1rem] font-bold">Top Landlord</div>
-                  <div className="text-[0.9rem] opacity-90 text-[#e0e0e0]">You respond to 95% of queries within 1 hour. Keep it up!</div>
-                </div>
-              </div>
-              <div className="bg-[rgba(255,255,255,0.15)] rounded-[8px] p-[15px] backdrop-blur-sm">
-                <div className="flex justify-between text-[0.9rem] mb-[5px]">
-                  <span>Profile Completion</span>
-                  <span className="font-bold">85%</span>
-                </div>
-                <div className="w-full bg-[rgba(0,0,0,0.2)] rounded-full h-[6px]">
-                  <div className="bg-[#28a745] h-[6px] rounded-full w-[85%]"></div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+        <div className="p-[20px] border-t border-white/10">
+          <Link to="/login" className="flex items-center gap-[15px] w-full text-left p-[14px_18px] rounded-[10px] font-semibold text-[#ef4444] hover:bg-red-500/10 transition-colors">
+            <i className="fas fa-sign-out-alt w-[24px] text-center text-[1.1rem]"></i>
+            Logout
+          </Link>
         </div>
       </div>
 
-      {/* Add/Edit Property Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] z-[9999] flex justify-center items-center p-[20px] overflow-y-auto">
-          <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-[700px] max-h-[90vh] overflow-y-auto relative animate-[fadeIn_0.3s]">
-            <div className="sticky top-0 bg-white border-b border-[#eee] p-[20px] flex justify-between items-center z-10 rounded-t-[10px]">
-              <h2 className="text-[1.5rem] font-bold text-[#2c3e50] m-0">{editingId ? 'Edit Property' : 'Add New Property'}</h2>
-              <button 
-                onClick={handleCloseModal}
-                className="w-[30px] h-[30px] rounded-full bg-[#f8f9fa] flex items-center justify-center text-gray-500 hover:bg-[#ffe5e5] hover:text-[#dc3545] transition-colors cursor-pointer border-none"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <form onSubmit={handleSaveProperty} className="p-[20px]">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px] mb-[20px]">
-                
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Property Title *</label>
-                  <input required name="title" value={formData.title} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" placeholder="e.g. Cozy Student Room" />
-                </div>
-                
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Property Type *</label>
-                  <select required name="type" value={formData.type} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]">
-                    <option value="Boarding House">Boarding House</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Room">Room</option>
-                    <option value="House">House</option>
-                    <option value="Hostel">Hostel</option>
-                    <option value="Annex">Annex</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Location (City / University) *</label>
-                  <input required name="location" value={formData.location} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" placeholder="e.g. Colombo 03" />
-                </div>
-                
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Price per Month (LKR) *</label>
-                  <input required name="price" type="number" value={formData.price} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" placeholder="e.g. 15000" />
-                </div>
-
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Bedrooms *</label>
-                  <input required name="bedrooms" type="number" min="1" value={formData.bedrooms} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" />
-                </div>
-
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Bathrooms *</label>
-                  <input required name="bathrooms" type="number" min="1" value={formData.bathrooms} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" />
-                </div>
-
-                <div className="flex flex-col gap-[8px]">
-                  <label className="font-semibold text-dark text-[0.9rem]">Amenities (Comma separated) *</label>
-                  <input required name="amenities" value={formData.amenities} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf]" placeholder="e.g. WiFi, AC, Kitchen" />
-                </div>
-
-                <div className="flex flex-col justify-center">
-                  <label className="flex items-center gap-[10px] cursor-pointer mt-[10px]">
-                    <input type="checkbox" name="available" checked={formData.available} onChange={handleInputChange} className="w-[18px] h-[18px] accent-[#4a6baf]" />
-                    <span className="font-semibold text-dark">Is Available Now?</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-[8px] mb-[20px]">
-                <label className="font-semibold text-dark text-[0.9rem]">Description *</label>
-                <textarea required name="description" value={formData.description} onChange={handleInputChange} className="p-[10px] border border-[#ddd] rounded-[4px] focus:outline-none focus:border-[#4a6baf] resize-y min-h-[100px]" placeholder="Detailed description of the property..."></textarea>
-              </div>
-
-              <div className="flex justify-end gap-[15px] pt-[20px] border-t border-[#eee]">
-                <button type="button" onClick={handleCloseModal} className="px-[20px] py-[10px] text-gray-600 bg-[#f8f9fa] border border-[#ddd] rounded-[4px] font-semibold hover:bg-[#e9ecef] transition-colors">Cancel</button>
-                <button type="submit" className="px-[20px] py-[10px] bg-[#4a6baf] text-white rounded-[4px] font-semibold hover:bg-[#3a5a9f] transition-colors">{editingId ? 'Save Changes' : 'Create Property'}</button>
-              </div>
-            </form>
-          </div>
+      {/* Main Content wrapper */}
+      <div className="flex-1 lg:ml-[280px] w-full min-h-full flex flex-col overflow-x-hidden relative">
+        {/* Mobile header */}
+        <div className="lg:hidden bg-white p-[15px_20px] flex items-center gap-[15px] shadow-[0_2px_10px_rgba(0,0,0,0.05)] sticky top-[80px] z-[20]">
+          <button onClick={() => setIsSidebarOpen(true)} className="text-[#10b981] text-[1.3rem] w-[40px] h-[40px] rounded-[8px] bg-[#ecfdf5] flex items-center justify-center">
+            <i className="fas fa-bars"></i>
+          </button>
+          <h2 className="font-bold text-[#1e1b2e] text-[1.2rem] font-poppins">
+            {isAddingProperty ? (editingId ? 'Edit Property' : 'Add Property') : navItems.find(i => i.id === activeTab)?.label}
+          </h2>
         </div>
-      )}
+
+        {/* Tab Contents */}
+        <div className="p-[20px] md:p-[40px] flex-1 max-w-[1200px] w-full mx-auto relative">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+               <div className="w-[50px] h-[50px] border-[5px] border-[#ecfdf5] border-t-[#10b981] rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'properties' && (isAddingProperty ? renderAddEditProperty() : renderProperties())}
+              {activeTab === 'tenants' && !isAddingProperty && renderTenants()}
+              {activeTab === 'payments' && !isAddingProperty && renderPayments()}
+              {activeTab === 'profile' && !isAddingProperty && renderProfile()}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

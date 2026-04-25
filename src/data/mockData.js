@@ -24,6 +24,24 @@ export const users = [
     email: "jane.smith@properties.com",
     phone: "555-0202",
     propertiesOwned: ["p1", "p2", "p3"]
+  },
+  {
+    id: "u3",
+    username: "admin",
+    password: "password123",
+    role: "admin",
+    name: "System Admin",
+    email: "admin@unistay.lk",
+    phone: "555-0000"
+  },
+  {
+    id: "u4",
+    username: "verifier",
+    password: "password123",
+    role: "verifier",
+    name: "Ruwan Jayasena",
+    email: "ruwan@unistay.lk",
+    phone: "555-4444"
   }
 ];
 

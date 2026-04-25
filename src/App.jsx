@@ -12,6 +12,8 @@ import HowItWorks from "./pages/HowItWorks";
 import ContactUs from "./pages/ContactUs";
 import About from "./pages/About";
 import OwnerDashboard from "./pages/OwnerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import VerifierDashboard from "./pages/VerifierDashboard";
 import { AuthProvider } from "./context/AuthContext";
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/owner-dashboard" element={<OwnerDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/verifier-dashboard" element={<VerifierDashboard />} />
           <Route path="/student-profile" element={<StudentProfile />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/contact-us" element={<ContactUs />} />

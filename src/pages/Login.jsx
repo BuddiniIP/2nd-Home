@@ -18,6 +18,10 @@ const Login = () => {
       if (result.success) {
         if (result.user.role === 'owner') {
            navigate("/owner-dashboard"); 
+        } else if (result.user.role === 'admin') {
+           navigate("/admin-dashboard");
+        } else if (result.user.role === 'verifier') {
+           navigate("/verifier-dashboard");
         } else {
            navigate("/student-dashboard");
         }

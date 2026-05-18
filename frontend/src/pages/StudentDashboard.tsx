@@ -1,0 +1,428 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Home as HomeIcon, 
+  Heart, 
+  CreditCard, 
+  User as UserIcon, 
+  MapPin, 
+  Phone, 
+  Clock, 
+  Bell, 
+  Camera,
+  CheckCircle2, 
+  AlertCircle,
+  ExternalLink,
+  ChevronRight
+} from 'lucide-react';
+
+const StudentDashboard = () => {
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: { type: "spring", stiffness: 200, damping: 20 }
+    },
+    exit: { opacity: 0, scale: 0.8, transition: { duration: 0.2 } }
+  };
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+    { id: 'current', label: 'Current Boarding', icon: <HomeIcon size={18} /> },
+    { id: 'saved', label: 'Saved Boardings', icon: <Heart size={18} /> },
+    { id: 'payments', label: 'Payments', icon: <CreditCard size={18} /> },
+    { id: 'profile', label: 'Edit Profile', icon: <UserIcon size={18} /> },
+  ];
+
+  const currentBoarding = {
+    title: "Premium Residence Colombo",
+    location: "Ward Place, Colombo 07",
+    owner: "Nimal Perera",
+    phone: "+94 77 123 4567",
+    monthlyRent: 25000,
+    status: "Active",
+    startDate: "01 Jan 2026",
+    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+  };
+
+  const payments = [
+    { id: 1, amount: 25000, date: "2026-05-01", time: "10:30 AM", method: "Online", status: "Paid" },
+    { id: 2, amount: 25000, date: "2026-04-02", time: "04:15 PM", method: "Physical", status: "Paid" },
+    { id: 3, amount: 25000, date: "2026-03-01", time: "09:00 AM", method: "Online", status: "Paid" },
+    { id: 4, amount: 25000, date: "2026-06-01", time: "-", method: "Physical", status: "Pending" },
+  ];
+
+  const handleRemindOwner = () => {
+    alert("Reminder sent to owner: 'Please update the payment' via WhatsApp and Email.");
+  };
+
+  const studentNotifications = [
+    { id: 1, title: "Rent Reminder", message: "Owner Mr. Nimal sent a reminder: Please pay the rent for May", time: "1h ago", type: "urgent" },
+    { id: 2, title: "Payment Confirmed", message: "Your physical payment for April has been confirmed", time: "1d ago", type: "info" },
+  ];
+
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  return (
+    <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+        {/* Sidebar */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-full lg:w-72 space-y-4"
+        >
+          {/* Header Actions for Student */}
+          <div className="flex justify-between items-center px-4 mb-2">
+             <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Dashboard</h2>
+             <div className="relative">
+                <Link 
+                  to="/notifications"
+                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black shadow-sm border border-gray-100 hover:text-accent-orange transition-colors relative"
+                >
+                   <Bell size={18} />
+                   <span className="absolute top-0 right-0 w-3 h-3 bg-accent-orange border-2 border-white rounded-full" />
+                </Link>
+             </div>
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
+             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
+                <img src="/images/house_white.jpg" alt="Profile" className="w-full h-full object-cover" />
+             </div>
+             <div className="text-center">
+                <h3 className="font-display font-bold text-xl">Sachintha K.</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">University Student</p>
+             </div>
+          </div>
+
+          <div className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-gray-50 overflow-hidden">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-50 hover:text-black'}`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Content Area */}
+        <div className="flex-1 min-h-[600px]">
+          <AnimatePresence mode="wait">
+            {activeTab === 'overview' && (
+              <motion.div
+                key="overview"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                   <div className="w-12 h-12 bg-accent-orange/10 rounded-2xl flex items-center justify-center text-accent-orange">
+                      <CreditCard size={24} />
+                   </div>
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Spent</p>
+                      <h4 className="text-4xl font-display font-bold text-black">LKR 125K</h4>
+                      <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                        <CheckCircle2 size={12} /> On Track
+                      </p>
+                   </div>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="bg-black rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between aspect-square text-white">
+                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
+                      <Clock size={24} />
+                   </div>
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Next Payment</p>
+                      <h4 className="text-4xl font-display font-bold">June 01</h4>
+                      <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">20 Days Remaining</p>
+                   </div>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                   <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
+                      <MapPin size={24} />
+                   </div>
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Stay</p>
+                      <h4 className="text-xl font-display font-bold text-black">Colombo 07</h4>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ward Place Residence</p>
+                   </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {activeTab === 'current' && (
+              <motion.div
+                key="current"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="space-y-8"
+              >
+                <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
+                   <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
+                      <img src={currentBoarding.image} alt={currentBoarding.title} className="w-full h-full object-cover" />
+                   </div>
+                   <div className="flex-1 space-y-8 py-4">
+                      <div className="space-y-4">
+                         <div className="flex items-center gap-3">
+                            <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
+                            <span className="px-4 py-1.5 bg-accent-orange/10 text-accent-orange rounded-full text-[8px] font-bold uppercase tracking-widest">Active</span>
+                         </div>
+                         <h2 className="text-4xl font-display font-bold tracking-tight">{currentBoarding.title}</h2>
+                         <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+                            <MapPin size={16} className="text-accent-orange" />
+                            {currentBoarding.location}
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-50">
+                         <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
+                            <p className="font-bold text-black">{currentBoarding.owner}</p>
+                         </div>
+                         <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
+                            <p className="font-bold text-black">LKR {currentBoarding.monthlyRent.toLocaleString()}</p>
+                         </div>
+                         <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
+                            <p className="font-bold text-black">{currentBoarding.startDate}</p>
+                         </div>
+                         <div className="space-y-2">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
+                            <p className="font-bold text-black">{currentBoarding.phone}</p>
+                         </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                         <button className="flex-1 bg-black text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all">
+                            View Full Agreement
+                         </button>
+                         <button className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
+                            <Phone size={24} />
+                         </button>
+                      </div>
+                   </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {activeTab === 'payments' && (
+              <motion.div
+                key="payments"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
+                   <div className="flex justify-between items-center mb-10">
+                      <h3 className="text-2xl font-display font-bold">Payment History</h3>
+                      <button className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
+                        Pay Next Month
+                      </button>
+                   </div>
+
+                   <div className="space-y-4">
+                      {payments.map((payment, i) => (
+                        <motion.div 
+                          variants={itemVariants}
+                          key={payment.id} 
+                          className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
+                        >
+                           <div className="flex items-center gap-6 mb-4 md:mb-0">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${payment.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                 {payment.status === 'Paid' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
+                              </div>
+                              <div>
+                                 <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
+                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.date} • {payment.time}</p>
+                              </div>
+                           </div>
+
+                           <div className="flex items-center gap-12">
+                              <div className="text-right">
+                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Method</p>
+                                 <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">
+                                    {payment.method}
+                                 </span>
+                              </div>
+                              {payment.status === 'Pending' && payment.method === 'Physical' ? (
+                                <button 
+                                  onClick={handleRemindOwner}
+                                  className="flex items-center gap-2 px-6 py-3 bg-accent-orange text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-all shadow-md"
+                                >
+                                   <Bell size={12} className="animate-bounce" />
+                                   Remind Owner
+                                </button>
+                              ) : (
+                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-200 border border-gray-50 group-hover:text-accent-orange transition-colors">
+                                   <ExternalLink size={16} />
+                                </div>
+                              )}
+                           </div>
+                        </motion.div>
+                      ))}
+                   </div>
+                </div>
+
+                <motion.div variants={itemVariants} className="bg-accent-orange rounded-[2.5rem] p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8">
+                   <div className="space-y-4 text-center md:text-left">
+                      <div className="flex items-center justify-center md:justify-start gap-3">
+                         <AlertCircle size={24} />
+                         <h4 className="text-xl font-bold font-display uppercase tracking-widest">Physical Payment Tip</h4>
+                      </div>
+                      <p className="text-white/80 text-sm max-w-md font-medium">
+                        Always ensure the owner updates the system immediately after a physical payment. Use the "Remind" button if they forget!
+                      </p>
+                   </div>
+                   <div className="w-32 h-32 relative">
+                      <motion.div 
+                        animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 4 }}
+                        className="w-full h-full bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md"
+                      >
+                         <CreditCard size={48} className="text-white" />
+                      </motion.div>
+                   </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {activeTab === 'saved' && (
+              <motion.div
+                key="saved"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                {[1, 2].map((i) => (
+                  <motion.div variants={itemVariants} key={i} className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm border border-gray-50">
+                     <div className="aspect-[16/10] relative overflow-hidden">
+                        <img src={`https://images.unsplash.com/photo-${i === 1 ? '1555854877-bab0e564b8d5' : '1586023492125-27b2c045efd7'}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`} alt="Saved" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                        <div className="absolute top-6 right-6">
+                           <button className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-accent-orange shadow-lg">
+                              <Heart size={20} fill="currentColor" />
+                           </button>
+                        </div>
+                     </div>
+                     <div className="p-8 space-y-4">
+                        <h4 className="text-xl font-display font-bold">Dream Living Annex {i}</h4>
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                           <MapPin size={12} className="text-accent-orange" />
+                           Colombo 0{i+2}
+                        </div>
+                        <div className="flex items-center justify-between pt-4">
+                           <p className="font-display font-bold">LKR {18000 + i*2000}<span className="text-[10px] font-normal text-gray-400 ml-1">/ mo</span></p>
+                           <button className="text-accent-orange text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 group/btn">
+                              View Details <ChevronRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
+                           </button>
+                        </div>
+                     </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'profile' && (
+              <motion.div
+                key="profile"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <div className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 max-w-3xl">
+                   <h3 className="text-2xl font-display font-bold mb-10">Edit Your Profile</h3>
+                   <form className="space-y-8">
+                      {/* Profile Picture Upload */}
+                      <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
+                         <div className="relative group">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                               <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" className="w-full h-full object-cover" />
+                            </div>
+                            <button 
+                              type="button"
+                              className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg"
+                              onClick={() => document.getElementById('profile-upload')?.click()}
+                            >
+                               <Camera size={16} />
+                            </button>
+                            <input type="file" id="profile-upload" className="hidden" accept="image/*" />
+                         </div>
+                         <div className="space-y-2 text-center sm:text-left">
+                            <h4 className="font-bold text-black">Profile Photo</h4>
+                            <p className="text-xs text-gray-400 max-w-[200px]">Update your profile picture for better identification in the boarding house.</p>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
+                          <input type="text" defaultValue="Sachintha Karunanayake" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Username</label>
+                          <input type="text" defaultValue="sachintha_k" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University Email</label>
+                        <input type="email" defaultValue="sachintha@uni.ac.lk" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                      </div>
+                      <div className="pt-6">
+                        <button type="button" className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
+                          Update Profile Settings
+                        </button>
+                      </div>
+                   </form>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentDashboard;

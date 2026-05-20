@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MapPin, Star, Filter, Search as SearchIcon, X, ChevronDown, Check, Map as MapIcon, Grid, Navigation } from 'lucide-react';
 
@@ -20,16 +20,7 @@ const Search = () => {
   const [sortBy, setSortBy] = useState("recommended");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const properties = [
-    { id: 1, title: "Green View Hostel", price: 18000, location: "Colombo 03", rating: 4.8, type: "Single", gender: "male", image: "/images/room1.jpg", university: "colombo", faculty: "computing", lat: 6.9147, lng: 79.8510 },
-    { id: 2, title: "Premium Residence", price: 25000, location: "Colombo 07", rating: 4.9, type: "Double", gender: "female", image: "/images/bedroom.jpg", university: "colombo", faculty: "medicine", lat: 6.9012, lng: 79.8612 },
-    { id: 3, title: "Colombo City Annex", price: 15000, location: "Colombo 04", rating: 4.3, type: "Single", gender: "mixed", image: "/images/house_white.jpg", university: "colombo", faculty: "engineering", lat: 6.8890, lng: 79.8550 },
-    { id: 4, title: "Student Comfort Home", price: 12000, location: "Kandy", rating: 4.2, type: "Double", gender: "male", image: "/images/house_orange.jpg", university: "peradeniya", faculty: "arts", lat: 7.2906, lng: 80.6337 },
-    { id: 5, title: "Hillside Dorm", price: 9000, location: "Peradeniya", rating: 4.0, type: "Single", gender: "female", image: "/images/town.jpg", university: "peradeniya", faculty: "science", lat: 7.2680, lng: 80.5970 },
-    { id: 6, title: "University Heights", price: 22000, location: "Moratuwa", rating: 4.5, type: "Double", gender: "mixed", image: "/images/bedrroom.jpg", university: "moratuwa", faculty: "technology", lat: 6.7950, lng: 79.9010 },
-    { id: 7, title: "Katubedda Rooms", price: 14000, location: "Moratuwa", rating: 4.6, type: "Single", gender: "male", image: "/images/pexels-shots2go-36890282.jpg", university: "moratuwa", faculty: "management", lat: 6.8010, lng: 79.9130 },
-    { id: 8, title: "Budget Stay Hostel", price: 10000, location: "Kelaniya", rating: 3.9, type: "Double", gender: "female", image: "/images/pexels-valeriia-slobodeniuk-340349257-14430742.jpg", university: "kelaniya", faculty: "law", lat: 6.9740, lng: 79.9150 },
-  ];
+  const [properties, setProperties] = useState<any[]>([]);
 
   const handleFilterChange = (id: string, value: string) => {
     setFilters(prev => ({ ...prev, [id]: value }));

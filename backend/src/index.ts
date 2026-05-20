@@ -1,14 +1,15 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import authRoutes from './routes/auth.js';
-import boardingRoutes from './routes/boardings.js';
-import paymentRoutes from './routes/payments.js';
-import userRoutes from './routes/users.js';
-import reportRoutes from './routes/reports.js';
-import adminRoutes from './routes/admin.js';
+import connectDB from './config/db.js';
+import authRoutes from './routes/authRoutes.js';
+// Add namespace so typescript gets req.user
+import './types/express.d.ts';
 
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,11 +20,6 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/boardings', boardingRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.send('2nd Home API is running...');

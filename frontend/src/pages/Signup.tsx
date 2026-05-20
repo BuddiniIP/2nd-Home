@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Home as HomeIcon, Camera, ChevronLeft } from 'lucide-react';
 
@@ -14,15 +14,42 @@ const Signup = () => {
     setStep('form');
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [university, setUniversity] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulation: Save auth state to localStorage
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userRole', role);
-    localStorage.setItem('userName', 'New User');
+    setError('');
     
-    // Redirect and refresh to update app state
-    window.location.href = '/';
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, password, role, phone, university: role === 'student' ? university : undefined }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userRole', data.user.role);
+      localStorage.setItem('token', data.token);
+      
+      if (data.user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else {
+        navigate(data.user.role === 'student' ? '/student-dashboard' : '/owner-dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +171,7 @@ const Signup = () => {
                 </div>
 
                 <form onSubmit={handleSignup} className="space-y-8">
+                  {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-full">{error}</p>}
                   {/* Profile Picture */}
                   <div className="space-y-4">
                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Profile Picture</label>
@@ -159,23 +187,30 @@ const Signup = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
-                      <input type="text" placeholder="John Doe" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">First Name</label>
+                      <input type="text" placeholder="John" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Username</label>
-                      <input type="text" placeholder="johndoe123" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Last Name</label>
+                      <input type="text" placeholder="Doe" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Password</label>
-                      <input type="password" placeholder="••••••••" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email Address</label>
+                      <input type="email" placeholder="john@example.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Confirm Password</label>
                       <input type="password" placeholder="••••••••" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Password</label>
+                      <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required minLength={6} />
                     </div>
                   </div>
 
@@ -193,17 +228,17 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University Email</label>
-                        <input type="email" placeholder="name@university.edu" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                        <input type="email" placeholder="name@university.edu" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University</label>
-                          <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             {universities.map(u => <option key={u} value={u.toLowerCase()}>{u}</option>)}
                           </select>
@@ -240,17 +275,17 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email Address</label>
-                          <input type="email" placeholder="owner@email.com" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
-                        </div>
-                        <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">WhatsApp Number</label>
                           <input type="tel" placeholder="+94 7X XXX XXXX" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Recovery Email</label>
+                          <input type="email" placeholder="owner_recovery@email.com" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                     </>

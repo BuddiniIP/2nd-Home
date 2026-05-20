@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
   CheckCircle2, 
@@ -42,15 +42,8 @@ const VerifierDashboard = () => {
     "Proper ventilation"
   ];
 
-  const pendingVerifications = [
-    { id: 1, title: "Green View Hostel", owner: "Nimal Silva", location: "Colombo 03", deadline: "2026-05-18", type: "New Listing" },
-    { id: 2, title: "Premium Residence", owner: "Amali P.", location: "Colombo 07", deadline: "2026-05-20", type: "Update" },
-  ];
-
-  const verificationHistory = [
-    { id: 101, title: "Lake Side Annex", owner: "Kamal P.", date: "2026-05-10", status: "Verified" },
-    { id: 102, title: "City Center Rooms", owner: "Sunil S.", date: "2026-05-08", status: "Rejected" },
-  ];
+  const [pendingVerifications, setPendingVerifications] = useState<any[]>([]);
+  const [verificationHistory, setVerificationHistory] = useState<any[]>([]);
 
   const toggleCheck = (item: string) => {
     const newChecklist = new Set(checklist);
@@ -74,7 +67,7 @@ const VerifierDashboard = () => {
     }, 2000);
   };
 
-  const containerVariants = {
+  const containerVariants: any = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };

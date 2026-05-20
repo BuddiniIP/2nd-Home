@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bell, 
   CheckCircle2, 
@@ -25,37 +25,9 @@ const Notifications = () => {
     setUserRole(role || 'student');
   }, []);
 
-  const [notifications, setNotifications] = useState([
-    { 
-      id: 1, 
-      title: userRole === 'owner' ? "New Review Posted" : (userRole === 'admin' ? "New Review Reported" : "Rent Reminder"), 
-      message: userRole === 'owner' ? "Amali P. left a 5-star review on Green View Hostel." : (userRole === 'admin' ? "Owner Mr. Nimal reported a review as fake on Green View Hostel." : "Owner Mr. Nimal sent a reminder: Please pay the rent for May."), 
-      time: "1 hour ago", 
-      type: "urgent",
-      icon: userRole === 'owner' ? <MessageSquare size={20} /> : (userRole === 'admin' ? <AlertOctagon size={20} /> : <Bell size={20} />),
-      isRead: false
-    },
-    { 
-      id: 2, 
-      title: userRole === 'student' ? "Review Warning" : "Payment Confirmed", 
-      message: userRole === 'student' ? "Your recent review on 'Hillside Dorm' has been flagged and you have been issued a warning for using inappropriate language." : "Your physical payment for the month of April has been officially confirmed by the property owner.", 
-      time: "1 day ago", 
-      type: userRole === 'student' ? "urgent" : "success",
-      icon: userRole === 'student' ? <AlertTriangle size={20} /> : <CheckCircle2 size={20} />,
-      isRead: userRole === 'student' ? false : true
-    },
-    { 
-      id: 3, 
-      title: "System Update", 
-      message: "We have updated our terms of service regarding physical payment verifications. Please review them.", 
-      time: "2 days ago", 
-      type: "info",
-      icon: <Zap size={20} />,
-      isRead: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-  const containerVariants = {
+  const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -65,7 +37,7 @@ const Notifications = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, x: -20 },
     visible: { 
       opacity: 1, 

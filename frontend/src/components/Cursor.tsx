@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useSpring, useMotionValue } from 'motion/react';
+import { motion, useSpring, useMotionValue } from 'framer-motion';
 
 const Cursor = () => {
   const [isHovering, setIsHovering] = useState(false);

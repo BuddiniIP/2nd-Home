@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -7,14 +7,45 @@ const Login = () => {
 
   const [role, setRole] = useState<'student' | 'owner' | 'admin'>('student');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userRole', role);
-    if (role === 'admin') {
-      navigate('/admin-dashboard');
-    } else {
-      navigate(role === 'student' ? '/student-dashboard' : '/owner-dashboard');
+    setError('');
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Warn if the frontend-selected role doesn't match the backend role
+      if (data.user.role !== role) {
+         console.warn(`Logged in as ${data.user.role}, regardless of frontend selection`);
+      }
+
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userRole', data.user.role);
+
+      // Navigate strictly by the backend-provided role
+      if (data.user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (data.user.role === 'student') {
+        navigate('/student-dashboard');
+      } else {
+        navigate('/owner-dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -68,16 +99,31 @@ const Login = () => {
           </div>
 
           <form className="space-y-6" onSubmit={handleLogin}>
+            {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-full">{error}</p>}
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Username</label>
-              <input type="text" placeholder="johndoe123" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email</label>
+              <input 
+                type="email" 
+                placeholder="name@example.com" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" 
+                required 
+              />
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center px-4">
                 <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Password</label>
                 <a href="#" className="text-[10px] font-bold text-accent-orange uppercase tracking-widest hover:text-black transition-colors">Forgot?</a>
               </div>
-              <input type="password" placeholder="••••••••" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" 
+                required 
+              />
             </div>
             
             <div className="pt-6">

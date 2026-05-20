@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
   AlertTriangle, 
@@ -31,17 +31,8 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
-  const [users, setUsers] = useState([
-    { id: 1, name: "Sachintha K.", email: "sachintha@uni.ac.lk", role: "student", status: "active" },
-    { id: 2, name: "Nimal Silva", email: "nimal@owner.com", role: "owner", status: "active" },
-    { id: 3, name: "Kasun T.", email: "kasun@student.com", role: "student", status: "suspended" },
-  ]);
-
-  const [verifiers, setVerifiers] = useState([
-    { id: 1, name: "Ruwan J.", email: "ruwan@unistay.lk", status: "active", university: "University of Colombo", tasks: 2, phone: "+94 77 123 4567" },
-    { id: 2, name: "Sunil P.", email: "sunil@unistay.lk", status: "active", university: "University of Sri Jayewardenepura", tasks: 1, phone: "+94 77 234 5678" },
-    { id: 3, name: "Kamal G.", email: "kamal@unistay.lk", status: "active", university: "University of Moratuwa", tasks: 0, phone: "+94 77 345 6789" },
-  ]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [verifiers, setVerifiers] = useState<any[]>([]);
 
   const [filterUni, setFilterUni] = useState('All');
   const [assignmentModal, setAssignmentModal] = useState<any>(null);
@@ -54,34 +45,10 @@ const AdminDashboard = () => {
     'University of Peradeniya'
   ];
 
-  const pendingAssignments = [
-    { id: 'PV-1', title: 'Green View Hostel', owner: 'Nimal Silva', location: 'Colombo 03' },
-    { id: 'PV-2', title: 'Lake Side Annex', owner: 'Kamal P.', location: 'Nugegoda' },
-  ];
+  const pendingAssignments = [];
 
   // Mock data for reported reviews
-  const [reports, setReports] = useState([
-    { 
-      id: 1, 
-      boardingName: "Green View Hostel", 
-      studentName: "Kasun T.", 
-      reviewText: "This place is terrible, the water never works!", 
-      reason: "Fake Review", 
-      ownerComment: "We have 24/7 water supply, this student never stayed here.",
-      date: "2026-05-11",
-      status: "pending"
-    },
-    { 
-      id: 2, 
-      boardingName: "Premium Residence", 
-      studentName: "Amali P.", 
-      reviewText: "Owner is very rude and doesn't return the deposit.", 
-      reason: "Harassment", 
-      ownerComment: "She is lying because she broke the furniture.",
-      date: "2026-05-10",
-      status: "pending"
-    }
-  ]);
+  const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
     fetchBoardingReports();
@@ -97,24 +64,6 @@ const AdminDashboard = () => {
       setStats(data);
     } catch (error) {
       console.error("Error fetching stats:", error);
-      // Fallback to mock data if backend is not running
-      setStats({
-        growthData: [
-          { month: 'Jan', users: 120, revenue: 45000 },
-          { month: 'Feb', users: 210, revenue: 82000 },
-          { month: 'Mar', users: 450, revenue: 150000 },
-          { month: 'Apr', users: 800, revenue: 290000 },
-          { month: 'May', users: 1240, revenue: 480000 },
-        ],
-        summary: {
-          totalUsers: 1240,
-          studentCount: 950,
-          ownerCount: 290,
-          activeBoardings: 85,
-          monthlyRevenue: 480000,
-          pendingReports: 4
-        }
-      });
     }
   };
 
@@ -125,10 +74,6 @@ const AdminDashboard = () => {
       setPayments(data);
     } catch (error) {
       console.error("Error fetching payments:", error);
-      setPayments([
-        { id: 'TXN001', user: 'Kasun T.', amount: 18000, boarding: 'Green View Hostel', date: '2026-05-11', status: 'Success' },
-        { id: 'TXN002', user: 'Amali P.', amount: 25000, boarding: 'Premium Residence', date: '2026-05-10', status: 'Success' },
-      ]);
     }
   };
 
@@ -139,11 +84,6 @@ const AdminDashboard = () => {
       setMessages(data);
     } catch (error) {
       console.error("Error fetching messages:", error);
-      setMessages([
-        { id: 101, sender: 'Ruwan J.', email: 'ruwan@verifier.lk', subject: 'Detailed Report: Greenwood Student Annex', message: 'Inspection completed. Matched 8/9 criteria. All facilities functional. selfie_verified.jpg attached.', date: '2026-05-16', unread: true, type: 'Verification', role: 'verifier' },
-        { id: 102, sender: 'Nimal Silva', email: 'nimal@owner.com', subject: 'Property Verification Request', message: 'this is my boarding, i want to verify it', date: '2026-05-16', unread: true, type: 'Verification', role: 'owner' },
-        { id: 1, sender: 'Kamal Perera', email: 'kamal@gmail.com', subject: 'Inquiry', message: 'Discount available?', date: '2026-05-12', unread: true },
-      ]);
     }
   };
 
@@ -283,17 +223,17 @@ const AdminDashboard = () => {
                    {/* SVG Growth Graph */}
                    <div className="relative h-80 w-full bg-gray-50 rounded-[2.5rem] p-8 overflow-hidden">
                       <svg className="w-full h-full" viewBox="0 0 1000 300" preserveAspectRatio="none">
-                         <path d={`M 0 300 ${stats.growthData.map((d: any, i: number) => `L ${i * 250} ${300 - (d.users / 1500) * 300}`).join(' ')} L 1000 300 Z`} fill="url(#gradient-users)" className="opacity-20" />
-                         <path d={`M 0 ${300 - (stats.growthData[0].users / 1500) * 300} ${stats.growthData.map((d: any, i: number) => `L ${i * 250} ${300 - (d.users / 1500) * 300}`).join(' ')}`} fill="none" stroke="#FF6B00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                         <path d={`M 0 300 ${stats.growthData.map((d: any, i: number) => `L ${i * 250} ${300 - (d.revenue / 600000) * 300}`).join(' ')} L 1000 300 Z`} fill="url(#gradient-revenue)" className="opacity-10" />
-                         <path d={`M 0 ${300 - (stats.growthData[0].revenue / 600000) * 300} ${stats.growthData.map((d: any, i: number) => `L ${i * 250} ${300 - (d.revenue / 600000) * 300}`).join(' ')}`} fill="none" stroke="#000000" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                         <path d={`M 0 300 ${(stats?.growthData || []).map((d: any, i: number) => `L ${i * 250} ${300 - (d.users / 1500) * 300}`).join(' ')} L 1000 300 Z`} fill="url(#gradient-users)" className="opacity-20" />
+                         <path d={`M 0 ${300 - ((stats?.growthData?.[0]?.users || 0) / 1500) * 300} ${(stats?.growthData || []).map((d: any, i: number) => `L ${i * 250} ${300 - (d.users / 1500) * 300}`).join(' ')}`} fill="none" stroke="#FF6B00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                         <path d={`M 0 300 ${(stats?.growthData || []).map((d: any, i: number) => `L ${i * 250} ${300 - (d.revenue / 600000) * 300}`).join(' ')} L 1000 300 Z`} fill="url(#gradient-revenue)" className="opacity-10" />
+                         <path d={`M 0 ${300 - ((stats?.growthData?.[0]?.revenue || 0) / 600000) * 300} ${(stats?.growthData || []).map((d: any, i: number) => `L ${i * 250} ${300 - (d.revenue / 600000) * 300}`).join(' ')}`} fill="none" stroke="#000000" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                          <defs>
                            <linearGradient id="gradient-users" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF6B00" /><stop offset="100%" stopColor="#FF6B00" stopOpacity="0" /></linearGradient>
                            <linearGradient id="gradient-revenue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#000000" /><stop offset="100%" stopColor="#000000" stopOpacity="0" /></linearGradient>
                          </defs>
                       </svg>
                       <div className="flex justify-between mt-6 px-2">
-                         {stats.growthData.map((d: any, i: number) => (
+                         {(stats?.growthData || []).map((d: any, i: number) => (
                            <div key={i} className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{d.month}</div>
                          ))}
                       </div>
@@ -303,7 +243,7 @@ const AdminDashboard = () => {
                       <div className="p-8 bg-black text-white rounded-[2.5rem] shadow-xl flex items-center justify-between">
                          <div className="space-y-1">
                             <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Total Platform Users</p>
-                            <h4 className="text-2xl font-display font-bold">{stats.summary.totalUsers.toLocaleString()}</h4>
+                            <h4 className="text-2xl font-display font-bold">{(stats?.summary?.totalUsers || 0).toLocaleString()}</h4>
                          </div>
                          <UsersIcon size={32} className="text-accent-orange" />
                       </div>
@@ -548,3 +488,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

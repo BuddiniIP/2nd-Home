@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -21,6 +21,7 @@ import {
 const StudentDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -30,7 +31,24 @@ const StudentDashboard = () => {
     }
   }, [location]);
 
-  const containerVariants = {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (response.ok) setUserProfile(data);
+      } catch (error) {
+        console.error('Failed to fetch profile', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -41,7 +59,7 @@ const StudentDashboard = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, scale: 0.8, y: 20 },
     visible: { 
       opacity: 1, 
@@ -60,34 +78,20 @@ const StudentDashboard = () => {
     { id: 'profile', label: 'Edit Profile', icon: <UserIcon size={18} /> },
   ];
 
-  const currentBoarding = {
-    title: "Premium Residence Colombo",
-    location: "Ward Place, Colombo 07",
-    owner: "Nimal Perera",
-    phone: "+94 77 123 4567",
-    monthlyRent: 25000,
-    status: "Active",
-    startDate: "01 Jan 2026",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-  };
-
-  const payments = [
-    { id: 1, amount: 25000, date: "2026-05-01", time: "10:30 AM", method: "Online", status: "Paid" },
-    { id: 2, amount: 25000, date: "2026-04-02", time: "04:15 PM", method: "Physical", status: "Paid" },
-    { id: 3, amount: 25000, date: "2026-03-01", time: "09:00 AM", method: "Online", status: "Paid" },
-    { id: 4, amount: 25000, date: "2026-06-01", time: "-", method: "Physical", status: "Pending" },
-  ];
+  const [currentBoarding, setCurrentBoarding] = useState<any>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>({
+    totalSpent: "LKR 0",
+    nextPaymentTitle: "-", 
+    nextPaymentSubtitle: "-", 
+    currentStay: "None",
+    currentStayLocation: "-"
+  });
 
   const handleRemindOwner = () => {
     alert("Reminder sent to owner: 'Please update the payment' via WhatsApp and Email.");
   };
-
-  const studentNotifications = [
-    { id: 1, title: "Rent Reminder", message: "Owner Mr. Nimal sent a reminder: Please pay the rent for May", time: "1h ago", type: "urgent" },
-    { id: 2, title: "Payment Confirmed", message: "Your physical payment for April has been confirmed", time: "1d ago", type: "info" },
-  ];
-
-  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
@@ -117,8 +121,12 @@ const StudentDashboard = () => {
                 <img src="/images/house_white.jpg" alt="Profile" className="w-full h-full object-cover" />
              </div>
              <div className="text-center">
-                <h3 className="font-display font-bold text-xl">Sachintha K.</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">University Student</p>
+                <h3 className="font-display font-bold text-xl">
+                  {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Loading..."}
+                </h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-wrap break-words px-2">
+                  {userProfile?.university || "University Student"}
+                </p>
              </div>
           </div>
 
@@ -154,9 +162,9 @@ const StudentDashboard = () => {
                    </div>
                    <div className="space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Spent</p>
-                      <h4 className="text-4xl font-display font-bold text-black">LKR 125K</h4>
-                      <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                        <CheckCircle2 size={12} /> On Track
+                      <h4 className="text-4xl font-display font-bold text-black">{dashboardStats.totalSpent}</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                          -
                       </p>
                    </div>
                 </motion.div>
@@ -167,8 +175,8 @@ const StudentDashboard = () => {
                    </div>
                    <div className="space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Next Payment</p>
-                      <h4 className="text-4xl font-display font-bold">June 01</h4>
-                      <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">20 Days Remaining</p>
+                      <h4 className="text-4xl font-display font-bold">{dashboardStats.nextPaymentTitle}</h4>
+                      <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{dashboardStats.nextPaymentSubtitle}</p>
                    </div>
                 </motion.div>
 
@@ -178,8 +186,8 @@ const StudentDashboard = () => {
                    </div>
                    <div className="space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Stay</p>
-                      <h4 className="text-xl font-display font-bold text-black">Colombo 07</h4>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ward Place Residence</p>
+                      <h4 className="text-xl font-display font-bold text-black">{dashboardStats.currentStayLocation}</h4>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{dashboardStats.currentStay}</p>
                    </div>
                 </motion.div>
               </motion.div>
@@ -194,52 +202,62 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="space-y-8"
               >
-                <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
-                   <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
-                      <img src={currentBoarding.image} alt={currentBoarding.title} className="w-full h-full object-cover" />
-                   </div>
-                   <div className="flex-1 space-y-8 py-4">
-                      <div className="space-y-4">
-                         <div className="flex items-center gap-3">
-                            <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
-                            <span className="px-4 py-1.5 bg-accent-orange/10 text-accent-orange rounded-full text-[8px] font-bold uppercase tracking-widest">Active</span>
-                         </div>
-                         <h2 className="text-4xl font-display font-bold tracking-tight">{currentBoarding.title}</h2>
-                         <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
-                            <MapPin size={16} className="text-accent-orange" />
-                            {currentBoarding.location}
-                         </div>
-                      </div>
+                {currentBoarding ? (
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
+                     <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
+                        <img src={currentBoarding.image} alt={currentBoarding.title} className="w-full h-full object-cover" />
+                     </div>
+                     <div className="flex-1 space-y-8 py-4">
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-3">
+                              <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
+                              <span className="px-4 py-1.5 bg-accent-orange/10 text-accent-orange rounded-full text-[8px] font-bold uppercase tracking-widest">Active</span>
+                           </div>
+                           <h2 className="text-4xl font-display font-bold tracking-tight">{currentBoarding.title}</h2>
+                           <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+                              <MapPin size={16} className="text-accent-orange" />
+                              {currentBoarding.location}
+                           </div>
+                        </div>
 
-                      <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-50">
-                         <div className="space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
-                            <p className="font-bold text-black">{currentBoarding.owner}</p>
-                         </div>
-                         <div className="space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
-                            <p className="font-bold text-black">LKR {currentBoarding.monthlyRent.toLocaleString()}</p>
-                         </div>
-                         <div className="space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
-                            <p className="font-bold text-black">{currentBoarding.startDate}</p>
-                         </div>
-                         <div className="space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
-                            <p className="font-bold text-black">{currentBoarding.phone}</p>
-                         </div>
-                      </div>
+                        <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-50">
+                           <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
+                              <p className="font-bold text-black">{currentBoarding.owner}</p>
+                           </div>
+                           <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
+                              <p className="font-bold text-black">LKR {currentBoarding.monthlyRent?.toLocaleString() || 0}</p>
+                           </div>
+                           <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
+                              <p className="font-bold text-black">{currentBoarding.startDate}</p>
+                           </div>
+                           <div className="space-y-2">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
+                              <p className="font-bold text-black">{currentBoarding.phone}</p>
+                           </div>
+                        </div>
 
-                      <div className="flex gap-4">
-                         <button className="flex-1 bg-black text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all">
-                            View Full Agreement
-                         </button>
-                         <button className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
-                            <Phone size={24} />
-                         </button>
+                        <div className="flex gap-4">
+                           <button className="flex-1 bg-black text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all">
+                              View Full Agreement
+                           </button>
+                           <button className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
+                              <Phone size={24} />
+                           </button>
+                        </div>
+                     </div>
+                  </motion.div>
+                ) : (
+                    <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                      <div className="w-24 h-24 bg-gray-50 rounded-full flex flex-col items-center justify-center mx-auto mb-6 text-gray-300">
+                        <HomeIcon size={32} />
                       </div>
-                   </div>
-                </motion.div>
+                      <h3 className="font-display font-bold text-2xl mb-4 text-black">No Current Boarding</h3>
+                      <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't booked any boarding yet. Explore verified listings and find your second home!</p>
+                    </motion.div>
+                  )}
               </motion.div>
             )}
 
@@ -335,31 +353,13 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
-                {[1, 2].map((i) => (
-                  <motion.div variants={itemVariants} key={i} className="group relative bg-white rounded-[3rem] overflow-hidden shadow-sm border border-gray-50">
-                     <div className="aspect-[16/10] relative overflow-hidden">
-                        <img src={`https://images.unsplash.com/photo-${i === 1 ? '1555854877-bab0e564b8d5' : '1586023492125-27b2c045efd7'}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`} alt="Saved" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                        <div className="absolute top-6 right-6">
-                           <button className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-accent-orange shadow-lg">
-                              <Heart size={20} fill="currentColor" />
-                           </button>
-                        </div>
-                     </div>
-                     <div className="p-8 space-y-4">
-                        <h4 className="text-xl font-display font-bold">Dream Living Annex {i}</h4>
-                        <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                           <MapPin size={12} className="text-accent-orange" />
-                           Colombo 0{i+2}
-                        </div>
-                        <div className="flex items-center justify-between pt-4">
-                           <p className="font-display font-bold">LKR {18000 + i*2000}<span className="text-[10px] font-normal text-gray-400 ml-1">/ mo</span></p>
-                           <button className="text-accent-orange text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 group/btn">
-                              View Details <ChevronRight size={12} className="group-hover/btn:translate-x-1 transition-transform" />
-                           </button>
-                        </div>
-                     </div>
-                  </motion.div>
-                ))}
+                <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                    <Heart size={32} />
+                  </div>
+                  <h3 className="font-display font-bold text-2xl mb-4 text-black">No Saved Boardings</h3>
+                  <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't saved any boardings yet.</p>
+                </motion.div>
               </motion.div>
             )}
 
@@ -398,16 +398,16 @@ const StudentDashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
-                          <input type="text" defaultValue="Sachintha Karunanayake" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Username</label>
-                          <input type="text" defaultValue="sachintha_k" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University</label>
+                          <input type="text" value={userProfile?.university || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University Email</label>
-                        <input type="email" defaultValue="sachintha@uni.ac.lk" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Account Email</label>
+                        <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="pt-6">
                         <button type="button" className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
@@ -426,3 +426,7 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+
+
+
+

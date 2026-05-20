@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -27,8 +27,9 @@ import {
 const OwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [userProfile, setUserProfile] = useState<any>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
     if (tab) {
@@ -36,7 +37,24 @@ const OwnerDashboard = () => {
     }
   }, [location]);
 
-  const containerVariants = {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const response = await fetch('http://localhost:5000/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (response.ok) setUserProfile(data);
+      } catch (error) {
+        console.error('Failed to fetch profile', error);
+      }
+    };
+    fetchUser();
+  }, []);
+
+   const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -47,7 +65,7 @@ const OwnerDashboard = () => {
     }
   };
 
-  const itemVariants = {
+   const itemVariants: any = {
     hidden: { opacity: 0, scale: 0.8, y: 20 },
     visible: { 
       opacity: 1, 
@@ -67,33 +85,15 @@ const OwnerDashboard = () => {
     { id: 'profile', label: 'Edit Profile', icon: <UserIcon size={18} /> },
   ];
 
-  const myStudents = [
-    { id: 1, name: "Sachintha K.", boarding: "Green View Hostel", status: "Paid", faculty: "Computing", university: "Colombo", phone: "+94 71 222 3333" },
-    { id: 2, name: "Amali P.", boarding: "Green View Hostel", status: "Unpaid", faculty: "Medicine", university: "Colombo", phone: "+94 71 444 5555" },
-    { id: 3, name: "Kasun T.", boarding: "Premium Residence", status: "Paid", faculty: "Engineering", university: "Moratuwa", phone: "+94 71 666 7777" },
-    { id: 4, name: "Nimali W.", boarding: "Premium Residence", status: "Unpaid", faculty: "Law", university: "Colombo", phone: "+94 71 888 9999" },
-  ];
-
-  const ownerNotifications = [
-    { id: 1, title: "New Payment", message: "Amali P. paid LKR 18,000 for May", time: "2h ago", type: "payment" },
-    { id: 2, title: "Reminder Requested", message: "Kasun T. asked to confirm a physical payment", time: "5h ago", type: "action" },
-  ];
-
-  const myBoardings = [
-    { id: 1, title: "Green View Hostel", location: "Colombo 03", students: 4, capacity: 6, income: 72000, image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", verified: false },
-    { id: 2, title: "Premium Residence", location: "Colombo 07", students: 2, capacity: 4, income: 50000, image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", verified: true },
-  ];
+  const [myStudents, setMyStudents] = useState<any[]>([]);
+  const [ownerNotifications, setOwnerNotifications] = useState<any[]>([]);
+  const [myBoardings, setMyBoardings] = useState<any[]>([]);
+  const [studentPayments, setStudentPayments] = useState<any[]>([]);
 
   const [verificationRequests, setVerificationRequests] = useState<Set<number>>(new Set());
   const [showVerifyModal, setShowVerifyModal] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
-
-  const studentPayments = [
-    { id: 1, student: "Sachintha K.", amount: 25000, date: "2026-05-11", type: "Physical", status: "Pending" },
-    { id: 2, student: "Amali P.", amount: 18000, date: "2026-05-10", type: "Online", status: "Paid" },
-    { id: 3, student: "Kasun T.", amount: 18000, date: "2026-05-09", type: "Physical", status: "Paid" },
-  ];
 
   const handleConfirmPayment = (id: number) => {
     alert("Payment confirmed! The student will be notified immediately.");
@@ -140,8 +140,10 @@ const OwnerDashboard = () => {
                 <img src="/images/house_orange.jpg" alt="Profile" className="w-full h-full object-cover" />
              </div>
              <div className="text-center">
-                <h3 className="font-display font-bold text-xl">Mr. Nimal</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Boarding Owner</p>
+                <h3 className="font-display font-bold text-xl">
+                  {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Loading..."}
+                </h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-wrap break-words px-2">Boarding Owner</p>
              </div>
           </div>
 
@@ -178,8 +180,8 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Revenue</p>
-                        <h4 className="text-4xl font-display font-bold text-black">LKR 122K</h4>
-                        <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">+12% from last month</p>
+                        <h4 className="text-4xl font-display font-bold text-black">LKR 0</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>
 
@@ -189,8 +191,8 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total Students</p>
-                        <h4 className="text-4xl font-display font-bold">06 Stays</h4>
-                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">85% Occupancy Rate</p>
+                        <h4 className="text-4xl font-display font-bold">0 Stays</h4>
+                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>
 
@@ -200,8 +202,8 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Pending Actions</p>
-                        <h4 className="text-4xl font-display font-bold text-black">02 Items</h4>
-                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">Action Required</p>
+                        <h4 className="text-4xl font-display font-bold text-black">0 Items</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>
                 </div>
@@ -575,11 +577,11 @@ const OwnerDashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
-                          <input type="text" defaultValue="Mr. Nimal Perera" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Official Phone</label>
-                          <input type="text" defaultValue="+94 77 123 4567" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email</label>
+                          <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                       <div className="pt-6">

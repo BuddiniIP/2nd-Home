@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useParams, Link } from 'react-router-dom';
 import { 
   MapPin, 
@@ -25,42 +25,9 @@ import {
 const BoardingDetail = () => {
   const { id } = useParams();
 
-  // Mock data for a detailed boarding
-  const boarding = {
-    id: id,
-    name: "Green View Premium Hostel",
-    location: "Colombo 03, near University of Colombo",
-    lat: 6.9147,
-    lng: 79.8510,
-    price: 18000,
-    includesBills: true,
-    totalBeds: 4,
-    remainingBeds: 2,
-    gender: "Male Only",
-    rating: 4.8,
-    reviews: 24,
-    description: "Experience premium student living in the heart of Colombo. Our hostel offers a quiet, clean, and secure environment perfect for focused studies. Located just 5 minutes away from the Faculty of Graduate Studies.",
-    features: [
-      { icon: <Wifi size={20} />, label: "High-speed WiFi" },
-      { icon: <Wind size={20} />, label: "Ceiling Fan" },
-      { icon: <Utensils size={20} />, label: "Shared Kitchen" },
-      { icon: <ShieldCheck size={20} />, label: "24/7 Security" },
-      { icon: <Zap size={20} />, label: "Electricity Inc." },
-      { icon: <Droplets size={20} />, label: "Water Inc." }
-    ],
-    nearestUniversity: "University of Colombo",
-    nearestFaculty: "Faculty of Graduate Studies",
-    images: [
-      "/images/room1.jpg",
-      "/images/bedroom.jpg",
-      "/images/house_white.jpg"
-    ]
-  };
+  const [boarding, setBoarding] = useState<any>(null);
 
-   const [reviews, setReviews] = useState([
-    { id: 1, user: "Amali P.", rating: 5, comment: "Amazing place! Very clean and quiet. The owner is very helpful.", date: "2026-05-01", reported: false },
-    { id: 2, user: "Kasun T.", rating: 4, comment: "Good location, but the WiFi can be a bit slow sometimes.", date: "2026-04-25", reported: false }
-  ]);
+   const [reviews, setReviews] = useState<any[]>([]);
 
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'guest');
@@ -68,6 +35,13 @@ const BoardingDetail = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  useEffect(() => {
+    // This will be replaced with an actual API fetch later
+    // fetch(`/api/boardings/${id}`).then(res => res.json()).then(data => setBoarding(data));
+  }, [id]);
+
+  if (!boarding) return <div className="pt-32 pb-24 px-6 text-center">Loading boarding details...</div>;
 
   const handleAddReview = (e: React.FormEvent) => {
     e.preventDefault();

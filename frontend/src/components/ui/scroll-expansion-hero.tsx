@@ -6,7 +6,7 @@ import {
   TouchEvent,
   WheelEvent,
 } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface ScrollExpandMediaProps {
   mediaType?: 'video' | 'image';

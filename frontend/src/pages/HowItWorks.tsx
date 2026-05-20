@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { UserCircle, Building, CheckCircle, Search, ClipboardList, Calendar, CreditCard, Home as HomeIcon, ShieldCheck, FileCheck, MapPin, SearchCheck } from 'lucide-react';
 

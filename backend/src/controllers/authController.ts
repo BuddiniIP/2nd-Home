@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { UserRole } from '../models/User.js';
-import dotenv from 'dotenv';
 import { z } from 'zod';
-
-dotenv.config();
+import { JWT_EXPIRES_IN, JWT_SECRET } from '../config/env.js';
 
 const generateToken = (id: string, role: string) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET || 'secret', {
-    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'],
+  return jwt.sign({ id, role }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 };
 

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Star, Filter, Search as SearchIcon, X, ChevronDown, Check, Map as MapIcon, Grid, Navigation } from 'lucide-react';
 
 const Search = () => {
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -21,6 +22,47 @@ const Search = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [properties, setProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBoardings = async () => {
+      try {
+        const response = await fetch(`${apiBase}/api/boardings`);
+        const data = await response.json();
+        const items = Array.isArray(data.data) ? data.data : [];
+
+        const universityLabels = universities.map((u) => u.label);
+        const facultyLabels = faculties;
+        const genderLabels = ['male only', 'female only', 'mixed'];
+
+        const mappedProperties = items.map((boarding: any) => {
+          const amenities = boarding.amenities || [];
+          const university = amenities.find((item: string) => universityLabels.includes(item)) || '';
+          const faculty = amenities.find((item: string) => facultyLabels.includes(item)) || '';
+          const gender = amenities.find((item: string) => genderLabels.includes(item.toLowerCase())) || 'mixed';
+          const imagePath = boarding.images?.[0] || '';
+
+          return {
+            id: boarding.id,
+            title: boarding.title,
+            location: boarding.location?.address || boarding.address || 'Unknown location',
+            image: imagePath ? `${apiBase}${imagePath}` : '/images/house_orange.jpg',
+            rating: 4.5,
+            type: boarding.capacity > 1 ? 'double' : 'single',
+            gender,
+            faculty,
+            university,
+            price: Number(boarding.price || 0),
+          };
+        });
+
+        setProperties(mappedProperties);
+      } catch (error) {
+        console.error('Failed to fetch boardings', error);
+      }
+    };
+
+    fetchBoardings();
+  }, [apiBase]);
 
   const handleFilterChange = (id: string, value: string) => {
     setFilters(prev => ({ ...prev, [id]: value }));
@@ -83,7 +125,7 @@ const Search = () => {
       if (sortBy === 'rating') return b.rating - a.rating;
       return 0;
     });
-  }, [filters, sortBy, searchQuery]);
+  }, [filters, sortBy, searchQuery, properties]);
 
   const universities = [
     { id: "colombo", label: "University of Colombo" },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Home as HomeIcon, 
@@ -20,6 +20,7 @@ import {
 
 const StudentDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
 
@@ -72,6 +73,7 @@ const StudentDashboard = () => {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+    { id: 'search', label: 'Search Boarding', icon: <MapPin size={18} /> },
     { id: 'current', label: 'Current Boarding', icon: <HomeIcon size={18} /> },
     { id: 'saved', label: 'Saved Boardings', icon: <Heart size={18} /> },
     { id: 'payments', label: 'Payments', icon: <CreditCard size={18} /> },
@@ -134,7 +136,14 @@ const StudentDashboard = () => {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.id === 'search') {
+                    navigate('/search');
+                    return;
+                  }
+
+                  setActiveTab(tab.id);
+                }}
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-50 hover:text-black'}`}
               >
                 {tab.icon}

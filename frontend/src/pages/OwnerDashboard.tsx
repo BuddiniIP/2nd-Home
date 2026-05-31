@@ -28,6 +28,36 @@ const OwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
+   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+
+   const universities = [
+      'University of Colombo',
+      'University of Peradeniya',
+      'University of Moratuwa',
+      'University of Kelaniya',
+      'University of Sri Jayewardenepura',
+   ];
+
+   const faculties = [
+      'Computing',
+      'Technology',
+      'Engineering',
+      'Medicine',
+      'Science',
+      'Arts',
+      'Law',
+      'Management',
+      'Other',
+   ];
+
+   const boardingFeatures = [
+      'WiFi',
+      'Ceiling Fan',
+      'Attached Kitchen',
+      'Attached Bathroom',
+      'Parking',
+      'Security',
+   ];
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -89,6 +119,76 @@ const OwnerDashboard = () => {
   const [ownerNotifications, setOwnerNotifications] = useState<any[]>([]);
   const [myBoardings, setMyBoardings] = useState<any[]>([]);
   const [studentPayments, setStudentPayments] = useState<any[]>([]);
+   const [selectedBoardingId, setSelectedBoardingId] = useState<string | null>(null);
+   const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
+   const [boardingTitle, setBoardingTitle] = useState('');
+   const [boardingDescription, setBoardingDescription] = useState('');
+   const [boardingAddress, setBoardingAddress] = useState('');
+   const [boardingUniversity, setBoardingUniversity] = useState('');
+   const [boardingFaculty, setBoardingFaculty] = useState('');
+   const [boardingPrice, setBoardingPrice] = useState('');
+   const [boardingLatitude, setBoardingLatitude] = useState('');
+   const [boardingLongitude, setBoardingLongitude] = useState('');
+   const [boardingCapacity, setBoardingCapacity] = useState('');
+   const [remainingBeds, setRemainingBeds] = useState('');
+   const [selectedGenderPreference, setSelectedGenderPreference] = useState('mixed');
+   const [billsIncluded, setBillsIncluded] = useState<'yes' | 'no'>('yes');
+   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+   const [boardingImages, setBoardingImages] = useState<File[]>([]);
+   const [boardingError, setBoardingError] = useState('');
+   const [boardingSuccess, setBoardingSuccess] = useState('');
+   const [isSubmittingBoarding, setIsSubmittingBoarding] = useState(false);
+
+   const matchesUniversity = (amenity: string) => universities.includes(amenity);
+   const matchesFaculty = (amenity: string) => faculties.includes(amenity);
+   const matchesGender = (amenity: string) => ['male only', 'female only', 'mixed'].includes(amenity.toLowerCase());
+   const matchesFeature = (amenity: string) => boardingFeatures.includes(amenity);
+
+   const populateBoardingForm = (boarding: any) => {
+      const amenities = boarding.amenities || [];
+      const latitude = boarding.location?.coordinates?.lat ?? boarding.coordinates?.lat ?? '';
+      const longitude = boarding.location?.coordinates?.lng ?? boarding.coordinates?.lng ?? '';
+      const description = String(boarding.description || '');
+      const cleanDescription = description.split(' | Nearest university:')[0].trim();
+
+      setSelectedBoardingId(boarding.id);
+      setExistingImagePaths(boarding.images || []);
+      setBoardingTitle(boarding.title || '');
+      setBoardingDescription(cleanDescription || description);
+      setBoardingAddress(boarding.location?.address || boarding.address || '');
+      setBoardingUniversity(amenities.find(matchesUniversity) || '');
+      setBoardingFaculty(amenities.find(matchesFaculty) || '');
+      setSelectedGenderPreference(amenities.find(matchesGender) || 'mixed');
+      setBillsIncluded(amenities.includes('Bills included') ? 'yes' : 'no');
+      setSelectedFeatures(amenities.filter(matchesFeature));
+      setBoardingPrice(String(boarding.price ?? ''));
+      setBoardingLatitude(String(latitude));
+      setBoardingLongitude(String(longitude));
+      setBoardingCapacity(String(boarding.capacity ?? ''));
+      setRemainingBeds(String(boarding.isAvailable ? boarding.capacity ?? '' : 0));
+      setBoardingError('');
+      setBoardingSuccess('');
+      setActiveTab('add-boarding');
+   };
+
+   const resetBoardingForm = () => {
+      setSelectedBoardingId(null);
+      setExistingImagePaths([]);
+      setBoardingTitle('');
+      setBoardingDescription('');
+      setBoardingAddress('');
+      setBoardingUniversity('');
+      setBoardingFaculty('');
+      setBoardingPrice('');
+      setBoardingLatitude('');
+      setBoardingLongitude('');
+      setBoardingCapacity('');
+      setRemainingBeds('');
+      setSelectedGenderPreference('mixed');
+      setBillsIncluded('yes');
+      setSelectedFeatures([]);
+      setBoardingImages([]);
+   };
 
   const [verificationRequests, setVerificationRequests] = useState<Set<number>>(new Set());
   const [showVerifyModal, setShowVerifyModal] = useState<any>(null);
@@ -111,6 +211,197 @@ const OwnerDashboard = () => {
     s.name.toLowerCase().includes(studentSearch.toLowerCase()) || 
     s.university.toLowerCase().includes(studentSearch.toLowerCase())
   );
+
+   useEffect(() => {
+      const fetchOwnerBoardings = async () => {
+         try {
+            if (!userProfile?._id && !userProfile?.id) {
+               return;
+            }
+
+            const response = await fetch(`${apiBase}/api/boardings`);
+            const data = await response.json();
+            const items = Array.isArray(data.data) ? data.data : [];
+            const ownerId = (userProfile._id || userProfile.id || '').toString();
+
+            const ownedBoardings = items
+               .filter((boarding: any) => boarding.owner?.id === ownerId)
+               .map((boarding: any) => ({
+                  id: boarding.id,
+                  title: boarding.title,
+                  description: boarding.description,
+                  location: boarding.location?.address || boarding.address || 'Unknown location',
+                  image: boarding.images?.[0] ? `${apiBase}${boarding.images[0]}` : '/images/house_orange.jpg',
+                  images: boarding.images || [],
+                  price: Number(boarding.price || 0),
+                  capacity: Number(boarding.capacity || 0),
+                  available: Boolean(boarding.isAvailable),
+                  amenities: boarding.amenities || [],
+                  raw: boarding,
+               }));
+
+            setMyBoardings(ownedBoardings);
+         } catch (error) {
+            console.error('Failed to fetch owner boardings', error);
+         }
+      };
+
+      fetchOwnerBoardings();
+   }, [apiBase, userProfile]);
+
+   const toggleFeature = (feature: string) => {
+      setSelectedFeatures((current) =>
+         current.includes(feature)
+            ? current.filter((item) => item !== feature)
+            : [...current, feature]
+      );
+   };
+
+   const handleBoardingImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      setBoardingImages(files);
+   };
+
+   const uploadBoardingImages = async (token: string) => {
+      if (!boardingImages.length) {
+         return [];
+      }
+
+      const formData = new FormData();
+      boardingImages.forEach((file) => formData.append('images', file));
+
+      const response = await fetch(`${apiBase}/api/boardings/upload-images`, {
+         method: 'POST',
+         headers: { Authorization: `Bearer ${token}` },
+         body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+         throw new Error(data.message || 'Failed to upload images');
+      }
+
+      return Array.isArray(data.images) ? data.images : [];
+   };
+
+   const handleBoardingSubmit = async (event: React.FormEvent) => {
+      event.preventDefault();
+      setBoardingError('');
+      setBoardingSuccess('');
+      setIsSubmittingBoarding(true);
+
+      try {
+         const token = localStorage.getItem('token');
+
+         if (!token) {
+            throw new Error('Please log in again before creating a boarding listing.');
+         }
+
+         const priceValue = Number(boardingPrice);
+         const capacityValue = Number(boardingCapacity);
+         const latitudeValue = Number(boardingLatitude);
+         const longitudeValue = Number(boardingLongitude);
+         const remainingBedsValue = Number(remainingBeds);
+
+         if (!boardingTitle.trim()) throw new Error('Property name is required.');
+         if (!boardingAddress.trim()) throw new Error('Location / address is required.');
+         if (!boardingDescription.trim()) throw new Error('Description is required.');
+         if (Number.isNaN(priceValue) || priceValue < 0) throw new Error('Enter a valid monthly rent.');
+         if (Number.isNaN(capacityValue) || capacityValue < 1) throw new Error('Enter a valid total beds count.');
+         if (Number.isNaN(latitudeValue) || Number.isNaN(longitudeValue)) throw new Error('Enter valid latitude and longitude.');
+
+         const uploadedImages = boardingImages.length ? await uploadBoardingImages(token) : existingImagePaths;
+
+         const descriptionParts = [
+            boardingDescription.trim(),
+         ].filter(Boolean);
+
+         const response = await fetch(`${apiBase}/api/boardings${selectedBoardingId ? `/${selectedBoardingId}` : ''}`, {
+            method: selectedBoardingId ? 'PUT' : 'POST',
+            headers: {
+               'Content-Type': 'application/json',
+               Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+               title: boardingTitle.trim(),
+               description: descriptionParts.join(' '),
+               price: priceValue,
+               address: boardingAddress.trim(),
+               coordinates: {
+                  lat: latitudeValue,
+                  lng: longitudeValue,
+               },
+               images: uploadedImages,
+               amenities: [
+                  boardingUniversity,
+                  boardingFaculty,
+                  selectedGenderPreference,
+                  billsIncluded === 'yes' ? 'Bills included' : 'Separate bills',
+                  ...selectedFeatures,
+               ].filter(Boolean),
+               capacity: capacityValue,
+               isAvailable: remainingBedsValue > 0,
+            }),
+         });
+
+         const data = await response.json();
+
+         if (!response.ok) {
+            throw new Error(data.message || 'Failed to create boarding listing.');
+         }
+
+         const updatedBoarding = {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            location: data.location?.address || boardingAddress.trim(),
+            image: data.images?.[0] ? `${apiBase}${data.images[0]}` : '/images/house_orange.jpg',
+            images: data.images || [],
+            price: Number(data.price || priceValue),
+            capacity: Number(data.capacity || capacityValue),
+            available: Boolean(data.isAvailable),
+            amenities: data.amenities || [],
+            raw: data,
+         };
+
+         setMyBoardings((current) => {
+            const withoutCurrent = current.filter((boarding) => boarding.id !== data.id);
+            return [updatedBoarding, ...withoutCurrent];
+         });
+
+         setBoardingSuccess(selectedBoardingId ? 'Boarding listing updated successfully.' : 'Boarding listing created successfully.');
+         resetBoardingForm();
+         setActiveTab('my-boardings');
+      } catch (error: any) {
+         setBoardingError(error.message || 'Failed to create boarding listing.');
+      } finally {
+         setIsSubmittingBoarding(false);
+      }
+   };
+
+   const handleDeleteBoarding = async (boardingId: string) => {
+      try {
+         const token = localStorage.getItem('token');
+         if (!token) {
+            throw new Error('Please log in again before deleting a boarding listing.');
+         }
+
+         const response = await fetch(`${apiBase}/api/boardings/${boardingId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+         });
+
+         if (!response.ok && response.status !== 204) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'Failed to delete boarding listing.');
+         }
+
+         setMyBoardings((current) => current.filter((boarding) => boarding.id !== boardingId));
+      } catch (error: any) {
+         alert(error.message || 'Failed to delete boarding listing.');
+      }
+   };
 
   return (
     <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
@@ -292,72 +583,112 @@ const OwnerDashboard = () => {
               </motion.div>
             )}
 
-            {activeTab === 'my-boardings' && (
-              <motion.div
-                key="my-boardings"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="grid grid-cols-1 md:grid-cols-2 gap-8"
-              >
-                {myBoardings.map((b) => (
-                  <motion.div variants={itemVariants} key={b.id} className="bg-white rounded-[3rem] overflow-hidden shadow-sm border border-gray-50 group">
-                     <div className="aspect-[16/9] relative overflow-hidden">
-                        <img src={b.image} alt={b.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                        <div className="absolute top-6 left-6">
-                           <div className={`px-4 py-2 rounded-full backdrop-blur-md flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest ${b.verified ? 'bg-green-500/90 text-white' : 'bg-black/50 text-white'}`}>
-                              {b.verified ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
-                              {b.verified ? 'Verified' : 'Unverified'}
+                  {activeTab === 'my-boardings' && (
+                     <motion.div
+                        key="my-boardings"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className="space-y-6"
+                     >
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                           <div>
+                              <h3 className="text-2xl font-display font-bold">My Boardings</h3>
+                              <p className="text-sm text-gray-400">Listings created from your owner account.</p>
                            </div>
-                        </div>
-                        <div className="absolute top-6 right-6">
-                           <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-black shadow-lg">
-                              <MoreVertical size={18} />
+                           <button
+                              type="button"
+                              onClick={() => setActiveTab('add-boarding')}
+                              className="px-6 py-3 rounded-full bg-black text-white text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"
+                           >
+                              Add New Boarding
                            </button>
                         </div>
-                     </div>
-                     <div className="p-8 space-y-6">
-                        <div className="space-y-2">
-                           <h4 className="text-2xl font-display font-bold">{b.title}</h4>
-                           <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                              <MapPin size={12} className="text-accent-orange" />
-                              {b.location}
+
+                        {myBoardings.length === 0 ? (
+                           <div className="bg-white rounded-[3rem] p-10 border border-gray-50 shadow-sm text-center space-y-4">
+                              <h4 className="font-display text-2xl font-bold">No boardings yet</h4>
+                              <p className="text-gray-400 text-sm max-w-md mx-auto">
+                                 Create your first boarding listing in the Add Boarding tab. After you submit, it will appear here and also in the public student search.
+                              </p>
+                              <button
+                                 type="button"
+                                 onClick={() => setActiveTab('add-boarding')}
+                                 className="px-6 py-3 rounded-full bg-accent-orange text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all"
+                              >
+                                 Create Boarding
+                              </button>
                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-50">
-                           <div>
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Students</p>
-                              <p className="text-lg font-bold">{b.students}/{b.capacity}</p>
+                        ) : (
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              {myBoardings.map((boarding) => (
+                                 <motion.div variants={itemVariants} key={boarding.id} className="bg-white rounded-[3rem] overflow-hidden shadow-sm border border-gray-50 group">
+                                    <div className="aspect-[16/9] relative overflow-hidden">
+                                       <img src={boarding.image} alt={boarding.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                       <div className="absolute top-6 left-6">
+                                          <div className={`px-4 py-2 rounded-full backdrop-blur-md flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest ${boarding.available ? 'bg-green-500/90 text-white' : 'bg-black/50 text-white'}`}>
+                                             {boarding.available ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+                                             {boarding.available ? 'Available' : 'Unavailable'}
+                                          </div>
+                                       </div>
+                                       <div className="absolute top-6 right-6">
+                                          <button type="button" className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-black shadow-lg">
+                                             <MoreVertical size={18} />
+                                          </button>
+                                       </div>
+                                    </div>
+                                    <div className="p-8 space-y-6">
+                                       <div className="space-y-2">
+                                          <h4 className="text-2xl font-display font-bold">{boarding.title}</h4>
+                                          <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                                             <MapPin size={12} className="text-accent-orange" />
+                                             {boarding.location}
+                                          </div>
+                                       </div>
+
+                                       <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-50">
+                                          <div>
+                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rent</p>
+                                             <p className="text-lg font-bold text-accent-orange">LKR {boarding.price.toLocaleString()}</p>
+                                          </div>
+                                          <div>
+                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Capacity</p>
+                                             <p className="text-lg font-bold">{boarding.capacity} beds</p>
+                                          </div>
+                                       </div>
+
+                                       <div className="flex flex-wrap gap-2">
+                                          {boarding.amenities.slice(0, 4).map((item: string) => (
+                                             <span key={item} className="px-3 py-1 rounded-full bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                                {item}
+                                             </span>
+                                          ))}
+                                       </div>
+
+                                       <div className="flex gap-4 pt-4 border-t border-gray-50">
+                                          <button
+                                             type="button"
+                                             onClick={() => populateBoardingForm(boarding.raw)}
+                                             className="flex-1 py-4 rounded-full border border-black/10 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                                          >
+                                             Manage Property
+                                          </button>
+                                          <button
+                                             type="button"
+                                             onClick={() => handleDeleteBoarding(boarding.id)}
+                                             className="px-5 py-4 rounded-full border border-red-200 text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                                          >
+                                             Delete
+                                          </button>
+                                       </div>
+                                    </div>
+                                 </motion.div>
+                              ))}
                            </div>
-                           <div>
-                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Revenue</p>
-                              <p className="text-lg font-bold text-accent-orange">LKR {b.income.toLocaleString()}</p>
-                           </div>
-                        </div>
-                        <div className="flex gap-4 pt-4 border-t border-gray-50">
-                           {!b.verified && (
-                             <button 
-                               onClick={() => setShowVerifyModal(b)}
-                               disabled={verificationRequests.has(b.id)}
-                               className={`flex-1 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
-                                 verificationRequests.has(b.id) 
-                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                 : 'bg-accent-orange text-white hover:bg-black'
-                               }`}
-                             >
-                               {verificationRequests.has(b.id) ? 'Request Sent' : 'Verify Property'}
-                             </button>
-                           )}
-                           <button className={`py-4 border border-black/10 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all ${b.verified ? 'w-full' : 'flex-1'}`}>
-                              Manage Property
-                           </button>
-                         </div>
-                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
+                        )}
+                     </motion.div>
+                  )}
 
             {activeTab === 'payments' && (
               <motion.div
@@ -454,93 +785,233 @@ const OwnerDashboard = () => {
                       </div>
                    </div>
 
-                    <form className="space-y-12">
-                       {/* Basic Info */}
+                    {boardingError && (
+                      <div className="mb-8 rounded-[2rem] bg-red-50 text-red-600 px-6 py-4 text-sm font-medium">
+                        {boardingError}
+                      </div>
+                    )}
+
+                    {boardingSuccess && (
+                      <div className="mb-8 rounded-[2rem] bg-green-50 text-green-600 px-6 py-4 text-sm font-medium">
+                        {boardingSuccess}
+                      </div>
+                    )}
+
+                    <form className="space-y-12" onSubmit={handleBoardingSubmit}>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-2">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Property Name</label>
-                             <input type="text" placeholder="e.g. Green View Premium Hostel" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                             <input
+                               type="text"
+                               placeholder="e.g. Green View Premium Hostel"
+                               value={boardingTitle}
+                               onChange={(e) => setBoardingTitle(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
                           </div>
                           <div className="space-y-2">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Images</label>
-                             <div 
+                             <label
+                               htmlFor="boarding-images"
                                className="w-full bg-[#F8F8F8] border-2 border-dashed border-gray-200 rounded-[2rem] px-6 py-3 text-sm flex items-center justify-between cursor-pointer hover:border-accent-orange transition-colors"
-                               onClick={() => document.getElementById('boarding-images')?.click()}
                              >
-                                <span className="text-gray-400">Upload property photos...</span>
+                                <span className="text-gray-400">
+                                  {boardingImages.length ? `${boardingImages.length} photo(s) selected` : 'Upload property photos...'}
+                                </span>
                                 <Camera size={18} className="text-gray-400" />
-                             </div>
-                             <input type="file" id="boarding-images" className="hidden" multiple accept="image/*" />
+                             </label>
+                             <input type="file" id="boarding-images" className="hidden" multiple accept="image/*" onChange={handleBoardingImageChange} />
                           </div>
                        </div>
 
-                       {/* Location & Academic Proximity */}
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                          <div className="md:col-span-1 space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Location (Google Maps Link)</label>
-                             <input type="text" placeholder="Paste map link here..." className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Location / Address</label>
+                             <input
+                               type="text"
+                               placeholder="No. 12, Main Street, Colombo"
+                               value={boardingAddress}
+                               onChange={(e) => setBoardingAddress(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
                           </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Description</label>
+                             <textarea
+                               rows={3}
+                               placeholder="Describe the rooms, facilities, and surroundings"
+                               value={boardingDescription}
+                               onChange={(e) => setBoardingDescription(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-[2rem] px-6 py-4 text-sm outline-none resize-none"
+                               required
+                             />
+                          </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           <div className="space-y-2">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest University</label>
-                             <input type="text" placeholder="e.g. University of Colombo" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
-                             <input type="text" placeholder="e.g. Faculty of Management" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
-                          </div>
-                       </div>
-
-                       {/* Pricing & Capacity */}
-                       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Monthly Rent (LKR)</label>
-                             <input type="number" placeholder="18000" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Bills Included?</label>
-                             <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none">
-                                <option value="yes">Yes (Electricity & Water)</option>
-                                <option value="no">No (Separate Bills)</option>
+                             <select
+                               value={boardingUniversity}
+                               onChange={(e) => setBoardingUniversity(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                               required
+                             >
+                               <option value="">Select university</option>
+                               {universities.map((university) => (
+                                 <option key={university} value={university}>{university}</option>
+                               ))}
                              </select>
                           </div>
                           <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Total Beds</label>
-                             <input type="number" placeholder="4" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
+                             <select
+                               value={boardingFaculty}
+                               onChange={(e) => setBoardingFaculty(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                               required
+                             >
+                               <option value="">Select faculty</option>
+                               {faculties.map((faculty) => (
+                                 <option key={faculty} value={faculty}>{faculty}</option>
+                               ))}
+                             </select>
                           </div>
                           <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Beds Remaining</label>
-                             <input type="number" placeholder="2" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Availability</label>
+                             <input
+                               type="number"
+                               min="0"
+                               placeholder="Beds remaining"
+                               value={remainingBeds}
+                               onChange={(e) => setRemainingBeds(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
                           </div>
                        </div>
 
-                       {/* Preferences & Features */}
+                       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Monthly Rent (LKR)</label>
+                             <input
+                               type="number"
+                               min="0"
+                               placeholder="18000"
+                               value={boardingPrice}
+                               onChange={(e) => setBoardingPrice(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Latitude</label>
+                             <input
+                               type="number"
+                               step="any"
+                               placeholder="6.9271"
+                               value={boardingLatitude}
+                               onChange={(e) => setBoardingLatitude(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Longitude</label>
+                             <input
+                               type="number"
+                               step="any"
+                               placeholder="79.8612"
+                               value={boardingLongitude}
+                               onChange={(e) => setBoardingLongitude(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Total Beds</label>
+                             <input
+                               type="number"
+                               min="1"
+                               placeholder="4"
+                               value={boardingCapacity}
+                               onChange={(e) => setBoardingCapacity(e.target.value)}
+                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               required
+                             />
+                          </div>
+                       </div>
+
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                           <div className="space-y-4">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Gender Preference</label>
-                             <div className="flex gap-4">
-                                {['Male Only', 'Female Only', 'Mixed'].map(g => (
-                                   <button key={g} type="button" className="flex-1 py-4 bg-[#F8F8F8] rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-                                      {g}
+                             <div className="grid grid-cols-3 gap-4">
+                                {[
+                                  { value: 'male only', label: 'Male Only' },
+                                  { value: 'female only', label: 'Female Only' },
+                                  { value: 'mixed', label: 'Mixed' },
+                                ].map((gender) => (
+                                   <button
+                                     key={gender.value}
+                                     type="button"
+                                     onClick={() => setSelectedGenderPreference(gender.value)}
+                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${selectedGenderPreference === gender.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
+                                   >
+                                      {gender.label}
                                    </button>
                                 ))}
                              </div>
                           </div>
                           <div className="space-y-4">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Additional Features</label>
-                             <div className="flex flex-wrap gap-4">
-                                {['WiFi', 'Ceiling Fan', 'Attached Kitchen', 'Attached Bathroom'].map(f => (
-                                   <div key={f} className="flex items-center gap-3 px-6 py-4 bg-gray-50 rounded-2xl border border-transparent hover:border-accent-orange/20 cursor-pointer transition-all group">
-                                      <div className="w-4 h-4 rounded border border-gray-300 group-hover:border-accent-orange transition-colors" />
-                                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 group-hover:text-black">{f}</span>
-                                   </div>
+                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Bills Included?</label>
+                             <div className="grid grid-cols-2 gap-4">
+                                {[
+                                  { value: 'yes', label: 'Yes (Electricity & Water)' },
+                                  { value: 'no', label: 'No (Separate Bills)' },
+                                ].map((billOption) => (
+                                  <button
+                                    key={billOption.value}
+                                    type="button"
+                                    onClick={() => setBillsIncluded(billOption.value as 'yes' | 'no')}
+                                    className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${billsIncluded === billOption.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
+                                  >
+                                    {billOption.label}
+                                  </button>
                                 ))}
                              </div>
                           </div>
                        </div>
 
+                       <div className="space-y-4">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Additional Features</label>
+                          <div className="flex flex-wrap gap-4">
+                             {boardingFeatures.map((feature) => {
+                               const isSelected = selectedFeatures.includes(feature);
+
+                               return (
+                                 <button
+                                   key={feature}
+                                   type="button"
+                                   onClick={() => toggleFeature(feature)}
+                                   className={`flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all group ${isSelected ? 'border-accent-orange bg-accent-orange text-white' : 'bg-gray-50 border-transparent hover:border-accent-orange/20 text-gray-500 hover:text-black'}`}
+                                 >
+                                    <div className={`w-4 h-4 rounded border transition-colors ${isSelected ? 'border-white bg-white' : 'border-gray-300 group-hover:border-accent-orange'}`} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">{feature}</span>
+                                 </button>
+                               );
+                             })}
+                          </div>
+                       </div>
+
                        <div className="pt-12 border-t border-gray-50">
-                          <button type="button" className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10">
-                            Launch Boarding Listing
+                          <button
+                            type="submit"
+                            disabled={isSubmittingBoarding}
+                            className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            {isSubmittingBoarding ? 'Submitting...' : 'Launch Boarding Listing'}
                           </button>
                        </div>
                     </form>

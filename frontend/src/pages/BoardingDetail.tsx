@@ -1,423 +1,434 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  MapPin, 
-  Star, 
-  Users, 
-  Bed, 
-  Wifi, 
-  Wind, 
-  Utensils, 
-  ShieldCheck, 
-  Info, 
-  ChevronLeft,
-  Phone,
-  MessageCircle,
-  Zap,
-  Droplets,
+import { Link, useParams } from 'react-router-dom';
+import {
   AlertOctagon,
-  Flag,
-  X,
-  Clock
+  Bed,
+  ChevronLeft,
+  Clock,
+  Droplets,
+  Info,
+  MessageCircle,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Star,
+  Users,
+  Wifi,
+  Wind,
+  Utensils,
+  Zap,
 } from 'lucide-react';
+
+type BoardingResponse = {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  images: string[];
+  location: {
+    address: string;
+    coordinates: { lat: number; lng: number };
+  };
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+    profilePicture: string | null;
+  } | null;
+  amenities: string[];
+  capacity: number;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const universities = [
+  'University of Colombo',
+  'University of Peradeniya',
+  'University of Moratuwa',
+  'University of Kelaniya',
+  'University of Sri Jayewardenepura',
+];
+
+const faculties = [
+  'Computing',
+  'Technology',
+  'Engineering',
+  'Medicine',
+  'Science',
+  'Arts',
+  'Law',
+  'Management',
+  'Other',
+];
+
+const amenityIcons: Record<string, React.ReactNode> = {
+  wifi: <Wifi size={18} />,
+  'ceiling fan': <Wind size={18} />,
+  'attached kitchen': <Utensils size={18} />,
+  'attached bathroom': <Droplets size={18} />,
+  parking: <ShieldCheck size={18} />,
+  security: <ShieldCheck size={18} />,
+  electricity: <Zap size={18} />,
+  'bills included': <Clock size={18} />,
+};
 
 const BoardingDetail = () => {
   const { id } = useParams();
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
-  const [boarding, setBoarding] = useState<any>(null);
-
-   const [reviews, setReviews] = useState<any[]>([]);
-
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
-  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'guest');
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [boarding, setBoarding] = useState<BoardingResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [retryToken, setRetryToken] = useState(0);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    // This will be replaced with an actual API fetch later
-    // fetch(`/api/boardings/${id}`).then(res => res.json()).then(data => setBoarding(data));
-  }, [id]);
+    const controller = new AbortController();
 
-  if (!boarding) return <div className="pt-32 pb-24 px-6 text-center">Loading boarding details...</div>;
-
-  const handleAddReview = (e: React.FormEvent) => {
-    e.preventDefault();
-    const review = {
-      id: reviews.length + 1,
-      user: localStorage.getItem('userName') || "Student",
-      rating: newReview.rating,
-      comment: newReview.comment,
-      date: new Date().toISOString().split('T')[0],
-      reported: false
-    };
-    setReviews([review, ...reviews]);
-    setNewReview({ rating: 5, comment: "" });
-    alert("Review added! The owner has been notified.");
-  };
-
-  const handleReport = (id: number) => {
-    setReviews(reviews.map(r => r.id === id ? { ...r, reported: true } : r));
-    alert("Review reported to admin. They will investigate and take action.");
-  };
-
-  const handleReportBoarding = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reportReason.trim()) return;
-
-    setIsSubmittingReport(true);
-    try {
-      const response = await fetch('http://localhost:5000/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          boardingId: id,
-          boardingName: boarding.name,
-          reporterName: localStorage.getItem('userName') || "Student",
-          reason: reportReason
-        })
-      });
-
-      if (response.ok) {
-        alert("Boarding reported successfully. Admin will review this.");
-        setIsReportModalOpen(false);
-        setReportReason("");
-      } else {
-        alert("Failed to submit report. Please try again.");
+    const fetchBoarding = async () => {
+      if (!id) {
+        setError('Missing boarding id.');
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Error reporting boarding:", error);
-      alert("An error occurred. Please try again.");
-    } finally {
-      setIsSubmittingReport(false);
-    }
-  };
+
+      setLoading(true);
+      setError('');
+
+      try {
+        const response = await fetch(`${apiBase}/api/boardings/${id}`, { signal: controller.signal });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.message || 'Failed to load boarding details.');
+        }
+
+        setBoarding(data);
+        setActiveImageIndex(0);
+      } catch (fetchError: any) {
+        if (fetchError?.name !== 'AbortError') {
+          setError(fetchError?.message || 'Failed to load boarding details.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBoarding();
+
+    return () => controller.abort();
+  }, [apiBase, id, retryToken]);
+
+  const displayImages = useMemo(() => {
+    const images = boarding?.images || [];
+    return images.length
+      ? images.map((image) => (image.startsWith('http') ? image : `${apiBase}${image}`))
+      : ['/images/house_orange.jpg'];
+  }, [apiBase, boarding]);
+
+  const amenities = boarding?.amenities || [];
+  const university = universities.find((item) => amenities.includes(item)) || 'University not specified';
+  const faculty = faculties.find((item) => amenities.includes(item)) || 'Faculty not specified';
+  const gender = amenities.find((item) => ['male only', 'female only', 'mixed'].includes(item.toLowerCase())) || 'Mixed';
+  const billsIncluded = amenities.some((item) => item.toLowerCase().includes('bill'));
+  const availabilityLabel = boarding?.isAvailable ? 'Available now' : 'Currently full';
+  const activeImage = displayImages[activeImageIndex] || displayImages[0];
+  const previewImages = displayImages.slice(0, 5);
+  const coordinates = boarding?.location?.coordinates;
+  const hasCoordinates = Boolean(coordinates && typeof coordinates.lat === 'number' && typeof coordinates.lng === 'number');
+
+  const handleRetry = () => setRetryToken((current) => current + 1);
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-white min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-12">
-        {/* Back Button */}
-        <Link 
-          to="/search" 
-          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-accent-orange transition-colors"
+    <div className="pt-32 pb-24 px-6 bg-[#FBFBFB] min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-10">
+        <Link
+          to="/search"
+          className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-accent-orange transition-colors"
         >
           <ChevronLeft size={14} /> Back to listings
         </Link>
 
-        {/* Hero Gallery */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[500px]">
-           <motion.div 
-             initial={{ opacity: 0, scale: 0.95 }}
-             animate={{ opacity: 1, scale: 1 }}
-             className="rounded-[3rem] overflow-hidden shadow-lg"
-           >
-              <img src={boarding.images[0]} alt={boarding.name} className="w-full h-full object-cover" />
-           </motion.div>
-           <div className="grid grid-cols-1 gap-6 h-full">
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="rounded-[2.5rem] overflow-hidden shadow-md h-[238px]"
+        {loading ? (
+          <div className="space-y-8 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[420px]">
+              <div className="rounded-[3rem] bg-gray-200" />
+              <div className="grid grid-cols-1 gap-6">
+                <div className="rounded-[2.5rem] bg-gray-200" />
+                <div className="rounded-[2.5rem] bg-gray-200" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="h-10 w-2/3 rounded-2xl bg-gray-200" />
+                <div className="h-24 rounded-[2rem] bg-gray-200" />
+                <div className="h-64 rounded-[2rem] bg-gray-200" />
+              </div>
+              <div className="h-[420px] rounded-[3rem] bg-gray-200" />
+            </div>
+          </div>
+        ) : error ? (
+          <div className="max-w-3xl mx-auto bg-white rounded-[3rem] p-10 shadow-sm border border-gray-100 text-center space-y-6">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-50 text-red-500 flex items-center justify-center">
+              <AlertOctagon size={28} />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-display font-bold text-black">Could not load boarding details</h1>
+              <p className="text-gray-500">{error}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="px-6 py-3 rounded-full bg-black text-white text-sm font-bold hover:bg-accent-orange transition-colors"
               >
-                 <img src={boarding.images[1]} alt="Interior" className="w-full h-full object-cover" />
-              </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="rounded-[2.5rem] overflow-hidden shadow-md h-[238px]"
+                Try again
+              </button>
+              <Link
+                to="/search"
+                className="px-6 py-3 rounded-full bg-gray-100 text-black text-sm font-bold hover:bg-gray-200 transition-colors"
               >
-                 <img src={boarding.images[2]} alt="Common area" className="w-full h-full object-cover" />
+                Return to search
+              </Link>
+            </div>
+          </div>
+        ) : boarding ? (
+          <div className="space-y-10">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.65fr_0.75fr] gap-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative rounded-[3rem] overflow-hidden shadow-2xl bg-black min-h-[520px]"
+              >
+                <img
+                  src={activeImage}
+                  alt={boarding.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                <div className="absolute left-6 right-6 bottom-6 md:left-10 md:right-10 md:bottom-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
+                  <div className="space-y-2 max-w-2xl">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-white/60">Featured image</p>
+                    <h2 className="text-2xl md:text-3xl font-display font-bold">{boarding.title}</h2>
+                    <p className="text-white/75 text-sm md:text-base">Tap the thumbnails to switch the main view.</p>
+                  </div>
+                  <div className="px-4 py-2 rounded-full bg-white/15 backdrop-blur text-[10px] font-bold uppercase tracking-[0.25em]">
+                    {activeImageIndex + 1} / {displayImages.length}
+                  </div>
+                </div>
               </motion.div>
-           </div>
-        </div>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-           <div className="lg:col-span-2 space-y-12">
-              {/* Title & Stats */}
-              <div className="space-y-6">
-                 <div className="flex flex-wrap items-center gap-4">
-                    <span className="px-5 py-2 bg-accent-orange text-white rounded-full text-[10px] font-bold uppercase tracking-widest">{boarding.gender}</span>
-                    <div className="flex items-center gap-2 text-yellow-500 font-bold text-sm">
-                       <Star size={16} fill="currentColor" />
-                       {boarding.rating} ({reviews.length} Reviews)
-                    </div>
-                 </div>
-                 <h1 className="text-5xl md:text-6xl font-display font-bold tracking-tight text-black">{boarding.name}</h1>
-                 <div className="flex items-center gap-3 text-gray-400 text-lg">
-                    <MapPin size={20} className="text-accent-orange" />
-                    {boarding.location}
-                 </div>
-              </div>
-
-              {/* Academic Proximity */}
-              <div className="flex flex-col sm:flex-row gap-8 p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100">
-                 <div className="flex-1 space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Nearest University</p>
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center">
-                          <Users size={18} />
-                       </div>
-                       <p className="font-display font-bold text-xl">{boarding.nearestUniversity}</p>
-                    </div>
-                 </div>
-                 <div className="w-[1px] h-full bg-gray-200 hidden sm:block" />
-                 <div className="flex-1 space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Nearest Faculty</p>
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 bg-accent-orange text-white rounded-xl flex items-center justify-center">
-                          <Info size={18} />
-                       </div>
-                       <p className="font-display font-bold text-xl">{boarding.nearestFaculty}</p>
-                    </div>
-                 </div>
-              </div>
-
-              {/* Core Details Row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-10 border-y border-gray-100">
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Price</p>
-                    <p className="text-2xl font-display font-bold text-black">LKR {boarding.price.toLocaleString()}</p>
-                    <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold uppercase">
-                       <Info size={10} /> Bills Included
-                    </div>
-                 </div>
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Capacity</p>
-                    <div className="flex items-center gap-2">
-                       <Users size={20} className="text-black" />
-                       <p className="text-2xl font-display font-bold text-black">{boarding.totalBeds} Beds</p>
-                    </div>
-                 </div>
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Remaining</p>
-                    <div className="flex items-center gap-2">
-                       <Bed size={20} className="text-accent-orange" />
-                       <p className="text-2xl font-display font-bold text-accent-orange">{boarding.remainingBeds} Left</p>
-                    </div>
-                 </div>
-                 <div className="space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Ideal For</p>
-                    <p className="text-2xl font-display font-bold text-black">{boarding.gender.split(' ')[0]}</p>
-                 </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-6">
-                 <h3 className="text-2xl font-display font-bold">About the property</h3>
-                 <p className="text-gray-500 leading-relaxed text-lg font-light">
-                    {boarding.description}
-                 </p>
-              </div>
-
-              {/* Features */}
-              <div className="space-y-8">
-                 <h3 className="text-2xl font-display font-bold">Room Features</h3>
-                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    {boarding.features.map((feature, i) => (
-                       <div key={i} className="flex items-center gap-4 p-6 rounded-3xl bg-gray-50 border border-transparent hover:border-accent-orange/20 transition-all">
-                          <div className="text-accent-orange">
-                             {feature.icon}
-                          </div>
-                          <span className="text-xs font-bold text-black uppercase tracking-widest">{feature.label}</span>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-
-              {/* Map */}
-              <div className="space-y-8">
-                 <h3 className="text-2xl font-display font-bold">Location</h3>
-                 <div className="h-[400px] rounded-[3rem] overflow-hidden shadow-sm border border-gray-100">
-                    <iframe 
-                      width="100%" 
-                      height="100%" 
-                      frameBorder="0" 
-                      style={{ border: 0 }}
-                      src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${boarding.lat},${boarding.lng}`}
-                      allowFullScreen
-                    ></iframe>
-                 </div>
-              </div>
-
-              {/* Reviews Section */}
-              <div className="space-y-12 pt-12 border-t border-gray-100">
-                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <h3 className="text-3xl font-display font-bold">Student Reviews</h3>
-                    {isLoggedIn && userRole === 'student' && (
-                       <p className="text-[10px] font-bold uppercase tracking-widest text-accent-orange bg-accent-orange/5 px-4 py-2 rounded-full">Your opinion matters</p>
-                    )}
-                 </div>
-
-                 {/* Add Review Form */}
-                 {isLoggedIn && userRole === 'student' && (
-                    <form onSubmit={handleAddReview} className="bg-gray-50 p-10 rounded-[3rem] border border-gray-100 space-y-6">
-                       <div className="flex items-center gap-4">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2">Your Rating</span>
-                          <div className="flex gap-2">
-                             {[1, 2, 3, 4, 5].map(star => (
-                                <button 
-                                  key={star} 
-                                  type="button"
-                                  onClick={() => setNewReview({ ...newReview, rating: star })}
-                                  className={`transition-all ${newReview.rating >= star ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-200'}`}
-                                >
-                                   <Star size={24} fill={newReview.rating >= star ? "currentColor" : "none"} />
-                                </button>
-                             ))}
-                          </div>
-                       </div>
-                       <textarea 
-                         placeholder="Describe your stay experience..." 
-                         required
-                         value={newReview.comment}
-                         onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                         className="w-full bg-white border border-gray-200 rounded-[2rem] px-8 py-6 text-sm focus:outline-none focus:border-accent-orange min-h-[150px] transition-all"
-                       />
-                       <button type="submit" className="bg-black text-white px-10 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-xl shadow-black/10">
-                          Submit My Review
-                       </button>
-                    </form>
-                 )}
-
-                 {/* Reviews List */}
-                 <div className="space-y-8">
-                    {reviews.map(review => (
-                       <div key={review.id} className="p-8 rounded-[2.5rem] bg-white border border-gray-50 shadow-sm space-y-4 hover:shadow-xl transition-all group">
-                          <div className="flex justify-between items-start">
-                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold">
-                                   {review.user.charAt(0)}
-                                </div>
-                                <div>
-                                   <h4 className="font-bold text-black">{review.user}</h4>
-                                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{review.date}</p>
-                                </div>
-                             </div>
-                             <div className="flex gap-1 text-yellow-500">
-                                {[...Array(5)].map((_, i) => (
-                                   <Star key={i} size={14} fill={i < review.rating ? "currentColor" : "none"} />
-                                ))}
-                             </div>
-                          </div>
-                          <p className="text-gray-500 text-sm leading-relaxed">{review.comment}</p>
-                          
-                          <div className="flex justify-between items-center pt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                             {userRole === 'owner' && !review.reported && (
-                                <button 
-                                  onClick={() => handleReport(review.id)}
-                                  className="text-[9px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600 flex items-center gap-2"
-                                >
-                                   <AlertOctagon size={12} /> Report as Fake
-                                </button>
-                             )}
-                             {review.reported && (
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-accent-orange flex items-center gap-2">
-                                   <Clock size={12} /> Under Investigation
-                                </span>
-                             )}
-                          </div>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-           </div>
-
-           {/* Sidebar: Booking */}
-           <div className="space-y-8">
-              <div className="sticky top-32 bg-black text-white p-10 rounded-[3.5rem] shadow-2xl space-y-8">
-                 <div className="space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total per month</p>
-                    <h4 className="text-4xl font-display font-bold">LKR {boarding.price.toLocaleString()}</h4>
-                 </div>
-                 
-                 <div className="space-y-4">
-                    <button className="w-full bg-white text-black py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange hover:text-white transition-all shadow-xl">
-                       Book This Place
-                    </button>
-                    <button className="w-full bg-white/10 text-white border border-white/20 py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
-                       <MessageCircle size={18} /> Chat with Owner
-                    </button>
-                 </div>
-
-                 <div className="pt-8 border-t border-white/10 space-y-4">
-                    <div className="flex items-center gap-3 text-xs text-white/60">
-                       <ShieldCheck size={16} className="text-green-400" />
-                       Physical verification completed
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-white/60">
-                       <Info size={16} className="text-accent-orange" />
-                       No hidden platform fees
-                    </div>
-                 </div>
-
-                 {isLoggedIn && userRole === 'student' && (
-                    <button 
-                      onClick={() => setIsReportModalOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors"
-                    >
-                       <Flag size={14} /> Report this boarding
-                    </button>
-                 )}
-              </div>
-           </div>
-        </div>
-
-        {/* Report Modal */}
-        {isReportModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-6">
-                <button 
-                  onClick={() => setIsReportModalOpen(false)}
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white transition-all"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center">
-                  <AlertOctagon size={32} />
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-display font-bold">Report Boarding</h3>
-                  <p className="text-gray-500 text-sm">Please tell us why you are reporting this property. Your report will be reviewed by our administrators.</p>
-                </div>
-
-                <form onSubmit={handleReportBoarding} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2">Reason for Reporting</label>
-                    <textarea 
-                      required
-                      value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      placeholder="e.g. Inaccurate photos, deceptive pricing, safety issues..."
-                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-red-400 min-h-[120px] transition-all"
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+                {previewImages.map((image, index) => (
+                  <motion.button
+                    key={`${image}-${index}`}
+                    type="button"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.06 }}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative rounded-[2.25rem] overflow-hidden shadow-md bg-gray-100 aspect-[4/3] ring-2 transition-all ${activeImageIndex === index ? 'ring-accent-orange scale-[1.01]' : 'ring-transparent hover:ring-gray-200'}`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${boarding.title} preview ${index + 1}`}
+                      className="w-full h-full object-cover"
                     />
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
+                <div className="bg-white rounded-[3rem] p-8 md:p-10 shadow-sm border border-gray-100 space-y-8">
+                  <div className="space-y-5">
+                    <div className="flex flex-wrap gap-3">
+                      <span className="px-4 py-2 rounded-full bg-accent-orange text-white text-[10px] font-bold uppercase tracking-[0.25em]">
+                        {gender}
+                      </span>
+                      <span className="px-4 py-2 rounded-full bg-black text-white text-[10px] font-bold uppercase tracking-[0.25em]">
+                        {availabilityLabel}
+                      </span>
+                      <span className="px-4 py-2 rounded-full bg-gray-100 text-black text-[10px] font-bold uppercase tracking-[0.25em]">
+                        {boarding.capacity > 1 ? 'Shared boarding' : 'Single room'}
+                      </span>
+                      {billsIncluded && (
+                        <span className="px-4 py-2 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-[0.25em]">
+                          Bills included
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight text-black">{boarding.title}</h1>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-gray-500 text-base md:text-lg">
+                        <span className="inline-flex items-center gap-2">
+                          <MapPin size={18} className="text-accent-orange" />
+                          {boarding.location?.address || 'Address not specified'}
+                        </span>
+                        <span className="hidden sm:block text-gray-300">•</span>
+                        <span className="inline-flex items-center gap-2">
+                          <Star size={18} className="text-yellow-500 fill-yellow-500" />
+                          4.8 rating
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <button 
-                    type="submit"
-                    disabled={isSubmittingReport}
-                    className="w-full bg-red-500 text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl shadow-red-500/20 disabled:opacity-50"
-                  >
-                    {isSubmittingReport ? "Submitting..." : "Submit Report"}
-                  </button>
-                </form>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Monthly Price</p>
+                      <p className="mt-2 text-3xl font-display font-bold text-black">LKR {boarding.price.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Capacity</p>
+                      <p className="mt-2 text-3xl font-display font-bold text-black">{boarding.capacity}</p>
+                    </div>
+                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Posted</p>
+                      <p className="mt-2 text-base font-bold text-black">{new Date(boarding.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-display font-bold text-black">About this boarding</h2>
+                    <p className="text-gray-500 leading-relaxed text-lg">{boarding.description}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="rounded-[2rem] bg-gray-50 border border-gray-100 p-5">
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 font-bold">Nearest University</p>
+                      <p className="mt-2 text-lg font-display font-bold text-black">{university}</p>
+                    </div>
+                    <div className="rounded-[2rem] bg-gray-50 border border-gray-100 p-5">
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 font-bold">Faculty</p>
+                      <p className="mt-2 text-lg font-display font-bold text-black">{faculty}</p>
+                    </div>
+                    <div className="rounded-[2rem] bg-gray-50 border border-gray-100 p-5">
+                      <p className="text-[10px] uppercase tracking-[0.25em] text-gray-400 font-bold">Last Updated</p>
+                      <p className="mt-2 text-lg font-display font-bold text-black">{new Date(boarding.updatedAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[3rem] p-8 md:p-10 shadow-sm border border-gray-100 space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-2xl font-display font-bold text-black">Amenities</h2>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">What students can expect</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {amenities.length > 0 ? (
+                      amenities.map((amenity) => {
+                        const iconKey = amenity.toLowerCase();
+                        return (
+                          <div key={amenity} className="flex items-center gap-4 rounded-[1.5rem] border border-gray-100 bg-[#FBFBFB] p-5">
+                            <div className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+                              {amenityIcons[iconKey] || <Info size={18} />}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-black">{amenity}</p>
+                              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">Included in this listing</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-gray-500">No amenities were provided for this listing.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[3rem] p-8 md:p-10 shadow-sm border border-gray-100 space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-2xl font-display font-bold text-black">Location</h2>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">
+                      {hasCoordinates ? `${coordinates?.lat}, ${coordinates?.lng}` : 'Coordinates unavailable'}
+                    </span>
+                  </div>
+                  {hasCoordinates ? (
+                    <div className="h-[360px] rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm">
+                      <iframe
+                        title="Boarding location map"
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        style={{ border: 0 }}
+                        src={`https://www.google.com/maps?q=${coordinates?.lat},${coordinates?.lng}&z=16&output=embed`}
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <div className="rounded-[2.5rem] border border-dashed border-gray-200 bg-gray-50 p-10 text-center text-gray-500">
+                      Location coordinates are not available for this boarding yet.
+                    </div>
+                  )}
+                </div>
               </div>
-            </motion.div>
+
+              <div className="space-y-6">
+                <div className="bg-black text-white rounded-[3rem] p-8 shadow-lg space-y-6 sticky top-36">
+                  <div className="space-y-2">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Owner contact</p>
+                    <h3 className="text-2xl font-display font-bold">{boarding.owner?.name || 'Boarding Owner'}</h3>
+                    <p className="text-sm text-white/70 break-all">{boarding.owner?.email || 'No contact email provided'}</p>
+                  </div>
+
+                  <div className="rounded-[2rem] bg-white/10 backdrop-blur-sm p-5 space-y-3">
+                    <div className="flex items-center gap-3 text-sm font-bold">
+                      <Users size={18} />
+                      <span>{boarding.capacity} student{boarding.capacity > 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-bold">
+                      <Bed size={18} />
+                      <span>{boarding.isAvailable ? 'Rooms available' : 'Fully occupied'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-bold">
+                      <Phone size={18} />
+                      <span>Contact through the platform</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      className="w-full rounded-full bg-accent-orange text-white py-4 font-bold text-sm uppercase tracking-[0.25em]"
+                    >
+                      Request viewing
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full rounded-full bg-white text-black py-4 font-bold text-sm uppercase tracking-[0.25em]"
+                    >
+                      Save listing
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[3rem] p-8 shadow-sm border border-gray-100 space-y-4">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 font-bold">Quick facts</p>
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck size={18} className="mt-0.5 text-accent-orange shrink-0" />
+                      <span>Verified listing flow from the owner dashboard.</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <MessageCircle size={18} className="mt-0.5 text-accent-orange shrink-0" />
+                      <span>Students can review the full property details before contacting the owner.</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Clock size={18} className="mt-0.5 text-accent-orange shrink-0" />
+                      <span>Updated listing data is fetched live from the backend.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

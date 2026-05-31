@@ -19,6 +19,24 @@ const Header = () => {
 
   const [userRole, setUserRole] = useState('student');
 
+  const dashboardPath =
+    userRole === 'admin'
+      ? '/admin-dashboard'
+      : userRole === 'owner'
+        ? '/owner-dashboard'
+        : userRole === 'verifier'
+          ? '/verifier-dashboard'
+          : '/student-dashboard';
+
+  const profilePath =
+    userRole === 'admin'
+      ? '/admin-dashboard'
+      : userRole === 'owner'
+        ? '/owner-dashboard?tab=profile'
+        : userRole === 'verifier'
+          ? '/verifier-dashboard?tab=profile'
+          : '/student-dashboard?tab=profile';
+
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userRole');
@@ -63,7 +81,7 @@ const Header = () => {
               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
-                  to={userRole === 'owner' ? '/owner-dashboard' : (userRole === 'verifier' ? '/verifier-dashboard' : '/student-dashboard')} 
+                  to={dashboardPath}
                   className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-black hover:text-accent-orange transition-colors"
                 >
                   Dashboard
@@ -76,7 +94,7 @@ const Header = () => {
                 >
                   Logout
                 </button>
-                <Link to={userRole === 'owner' ? '/owner-dashboard?tab=profile' : (userRole === 'verifier' ? '/verifier-dashboard?tab=profile' : '/student-dashboard?tab=profile')}>
+                <Link to={profilePath}>
                   <motion.div 
                     whileHover={{ scale: 1.1 }}
                     className="w-10 h-10 rounded-full overflow-hidden border-2 border-accent-orange shadow-sm"
@@ -132,7 +150,6 @@ const Footer = () => {
           <div>
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">For Students</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
-              <li><Link to="/search" className="hover:text-accent-orange transition-colors">Search Boarding</Link></li>
               <li><Link to="/how-it-works" className="hover:text-accent-orange transition-colors">How it Works</Link></li>
               <li><Link to="#" className="hover:text-accent-orange transition-colors">Safety Tips</Link></li>
             </ul>

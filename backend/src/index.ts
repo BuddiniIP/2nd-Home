@@ -9,6 +9,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import bookingRoutes from "./routes/bookingRoutes.js";
 import studentRoutes from './routes/studentRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 // Add namespace so typescript gets req.user
@@ -51,6 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/boardings', listingRoutes);
 app.use('/api/students', studentRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use('/api/reports', reportRoutes);
 
 app.get('/', (req, res) => {
   res.send('2nd Home API is running...');

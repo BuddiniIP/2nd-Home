@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import bookingRoutes from "./routes/bookingRoutes.js";
+import studentRoutes from './routes/studentRoutes.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 // Add namespace so typescript gets req.user
@@ -48,7 +49,7 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/boardings', listingRoutes);
-
+app.use('/api/students', studentRoutes);
 app.use("/api/bookings", bookingRoutes);
 
 app.get('/', (req, res) => {

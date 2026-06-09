@@ -38,4 +38,7 @@ ListingSchema.index({ title: 'text', description: 'text' });
 ListingSchema.index({ price: 1 });
 ListingSchema.index({ location: '2dsphere' });
 
+ListingSchema.index({ owner: 1 });
+ListingSchema.index({ createdAt: -1 });
+
 export default mongoose.models.Listing || mongoose.model<IListing>('Listing', ListingSchema);

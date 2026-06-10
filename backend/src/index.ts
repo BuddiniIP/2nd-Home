@@ -9,6 +9,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
+import { rateLimit } from "./middleware/rateLimit.js";
+import { inputSanitize } from "./middleware/inputSanitize.js";
 // Add namespace so typescript gets req.user
 import './types/express.d.ts';
 
@@ -41,6 +43,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(rateLimit);
+app.use(inputSanitize);
 app.use('/uploads', express.static(uploadsDir));
 
 // Routes

@@ -16,4 +16,6 @@ const savedListingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Ensure a student can only save a given listing once
+savedListingSchema.index({ student: 1, listing: 1 }, { unique: true });
 export default mongoose.model("SavedListing", savedListingSchema);

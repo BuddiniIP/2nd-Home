@@ -23,6 +23,9 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const [savedListings, setSavedListings] = useState<any[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -37,7 +40,7 @@ const StudentDashboard = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:5001/api/auth/me', {
+        const response = await fetch(`${apiBase}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
@@ -48,6 +51,42 @@ const StudentDashboard = () => {
     };
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    const fetchSaved = async () => {
+      setSavedLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setSavedListings([]);
+          return;
+        }
+
+        const res = await fetch(`${apiBase}/api/students/saved`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data)) {
+          // Deduplicate by listing id in case backend has duplicate records
+          const map = new Map<string, any>();
+          data.forEach((s: any) => {
+            const lid = s.listing?._id || s.listing?.id || String(s.listing);
+            if (!map.has(lid)) map.set(lid, s);
+          });
+          setSavedListings(Array.from(map.values()));
+        } else {
+          setSavedListings([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch saved listings', err);
+        setSavedListings([]);
+      } finally {
+        setSavedLoading(false);
+      }
+    };
+
+    if (activeTab === 'saved') fetchSaved();
+  }, [activeTab]);
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
@@ -362,13 +401,43 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
-                <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
-                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
-                    <Heart size={32} />
-                  </div>
-                  <h3 className="font-display font-bold text-2xl mb-4 text-black">No Saved Boardings</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't saved any boardings yet.</p>
-                </motion.div>
+                {savedLoading ? (
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                      <Heart size={32} />
+                    </div>
+                    <h3 className="font-display font-bold text-2xl mb-4 text-black">Loading saved boardings...</h3>
+                  </motion.div>
+                ) : savedListings.length === 0 ? (
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                      <Heart size={32} />
+                    </div>
+                    <h3 className="font-display font-bold text-2xl mb-4 text-black">No Saved Boardings</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't saved any boardings yet.</p>
+                  </motion.div>
+                ) : (
+                  savedListings.map((s) => {
+                    const listing = s.listing || {};
+                    const lid = listing._id || listing.id || s.listing;
+                    return (
+                      <motion.div variants={itemVariants} key={s._id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50">
+                        <div className="flex gap-4 items-center">
+                          <div className="w-28 h-20 rounded-[1rem] overflow-hidden bg-gray-100">
+                            <img src={listing.images?.[0] || '/images/house_white.jpg'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-lg">{listing.title || 'Untitled Listing'}</h4>
+                            <p className="text-sm text-gray-500 mt-2">{listing.location?.address || listing.address || ''}</p>
+                            <div className="mt-4 flex gap-3">
+                              <Link to={`/boarding/${lid}`} className="px-4 py-2 bg-black text-white rounded-full text-xs font-bold">View</Link>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
               </motion.div>
             )}
 

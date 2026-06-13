@@ -1,43 +1,43 @@
 import { Request, Response } from "express";
-import User from "../models/User.js"; // edited ss
-
+import User from "../models/User.js";
 import SavedListing from "../models/SavedListing.js";
 
 export const saveListing = async (req: Request, res: Response) => {
   try {
     const { listing } = req.body;
-//edited ss
-    const existing = await SavedListing.findOne({
-      student: req.user?.id,
-      listing,
-    });
+
+    const existing = await SavedListing.findOne({ student: req.user?.id, listing });
 
     if (existing) {
-      return res.status(400).json({
-        message: "Already saved",
-      });
+      return res.status(200).json({ message: "Already saved", saved: existing });
     }
 
-    const saved = await SavedListing.create({
-      student: req.user?.id,
-      listing,
-    });
+    const saved = await SavedListing.create({ student: req.user?.id, listing });
 
-    res.status(201).json(saved);
+    return res.status(201).json(saved);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    // Handle duplicate key errors that may occur due to race conditions
+    if (error && (error as any).code === 11000) {
+      try {
+        const existingSaved = await SavedListing.findOne({ student: req.user?.id, listing: req.body.listing });
+        if (existingSaved) {
+          return res.status(200).json({ message: 'Already saved', saved: existingSaved });
+        }
+      } catch (err) {
+        // fallthrough to generic error
+      }
+    }
+
+    return res.status(500).json({ message: error.message });
   }
 };
 
 export const getSavedListings = async (req: Request, res: Response) => {
   try {
-    const savedListings = await SavedListing.find({
-      student: req.user?.id,
-    }).populate("listing");
-
-    res.json(savedListings);
+    const savedListings = await SavedListing.find({ student: req.user?.id }).populate('listing');
+    return res.json(savedListings);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -46,47 +46,36 @@ export const removeSavedListing = async (req: Request, res: Response) => {
     const savedListing = await SavedListing.findById(req.params.id);
 
     if (!savedListing) {
-      res.status(404).json({ message: "Saved listing not found" });
-      return;
+      return res.status(404).json({ message: 'Saved listing not found' });
     }
 
     if (savedListing.student.toString() !== req.user?.id) {
-      res.status(403).json({ message: "Not authorized" });
-      return;
+      return res.status(403).json({ message: 'Not authorized' });
     }
 
     await savedListing.deleteOne();
 
-    res.json({ message: "Saved listing removed" });
+    return res.json({ message: 'Saved listing removed' });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
-
-// edited ss
 
 export const getCurrentBoarding = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    const user = await User.findById(userId)
-      .populate("currentBoarding") as any;
+    const user = (await User.findById(userId).populate('currentBoarding')) as any;
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     return res.json(user.currentBoarding || null);
   } catch (error: any) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
-
-// edited ss
 
 export const updateCurrentBoarding = async (req: Request, res: Response) => {
   try {
@@ -94,31 +83,22 @@ export const updateCurrentBoarding = async (req: Request, res: Response) => {
     const { listingId } = req.body;
 
     if (!listingId) {
-      return res.status(400).json({
-        message: "listingId is required",
-      });
+      return res.status(400).json({ message: 'listingId is required' });
     }
 
-    const user = await User.findByIdAndUpdate(
+    const user = (await User.findByIdAndUpdate(
       userId,
       { currentBoarding: listingId },
       { new: true }
-    ).populate("currentBoarding") as any;
+    ).populate('currentBoarding')) as any;
 
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    return res.json({
-      message: "Current boarding updated successfully",
-      currentBoarding: user.currentBoarding,
-    });
+    return res.json({ message: 'Current boarding updated successfully', currentBoarding: user.currentBoarding });
   } catch (error: any) {
-    return res.status(500).json({
-      message: error.message,
-    });
+    return res.status(500).json({ message: error.message });
   }
 };
 

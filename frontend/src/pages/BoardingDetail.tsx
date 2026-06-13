@@ -89,6 +89,7 @@ const BoardingDetail = () => {
 
   const handleSaveListing = async () => {
     if (!boarding?.id) return;
+    if (actionLoading) return;
     setActionMessage('');
     setActionError('');
     setActionLoading(true);

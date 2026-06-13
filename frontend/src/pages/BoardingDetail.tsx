@@ -86,6 +86,7 @@ const BoardingDetail = () => {
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [isAlreadySaved, setIsAlreadySaved] = useState(false);
 
   const handleSaveListing = async () => {
     if (!boarding?.id) return;

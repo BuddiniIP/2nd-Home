@@ -26,6 +26,7 @@ const StudentDashboard = () => {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
+  const [showRawSaved, setShowRawSaved] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -437,6 +438,16 @@ const StudentDashboard = () => {
                       </motion.div>
                     );
                   })
+                )}
+                {savedListings.length > 0 && (
+                  <div className="col-span-1 md:col-span-2 mt-4">
+                    <button onClick={() => setShowRawSaved(v => !v)} className="text-xs font-bold text-accent-orange">
+                      {showRawSaved ? 'Hide raw saved data' : 'Show raw saved data'}
+                    </button>
+                    {showRawSaved && (
+                      <pre className="text-xs p-4 bg-black/5 rounded mt-2 overflow-auto max-h-60">{JSON.stringify(savedListings, null, 2)}</pre>
+                    )}
+                  </div>
                 )}
               </motion.div>
             )}

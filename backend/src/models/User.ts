@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
+
 export enum UserRole {
   STUDENT = 'student',
   OWNER = 'owner',
@@ -19,6 +20,7 @@ export interface IUser extends Document {
   // Common fields
   profilePicture?: string;
   isActive: boolean;
+  currentBoarding?: mongoose.Types.ObjectId; // edited ss
   matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
@@ -33,6 +35,7 @@ const userSchema = new Schema<IUser>(
     university: { type: String },
     profilePicture: { type: String },
     isActive: { type: Boolean, default: true },
+    currentBoarding: {type: mongoose.Schema.Types.ObjectId,ref: "Listing",default: null,} // edited ss
   },
   {
     timestamps: true,

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
+    "sync-indexes": "node --loader ts-node/esm src/scripts/syncIndexes.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -25,7 +26,8 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.19.21",
+    "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2"
   }

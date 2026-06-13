@@ -1,7 +1,11 @@
 import { RequestHandler } from 'express';
 import User, { UserRole } from '../models/User.js';
 import Listing from '../models/Listing.js';
+
+import Booking from "../models/Booking.js";
+
 import Report from '../models/Report.js';
+
 
 
 const getMonthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
@@ -37,14 +41,23 @@ const buildGrowthSeries = (userDocs: any[], listingDocs: any[]) => {
 
 export const getAdminStats: RequestHandler = async (_req, res, next) => {
   try {
-    const [users, listings] = await Promise.all([
+    const [users, listings, bookings] = await Promise.all([
       User.find().select('role createdAt').lean(),
       Listing.find().select('price isAvailable createdAt').lean(),
+      Booking.find().select('status amount').lean(),
     ]);
 
     const studentCount = users.filter((user) => user.role === UserRole.STUDENT).length;
     const ownerCount = users.filter((user) => user.role === UserRole.OWNER).length;
     const adminCount = users.filter((user) => user.role === UserRole.ADMIN).length;
+    const pendingBookings = bookings.filter((booking) => booking.status === "pending").length;
+    const confirmedBookings = bookings.filter((booking) => booking.status === "confirmed").length;
+    const cancelledBookings = bookings.filter((booking) => booking.status === "cancelled").length;
+
+const totalRevenue = bookings
+  .filter((booking) => booking.status === "confirmed")
+  .reduce((sum, booking) => sum + Number(booking.amount || 0), 0);
+
     const activeBoardings = listings.filter((listing) => listing.isAvailable).length;
     const monthlyRevenue = listings.reduce((sum, listing) => sum + Number(listing.price || 0), 0);
 
@@ -55,6 +68,10 @@ export const getAdminStats: RequestHandler = async (_req, res, next) => {
         ownerCount,
         adminCount,
         activeBoardings,
+        pendingBookings,
+        confirmedBookings,
+       cancelledBookings,
+        totalRevenue,
         monthlyRevenue,
       },
       growthData: buildGrowthSeries(users, listings),
@@ -123,9 +140,50 @@ export const getAdminBoardings: RequestHandler = async (_req, res, next) => {
   }
 };
 
-export const getAdminPayments: RequestHandler = async (_req, res) => {
+/*export const getAdminPayments: RequestHandler = async (_req, res) => {
   res.json([]);
+};*/
+
+export const getAdminPayments: RequestHandler = async (_req, res, next) => {
+  try {
+    const payments = await Booking.find()
+      .populate("student", "firstName lastName email")
+      .populate("listing", "title");
+
+    res.json(payments);
+  } catch (err) {
+    next(err);
+  }
 };
+
+export const updatePaymentStatus: RequestHandler = async (req, res, next) => {
+  try {
+    const { status, paymentId } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      res.status(404).json({ message: "Booking not found" });
+      return;
+    }
+
+    if (status) {
+      booking.status = status;
+    }
+
+    if (paymentId) {
+      booking.paymentId = paymentId;
+    }
+
+    await booking.save();
+
+    res.json(booking);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 
 export const getAdminMessages: RequestHandler = async (_req, res) => {
   res.json([]);

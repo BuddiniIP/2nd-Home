@@ -58,7 +58,7 @@ userSchema.methods.matchPassword = async function (enteredPassword: string) {
 
 const User = mongoose.model<IUser>('User', userSchema);
 
-User.syncIndexes().catch(console.error);
+//User.syncIndexes().catch(console.error);
 
 export default User;
 

@@ -3,6 +3,8 @@ import {
   saveListing,
   getSavedListings,
   removeSavedListing,
+  getCurrentBoarding,// edited ss
+  updateCurrentBoarding,// edited ss
 } from "../controllers/studentController.js";
 
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -29,6 +31,20 @@ router.delete(
   protect,
   authorize(UserRole.STUDENT),
   removeSavedListing
+);
+// edited ss
+router.get(
+  "/current",
+  protect,
+  authorize(UserRole.STUDENT),
+  getCurrentBoarding
+);
+// edited ss
+router.put(
+  "/current",
+  protect,
+  authorize(UserRole.STUDENT),
+  updateCurrentBoarding
 );
 
 export default router;

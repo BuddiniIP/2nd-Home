@@ -28,7 +28,7 @@ const OwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
-   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
 
    const universities = [
       'University of Colombo',
@@ -72,7 +72,7 @@ const OwnerDashboard = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:5000/api/auth/me', {
+        const response = await fetch('http://localhost:5001/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();

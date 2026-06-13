@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
-   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
   const [activeTab, setActiveTab] = useState('analytics');
   const [searchTerm, setSearchTerm] = useState('');
   const [boardingReports, setBoardingReports] = useState<any[]>([]);
@@ -201,7 +201,7 @@ const AdminDashboard = () => {
 
   const fetchBoardingReports = async () => {
     try {
-         const response = await fetch(`${apiBase}/api/admin/reports`, {
+         const response = await fetch(`${apiBase}/api/reports/admin/reports`, {
             headers: getAdminHeaders(),
          });
       const data = await response.json();
@@ -345,21 +345,24 @@ const AdminDashboard = () => {
 
   const handleBoardingAction = async (id: number, action: 'warn' | 'remove') => {
     try {
-      let url = `http://localhost:5000/api/reports/${id}/`;
-      let method = 'POST';
+      let url = `${apiBase}/api/reports/admin/reports/${id}`;
+      let body: any = {};
       
       if (action === 'warn') {
-        url += 'warn';
+        body = { status: 'resolved', actionTaken: 'warned' };
       } else if (action === 'remove') {
-        url += 'boarding';
-        method = 'DELETE';
+        body = { status: 'resolved', actionTaken: 'boarding_removed' };
       }
 
-      const response = await fetch(url, { method });
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: getAdminHeaders(),
+        body: JSON.stringify(body),
+      });
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
+        alert(`Report ${action === 'warn' ? 'warning issued' : 'action completed'}`);
         fetchBoardingReports(); // Refresh the list
       } else {
         alert("Action failed. Please try again.");

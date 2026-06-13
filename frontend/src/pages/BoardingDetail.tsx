@@ -76,13 +76,79 @@ const amenityIcons: Record<string, React.ReactNode> = {
 
 const BoardingDetail = () => {
   const { id } = useParams();
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
 
   const [boarding, setBoarding] = useState<BoardingResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryToken, setRetryToken] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [actionMessage, setActionMessage] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const handleSaveListing = async () => {
+    if (!boarding?.id) return;
+    setActionMessage('');
+    setActionError('');
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiBase}/api/students/saved`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ listing: boarding.id }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save listing');
+      }
+      setActionMessage('Listing saved successfully.');
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to save listing.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRequestViewing = async () => {
+    if (!boarding?.id) return;
+    setActionMessage('');
+    setActionError('');
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+
+      const response = await fetch(`${apiBase}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          listing: boarding.id,
+          startDate: now.toISOString(),
+          endDate: tomorrow.toISOString(),
+          amount: boarding.price,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to request viewing');
+      }
+      setActionMessage('Viewing request sent successfully.');
+    } catch (err: any) {
+      setActionError(err.message || 'Failed to request viewing.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -395,16 +461,26 @@ const BoardingDetail = () => {
                   <div className="space-y-3">
                     <button
                       type="button"
-                      className="w-full rounded-full bg-accent-orange text-white py-4 font-bold text-sm uppercase tracking-[0.25em]"
+                      disabled={actionLoading}
+                      onClick={handleRequestViewing}
+                      className="w-full rounded-full bg-accent-orange text-white py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Request viewing
+                      {actionLoading ? 'Sending request...' : 'Request viewing'}
                     </button>
                     <button
                       type="button"
-                      className="w-full rounded-full bg-white text-black py-4 font-bold text-sm uppercase tracking-[0.25em]"
+                      disabled={actionLoading}
+                      onClick={handleSaveListing}
+                      className="w-full rounded-full bg-white text-black py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Save listing
+                      {actionLoading ? 'Processing...' : 'Save listing'}
                     </button>
+                    {actionMessage && (
+                      <p className="text-sm text-green-600 font-bold">{actionMessage}</p>
+                    )}
+                    {actionError && (
+                      <p className="text-sm text-red-600 font-bold">{actionError}</p>
+                    )}
                   </div>
                 </div>
 

@@ -2,6 +2,8 @@ import { RequestHandler } from 'express';
 import User, { UserRole } from '../models/User.js';
 import Listing from '../models/Listing.js';
 
+
+
 const getMonthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
 
 const buildGrowthSeries = (userDocs: any[], listingDocs: any[]) => {
@@ -129,6 +131,23 @@ export const getAdminMessages: RequestHandler = async (_req, res) => {
   res.json([]);
 };
 
-export const getAdminReports: RequestHandler = async (_req, res) => {
+/*export const getAdminReports: RequestHandler = async (_req, res) => {
   res.json([]);
+};*/
+
+export const getAdminReports: RequestHandler = async (_req, res, next) => {
+  try {
+    const reports = await Report.find()
+      .populate("reporter", "firstName lastName email")
+      .populate("targetListing")
+      .populate("targetUser")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      data: reports,
+      total: reports.length,
+    });
+  } catch (err) {
+    next(err);
+  }
 };

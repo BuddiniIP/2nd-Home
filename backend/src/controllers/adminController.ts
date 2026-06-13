@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import User, { UserRole } from '../models/User.js';
 import Listing from '../models/Listing.js';
-
+import Report from '../models/Report.js';
 
 
 const getMonthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;

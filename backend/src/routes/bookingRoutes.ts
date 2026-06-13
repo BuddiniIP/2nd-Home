@@ -1,3 +1,5 @@
+
+
 import express from "express";
 import {
   createBooking,
@@ -6,18 +8,40 @@ import {
   getAllBookings,
 } from "../controllers/bookingController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
+import { UserRole } from "../models/User.js";
 
 const router = express.Router();
 
 // Student
-router.post("/", protect, createBooking);
-router.get("/", protect, getMyBookings);
+router.post(
+  "/",
+  protect,
+  authorize(UserRole.STUDENT),
+  createBooking
+);
+
+router.get(
+  "/",
+  protect,
+  authorize(UserRole.STUDENT),
+  getMyBookings
+);
 
 // Owner
-router.get("/owner/bookings", protect, getOwnerBookings);
+router.get(
+  "/owner/bookings",
+  protect,
+  authorize(UserRole.OWNER),
+  getOwnerBookings
+);
 
 // Admin
-router.get("/admin/bookings", protect, getAllBookings);
+router.get(
+  "/admin/bookings",
+  protect,
+  authorize(UserRole.ADMIN),
+  getAllBookings
+);
 
 export default router;

@@ -54,6 +54,21 @@ const StudentDashboard = () => {
   }, []);
 
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch(`${apiBase}/api/payments/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) setDashboardStats(data);
+      } catch { /* ignore */ }
+    };
+    if (activeTab === 'overview') fetchStats();
+  }, [activeTab]);
+
+  useEffect(() => {
     const fetchSaved = async () => {
       setSavedLoading(true);
       try {

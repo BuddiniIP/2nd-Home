@@ -28,7 +28,7 @@ const OwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
-   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
    const universities = [
       'University of Colombo',

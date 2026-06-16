@@ -76,7 +76,7 @@ const amenityIcons: Record<string, React.ReactNode> = {
 
 const BoardingDetail = () => {
   const { id } = useParams();
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const [boarding, setBoarding] = useState<BoardingResponse | null>(null);
   const [loading, setLoading] = useState(true);

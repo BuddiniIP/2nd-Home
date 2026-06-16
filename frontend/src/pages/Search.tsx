@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Star, Filter, Search as SearchIcon, X, ChevronDown, Check, Map as MapIcon, Grid, Navigation } from 'lucide-react';
 
 const Search = () => {
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
-   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [activeTab, setActiveTab] = useState('analytics');
   const [searchTerm, setSearchTerm] = useState('');
   const [boardingReports, setBoardingReports] = useState<any[]>([]);

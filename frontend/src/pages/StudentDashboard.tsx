@@ -23,7 +23,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
   const [showRawSaved, setShowRawSaved] = useState(false);

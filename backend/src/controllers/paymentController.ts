@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import stripe from '../config/stripe.js';
+import { getStripe } from '../config/stripe.js';
 import Booking from '../models/Booking.js';
 import { FRONTEND_URL } from '../config/env.js';
 
@@ -19,7 +19,7 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: [
@@ -60,7 +60,7 @@ export const verifySession: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await getStripe().checkout.sessions.retrieve(sessionId);
     const bookingId = session.metadata?.bookingId;
 
     if (!bookingId) {

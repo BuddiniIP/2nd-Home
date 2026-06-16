@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -99,7 +99,7 @@ const StudentDashboard = () => {
         });
         const data = await res.json();
         if (res.ok && Array.isArray(data)) {
-          setPayments(data.map((b: any) => ({
+          const mapped = data.map((b: any) => ({
             id: b._id,
             _id: b._id,
             amount: b.amount,
@@ -109,18 +109,23 @@ const StudentDashboard = () => {
             date: new Date(b.createdAt).toLocaleDateString(),
             time: new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             listing: b.listing,
-          })));
+          }));
+          setPayments(mapped);
+          if (sessionStorage.getItem('paymentReturn') === 'true') {
+            sessionStorage.removeItem('paymentReturn');
+            const justPaid = mapped.find(p => p.paymentStatus === 'paid');
+            if (justPaid) {
+              setPaySuccess('Payment successful! Your booking is confirmed.');
+              setTimeout(() => setPaySuccess(null), 8000);
+            }
+          }
         }
       } catch { /* ignore */ }
     };
     if (activeTab === 'payments') fetchPayments();
   }, [activeTab]);
 
-  useEffect(() => {
-    return () => {
-      if (paymentPollRef.current) clearInterval(paymentPollRef.current);
-    };
-  }, []);
+
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
@@ -156,9 +161,7 @@ const StudentDashboard = () => {
   const [currentBoarding, setCurrentBoarding] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [payLoading, setPayLoading] = useState(false);
-  const [payPending, setPayPending] = useState(false);
   const [paySuccess, setPaySuccess] = useState<string | null>(null);
-  const paymentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>({
     totalSpent: "LKR 0",
@@ -178,34 +181,15 @@ const StudentDashboard = () => {
       const res = await fetch(`${apiBase}/api/payments/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bookingId: unpaid._id }),
+        body: JSON.stringify({
+          bookingId: unpaid._id,
+          origin: window.location.origin,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        window.open(data.url, '_blank');
-        setPayPending(true);
-        setPaySuccess('Payment page opened in a new tab. Waiting for confirmation...');
-        const bookingId = unpaid._id;
-        paymentPollRef.current = setInterval(async () => {
-          try {
-            const pollRes = await fetch(`${apiBase}/api/payments/my`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            const pollData = await pollRes.json();
-            const updated = Array.isArray(pollData) && pollData.find((b: any) => b._id === bookingId);
-            if (updated?.paymentStatus === 'paid') {
-              if (paymentPollRef.current) clearInterval(paymentPollRef.current);
-              paymentPollRef.current = null;
-              setPayPending(false);
-              setPaySuccess('Payment successful! Your booking is confirmed.');
-              setPayments((prev: any[]) => prev.map(p =>
-                p._id === bookingId ? { ...p, paymentStatus: 'paid', status: 'Paid', method: 'Card' } : p
-              ));
-              const timer = setTimeout(() => setPaySuccess(null), 8000);
-              return () => clearTimeout(timer);
-            }
-          } catch { /* poll quietly */ }
-        }, 3000);
+        sessionStorage.setItem('paymentReturn', 'true');
+        window.location.href = data.url;
       } else {
         alert(data.message || 'Failed to create payment');
       }
@@ -417,7 +401,7 @@ const StudentDashboard = () => {
                          disabled={payLoading}
                          className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10 disabled:opacity-50"
                        >
-                         {payPending ? 'Awaiting Payment...' : payLoading ? 'Processing...' : 'Pay Next Month'}
+                         {payLoading ? 'Redirecting to Stripe...' : 'Pay Next Month'}
                        </button>
                    </div>
 

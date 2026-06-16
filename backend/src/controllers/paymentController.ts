@@ -5,8 +5,9 @@ import { FRONTEND_URL } from '../config/env.js';
 
 export const createCheckoutSession: RequestHandler = async (req, res, next) => {
   try {
-    const { bookingId } = req.body;
+    const { bookingId, origin } = req.body;
     const studentId = req.user!.id;
+    const baseUrl = origin || FRONTEND_URL;
 
     const booking = await Booking.findOne({ _id: bookingId, student: studentId }).populate('listing');
     if (!booking) {
@@ -38,8 +39,8 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
         bookingId: booking._id.toString(),
         studentId,
       },
-      success_url: `${FRONTEND_URL}/student-dashboard?tab=payments`,
-      cancel_url: `${FRONTEND_URL}/student-dashboard?tab=payments&payment=cancel`,
+      success_url: `${baseUrl}/student-dashboard?tab=payments`,
+      cancel_url: `${baseUrl}/student-dashboard?tab=payments`,
     });
 
     booking.stripeSessionId = session.id;

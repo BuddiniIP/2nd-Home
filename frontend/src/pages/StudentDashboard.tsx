@@ -119,13 +119,36 @@ const StudentDashboard = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const payment = params.get('payment');
-    if (payment === 'success') setPaySuccess('Payment successful! Your booking is confirmed.');
-    if (payment === 'cancel') setPaySuccess('Payment was cancelled. You can try again.');
-    if (payment && activeTab === 'payments') {
+    const sessionId = params.get('session_id');
+
+    if (payment === 'success' && sessionId && !hasVerified) {
+      setHasVerified(true);
+      (async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          const res = await fetch(`${apiBase}/api/payments/verify-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ sessionId }),
+          });
+          const data = await res.json();
+          setPaySuccess(data.paid
+            ? 'Payment successful! Your booking is confirmed.'
+            : 'Payment not yet confirmed. It may take a moment.');
+        } catch {
+          setPaySuccess('Verification failed. Your payment may still process.');
+        }
+        const timer = setTimeout(() => setPaySuccess(null), 8000);
+        return () => clearTimeout(timer);
+      })();
+    }
+    if (payment === 'cancel') {
+      setPaySuccess('Payment was cancelled. You can try again.');
       const timer = setTimeout(() => setPaySuccess(null), 5000);
       return () => clearTimeout(timer);
     }
-  }, [location, activeTab]);
+  }, [location]);
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
@@ -162,6 +185,7 @@ const StudentDashboard = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [payLoading, setPayLoading] = useState(false);
   const [paySuccess, setPaySuccess] = useState<string | null>(null);
+  const [hasVerified, setHasVerified] = useState(false);
   const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>({
     totalSpent: "LKR 0",

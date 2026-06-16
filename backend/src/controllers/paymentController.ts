@@ -38,7 +38,7 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
         bookingId: booking._id.toString(),
         studentId,
       },
-      success_url: `${FRONTEND_URL}/student-dashboard?tab=payments&payment=success`,
+      success_url: `${FRONTEND_URL}/student-dashboard?tab=payments&payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${FRONTEND_URL}/student-dashboard?tab=payments&payment=cancel`,
     });
 
@@ -52,32 +52,35 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const stripeWebhook: RequestHandler = async (req, res) => {
-  const sig = req.headers['stripe-signature'] as string;
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
+export const verifySession: RequestHandler = async (req, res, next) => {
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret!);
-  } catch {
-    res.status(400).json({ message: 'Invalid signature' });
-    return;
-  }
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      res.status(400).json({ message: 'sessionId required' });
+      return;
+    }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
     const bookingId = session.metadata?.bookingId;
 
-    if (bookingId) {
+    if (!bookingId) {
+      res.status(400).json({ message: 'No booking linked to this session' });
+      return;
+    }
+
+    if (session.payment_status === 'paid') {
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: 'paid',
         paymentId: session.id,
         status: 'confirmed',
       });
+      res.json({ verified: true, paid: true });
+    } else {
+      res.json({ verified: true, paid: false });
     }
+  } catch (err) {
+    next(err);
   }
-
-  res.json({ received: true });
 };
 
 export const getMyPayments: RequestHandler = async (req, res, next) => {

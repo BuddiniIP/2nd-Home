@@ -124,6 +124,7 @@ const StudentDashboard = () => {
             date: new Date(b.createdAt).toLocaleDateString(),
             time: new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             listing: b.listing,
+            listingTitle: b.listing?.title || 'Boarding',
           }));
           setPayments(mapped);
           if (sessionStorage.getItem('paymentReturn') === 'true') {
@@ -215,11 +216,16 @@ const StudentDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      await fetch(`${apiBase}/api/students/saved/${savedId}`, {
+      const res = await fetch(`${apiBase}/api/students/saved/${savedId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      setSavedListings(prev => prev.filter(s => s._id !== savedId));
+      const data = await res.json();
+      if (res.ok) {
+        setSavedListings(prev => prev.filter(s => s._id !== savedId));
+      } else {
+        alert(data.message || 'Cannot remove saved listing');
+      }
     } catch { /* ignore */ }
   };
 
@@ -482,41 +488,43 @@ const StudentDashboard = () => {
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                     {payments.filter(p => p.paymentStatus === 'paid').map((payment) => (
-                       <motion.div 
-                         variants={itemVariants}
-                         key={payment.id} 
-                         className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
-                       >
-                          <div className="flex items-center gap-6 mb-4 md:mb-0">
-                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
-                                <CheckCircle2 size={24} />
-                             </div>
-                             <div>
-                                <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.date} • {payment.time}</p>
-                             </div>
-                          </div>
-
-                          <div className="flex items-center gap-12">
-                             <div className="text-right">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Method</p>
-                                <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">
-                                   {payment.method}
-                                </span>
-                             </div>
-                             <div className="flex items-center gap-2 text-green-500 font-bold text-[10px] uppercase tracking-widest">
-                                <CheckCircle2 size={16} /> Paid
-                             </div>
-                          </div>
-                       </motion.div>
-                     ))}
-                     {payments.filter(p => p.paymentStatus === 'paid').length === 0 && (
-                       <div className="text-center py-10 text-gray-400 font-medium">
-                         <p>No payment history yet.</p>
-                       </div>
-                     )}
+                  <div className="space-y-6">
+                     {(() => {
+                       const paid = payments.filter(p => p.paymentStatus === 'paid');
+                       if (paid.length === 0) return <div className="text-center py-10 text-gray-400 font-medium"><p>No payment history yet.</p></div>;
+                       const groups: Record<string, typeof paid> = {};
+                       paid.forEach(p => {
+                         const d = new Date(p.date);
+                         const key = `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+                         if (!groups[key]) groups[key] = [];
+                         groups[key].push(p);
+                       });
+                       return Object.entries(groups).map(([month, items]) => (
+                         <div key={month}>
+                           <h4 className="text-lg font-display font-bold text-black mb-4 pb-2 border-b border-gray-100">{month}</h4>
+                           <div className="space-y-3">
+                             {items.map((payment) => (
+                               <motion.div variants={itemVariants} key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group">
+                                 <div className="flex items-center gap-5 mb-3 md:mb-0">
+                                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
+                                     <CheckCircle2 size={20} />
+                                   </div>
+                                   <div>
+                                     <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
+                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.listingTitle}</p>
+                                     <p className="text-[9px] text-gray-300 font-medium">{payment.date} • {payment.time}</p>
+                                   </div>
+                                 </div>
+                                 <div className="flex items-center gap-4">
+                                   <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">{payment.method}</span>
+                                   <span className="flex items-center gap-1.5 text-green-600 font-bold text-[10px] uppercase tracking-widest"><CheckCircle2 size={14} /> Paid</span>
+                                 </div>
+                               </motion.div>
+                             ))}
+                           </div>
+                         </div>
+                       ));
+                     })()}
                   </div>
                </div>
 

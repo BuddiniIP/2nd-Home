@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User.js";
 import SavedListing from "../models/SavedListing.js";
+import Booking from "../models/Booking.js";
 
 export const saveListing = async (req: Request, res: Response) => {
   try {
@@ -51,6 +52,18 @@ export const removeSavedListing = async (req: Request, res: Response) => {
 
     if (savedListing.student.toString() !== req.user?.id) {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const unpaidBooking = await Booking.findOne({
+      student: req.user?.id,
+      listing: savedListing.listing,
+      paymentStatus: { $in: ['unpaid', 'processing'] },
+    });
+
+    if (unpaidBooking) {
+      return res.status(400).json({
+        message: 'Cannot remove: you have an unpaid booking for this boarding. Please settle the payment first.',
+      });
     }
 
     await savedListing.deleteOne();

@@ -10,6 +10,9 @@ import listingRoutes from './routes/listingRoutes.js';
 import bookingRoutes from "./routes/bookingRoutes.js";
 import studentRoutes from './routes/studentRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
+import verificationRoutes from './routes/verificationRoutes.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import { rateLimit } from "./middleware/rateLimit.js";
@@ -57,6 +60,9 @@ app.use('/api/boardings', listingRoutes);
 app.use('/api/students', studentRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/verifications', verificationRoutes);
 
 app.get('/', (req, res) => {
   res.send('2nd Home API is running...');

@@ -5,7 +5,7 @@ import Listing from '../models/Listing.js';
 import Booking from "../models/Booking.js";
 
 import Report from '../models/Report.js';
-
+import Message from "../models/Message.js";
 
 
 const getMonthKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
@@ -185,8 +185,16 @@ export const updatePaymentStatus: RequestHandler = async (req, res, next) => {
 
 
 
-export const getAdminMessages: RequestHandler = async (_req, res) => {
-  res.json([]);
+export const getAdminMessages: RequestHandler = async (_req, res, next) => {
+  try {
+    const messages = await Message.find()
+      .populate("sender", "firstName lastName email")
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(messages);
+  } catch (err) {
+    next(err);
+  }
 };
 
 /*export const getAdminReports: RequestHandler = async (_req, res) => {

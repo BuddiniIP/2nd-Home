@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -117,38 +117,10 @@ const StudentDashboard = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const payment = params.get('payment');
-    const sessionId = params.get('session_id');
-
-    if (payment === 'success' && sessionId && !hasVerified) {
-      setHasVerified(true);
-      (async () => {
-        try {
-          const token = localStorage.getItem('token');
-          if (!token) return;
-          const res = await fetch(`${apiBase}/api/payments/verify-session`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ sessionId }),
-          });
-          const data = await res.json();
-          setPaySuccess(data.paid
-            ? 'Payment successful! Your booking is confirmed.'
-            : 'Payment not yet confirmed. It may take a moment.');
-        } catch {
-          setPaySuccess('Verification failed. Your payment may still process.');
-        }
-        const timer = setTimeout(() => setPaySuccess(null), 8000);
-        return () => clearTimeout(timer);
-      })();
-    }
-    if (payment === 'cancel') {
-      setPaySuccess('Payment was cancelled. You can try again.');
-      const timer = setTimeout(() => setPaySuccess(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [location]);
+    return () => {
+      if (paymentPollRef.current) clearInterval(paymentPollRef.current);
+    };
+  }, []);
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
@@ -184,8 +156,9 @@ const StudentDashboard = () => {
   const [currentBoarding, setCurrentBoarding] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [payLoading, setPayLoading] = useState(false);
+  const [payPending, setPayPending] = useState(false);
   const [paySuccess, setPaySuccess] = useState<string | null>(null);
-  const [hasVerified, setHasVerified] = useState(false);
+  const paymentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>({
     totalSpent: "LKR 0",
@@ -209,7 +182,30 @@ const StudentDashboard = () => {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
+        setPayPending(true);
+        setPaySuccess('Payment page opened in a new tab. Waiting for confirmation...');
+        const bookingId = unpaid._id;
+        paymentPollRef.current = setInterval(async () => {
+          try {
+            const pollRes = await fetch(`${apiBase}/api/payments/my`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const pollData = await pollRes.json();
+            const updated = Array.isArray(pollData) && pollData.find((b: any) => b._id === bookingId);
+            if (updated?.paymentStatus === 'paid') {
+              if (paymentPollRef.current) clearInterval(paymentPollRef.current);
+              paymentPollRef.current = null;
+              setPayPending(false);
+              setPaySuccess('Payment successful! Your booking is confirmed.');
+              setPayments((prev: any[]) => prev.map(p =>
+                p._id === bookingId ? { ...p, paymentStatus: 'paid', status: 'Paid', method: 'Card' } : p
+              ));
+              const timer = setTimeout(() => setPaySuccess(null), 8000);
+              return () => clearTimeout(timer);
+            }
+          } catch { /* poll quietly */ }
+        }, 3000);
       } else {
         alert(data.message || 'Failed to create payment');
       }
@@ -421,7 +417,7 @@ const StudentDashboard = () => {
                          disabled={payLoading}
                          className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10 disabled:opacity-50"
                        >
-                         {payLoading ? 'Processing...' : 'Pay Next Month'}
+                         {payPending ? 'Awaiting Payment...' : payLoading ? 'Processing...' : 'Pay Next Month'}
                        </button>
                    </div>
 

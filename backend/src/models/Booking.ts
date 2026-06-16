@@ -30,6 +30,17 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    stripeSessionId: {
+      type: String,
+      default: null,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "processing", "paid", "failed"],
+      default: "unpaid",
+    },
   },
   { timestamps: true }
 );

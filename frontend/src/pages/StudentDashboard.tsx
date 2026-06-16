@@ -89,6 +89,44 @@ const StudentDashboard = () => {
     if (activeTab === 'saved') fetchSaved();
   }, [activeTab]);
 
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch(`${apiBase}/api/payments/my`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data)) {
+          setPayments(data.map((b: any) => ({
+            id: b._id,
+            _id: b._id,
+            amount: b.amount,
+            paymentStatus: b.paymentStatus || 'unpaid',
+            status: b.paymentStatus === 'paid' ? 'Paid' : 'Pending',
+            method: b.paymentId ? 'Card' : 'Unpaid',
+            date: new Date(b.createdAt).toLocaleDateString(),
+            time: new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            listing: b.listing,
+          })));
+        }
+      } catch { /* ignore */ }
+    };
+    if (activeTab === 'payments') fetchPayments();
+  }, [activeTab]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get('payment');
+    if (payment === 'success') setPaySuccess('Payment successful! Your booking is confirmed.');
+    if (payment === 'cancel') setPaySuccess('Payment was cancelled. You can try again.');
+    if (payment && activeTab === 'payments') {
+      const timer = setTimeout(() => setPaySuccess(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location, activeTab]);
+
   const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
@@ -122,6 +160,8 @@ const StudentDashboard = () => {
 
   const [currentBoarding, setCurrentBoarding] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
+  const [payLoading, setPayLoading] = useState(false);
+  const [paySuccess, setPaySuccess] = useState<string | null>(null);
   const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>({
     totalSpent: "LKR 0",
@@ -130,6 +170,31 @@ const StudentDashboard = () => {
     currentStay: "None",
     currentStayLocation: "-"
   });
+
+  const handlePayNextMonth = async () => {
+    setPayLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const unpaid = payments.find(p => p.paymentStatus === 'unpaid' || p.paymentStatus === 'processing');
+      if (!unpaid) { alert('No unpaid bookings found.'); setPayLoading(false); return; }
+      const res = await fetch(`${apiBase}/api/payments/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bookingId: unpaid._id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.message || 'Failed to create payment');
+      }
+    } catch {
+      alert('Payment failed. Please try again.');
+    } finally {
+      setPayLoading(false);
+    }
+  };
 
   const handleRemindOwner = () => {
     alert("Reminder sent to owner: 'Please update the payment' via WhatsApp and Email.");
@@ -319,12 +384,21 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="space-y-6"
               >
-                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
-                   <div className="flex justify-between items-center mb-10">
-                      <h3 className="text-2xl font-display font-bold">Payment History</h3>
-                      <button className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
-                        Pay Next Month
-                      </button>
+               {paySuccess && (
+                 <div className="bg-green-100 text-green-700 rounded-[2rem] px-6 py-4 text-sm font-medium mb-4">
+                   {paySuccess}
+                 </div>
+               )}
+               <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
+                  <div className="flex justify-between items-center mb-10">
+                     <h3 className="text-2xl font-display font-bold">Payment History</h3>
+                     <button
+                         onClick={handlePayNextMonth}
+                         disabled={payLoading}
+                         className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10 disabled:opacity-50"
+                       >
+                         {payLoading ? 'Processing...' : 'Pay Next Month'}
+                       </button>
                    </div>
 
                    <div className="space-y-4">

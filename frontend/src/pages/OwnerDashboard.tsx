@@ -195,8 +195,25 @@ const OwnerDashboard = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
 
-  const handleConfirmPayment = (id: number) => {
-    alert("Payment confirmed! The student will be notified immediately.");
+  const handleConfirmPayment = async (bookingId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${apiBase}/api/payments/${bookingId}/confirm`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStudentPayments(prev => prev.map(p =>
+          p._id === bookingId ? { ...p, paymentStatus: 'paid', status: 'Paid' } : p
+        ));
+      } else {
+        alert(data.message || 'Failed to confirm payment');
+      }
+    } catch {
+      alert('Failed to confirm payment');
+    }
   };
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -248,6 +265,33 @@ const OwnerDashboard = () => {
 
       fetchOwnerBoardings();
    }, [apiBase, userProfile]);
+
+   useEffect(() => {
+      const fetchOwnerPayments = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          const res = await fetch(`${apiBase}/api/payments/owner`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (res.ok && Array.isArray(data)) {
+            setStudentPayments(data.map((b: any) => ({
+              id: b._id,
+              _id: b._id,
+              student: b.student ? `${b.student.firstName} ${b.student.lastName}` : 'Unknown',
+              studentId: b.student?._id,
+              amount: b.amount,
+              paymentStatus: b.paymentStatus || 'unpaid',
+              status: b.paymentStatus === 'paid' ? 'Paid' : 'Pending',
+              date: new Date(b.createdAt).toLocaleDateString(),
+              type: b.paymentId ? 'Card' : 'Unpaid',
+            })));
+          }
+        } catch { /* ignore */ }
+      };
+      if (activeTab === 'payments') fetchOwnerPayments();
+   }, [activeTab]);
 
    const toggleFeature = (feature: string) => {
       setSelectedFeatures((current) =>

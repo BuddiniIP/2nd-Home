@@ -688,15 +688,18 @@ const AdminDashboard = () => {
                       <table className="w-full text-left border-separate border-spacing-y-4">
                          <thead><tr className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]"><th className="px-6 py-2">Transaction ID</th><th className="px-6 py-2">User</th><th className="px-6 py-2">Property</th><th className="px-6 py-2">Amount</th><th className="px-6 py-2">Status</th></tr></thead>
                          <tbody>
-                            {payments.map((payment) => (
-                               <tr key={payment.id} className="bg-gray-50 hover:bg-white transition-all shadow-sm group">
-                                  <td className="px-6 py-6 rounded-l-[2rem] font-mono text-xs">{payment.id}</td>
-                                  <td className="px-6 py-6 font-bold text-sm">{payment.user}</td>
-                                  <td className="px-6 py-6 text-sm text-gray-500">{payment.boarding}</td>
-                                  <td className="px-6 py-6 font-display font-bold">LKR {payment.amount.toLocaleString()}</td>
-                                  <td className="px-6 py-6 rounded-r-[2rem]"><span className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${payment.status === 'Success' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>{payment.status}</span></td>
-                               </tr>
-                            ))}
+                             {payments.map((payment) => {
+                                const studentName = payment.student ? `${payment.student.firstName || ''} ${payment.student.lastName || ''}`.trim() : 'Unknown';
+                                const isPaid = payment.paymentStatus === 'paid';
+                                return (
+                                <tr key={payment._id} className="bg-gray-50 hover:bg-white transition-all shadow-sm group">
+                                   <td className="px-6 py-6 rounded-l-[2rem] font-mono text-xs">{payment._id.slice(-8)}</td>
+                                   <td className="px-6 py-6 font-bold text-sm">{studentName || 'Unknown'}</td>
+                                   <td className="px-6 py-6 text-sm text-gray-500">{payment.listing?.title || 'N/A'}</td>
+                                   <td className="px-6 py-6 font-display font-bold">LKR {(payment.amount || 0).toLocaleString()}</td>
+                                   <td className="px-6 py-6 rounded-r-[2rem]"><span className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${isPaid ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>{isPaid ? 'Paid' : 'Pending'}</span></td>
+                                </tr>
+                             )})}
                          </tbody>
                       </table>
                    </div>

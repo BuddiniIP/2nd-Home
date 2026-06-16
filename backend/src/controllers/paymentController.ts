@@ -119,28 +119,36 @@ export const getDashboardStats: RequestHandler = async (req, res, next) => {
   try {
     const studentId = req.user!.id;
 
-    const paidBookings = await Booking.find({ student: studentId, paymentStatus: 'paid' }).lean();
+    const paidBookings = await Booking.find({ student: studentId, paymentStatus: 'paid' })
+      .populate('listing', 'title location.address')
+      .sort({ createdAt: -1 })
+      .lean();
     const totalSpent = paidBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
-    const nextUnpaid = await Booking.findOne({
+    const unpaidBookings = await Booking.find({
       student: studentId,
       paymentStatus: { $in: ['unpaid', 'processing'] },
     })
-      .populate('listing', 'title')
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const currentStay = await Booking.findOne({ student: studentId, paymentStatus: 'paid' })
-      .populate('listing', 'title')
+      .populate('listing', 'title location.address')
       .sort({ createdAt: -1 })
       .lean();
 
     res.json({
       totalSpent: `LKR ${totalSpent.toLocaleString()}`,
-      nextPaymentTitle: nextUnpaid ? `LKR ${nextUnpaid.amount.toLocaleString()}` : null,
-      nextPaymentSubtitle: nextUnpaid ? (nextUnpaid.listing as any)?.title || 'Boarding' : null,
-      currentStay: currentStay ? 'Active' : null,
-      currentStayLocation: currentStay ? (currentStay.listing as any)?.title || 'Boarding' : null,
+      totalSpentRaw: totalSpent,
+      unpaidBookings: unpaidBookings.map((b) => ({
+        _id: b._id,
+        amount: b.amount,
+        listingTitle: (b.listing as any)?.title || 'Boarding',
+        listingAddress: (b.listing as any)?.location?.address || '',
+      })),
+      currentStays: paidBookings.map((b) => ({
+        bookingId: b._id,
+        title: (b.listing as any)?.title || 'Boarding',
+        address: (b.listing as any)?.location?.address || '',
+        amount: b.amount,
+        paidAt: b.updatedAt,
+      })),
     });
   } catch (err) {
     next(err);

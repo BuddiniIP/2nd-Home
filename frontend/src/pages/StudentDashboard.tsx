@@ -130,8 +130,7 @@ const StudentDashboard = () => {
             sessionStorage.removeItem('paymentReturn');
             const justPaid = mapped.find(p => p.paymentStatus === 'paid');
             if (justPaid) {
-              setPaySuccess('Payment successful! Your booking is confirmed.');
-              setTimeout(() => setPaySuccess(null), 8000);
+              setShowPaySuccess(true);
             }
           }
         }
@@ -180,24 +179,21 @@ const StudentDashboard = () => {
   const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>({
     totalSpent: "LKR 0",
-    nextPaymentTitle: "-", 
-    nextPaymentSubtitle: "-", 
-    currentStay: "None",
-    currentStayLocation: "-"
+    unpaidBookings: [],
+    currentStays: [],
   });
+  const [showPaySuccess, setShowPaySuccess] = useState(false);
 
-  const handlePayNextMonth = async () => {
+  const handlePayBooking = async (bookingId: string) => {
     setPayLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const unpaid = payments.find(p => p.paymentStatus === 'unpaid' || p.paymentStatus === 'processing');
-      if (!unpaid) { alert('No unpaid bookings found.'); setPayLoading(false); return; }
       const res = await fetch(`${apiBase}/api/payments/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          bookingId: unpaid._id,
+          bookingId,
           origin: window.location.origin,
         }),
       });
@@ -213,6 +209,18 @@ const StudentDashboard = () => {
     } finally {
       setPayLoading(false);
     }
+  };
+
+  const handleRemoveSaved = async (savedId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      await fetch(`${apiBase}/api/students/saved/${savedId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedListings(prev => prev.filter(s => s._id !== savedId));
+    } catch { /* ignore */ }
   };
 
   const handleRemindOwner = () => {
@@ -287,42 +295,54 @@ const StudentDashboard = () => {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="space-y-6"
               >
-                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
-                   <div className="w-12 h-12 bg-accent-orange/10 rounded-2xl flex items-center justify-center text-accent-orange">
-                      <CreditCard size={24} />
-                   </div>
-                   <div className="space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Spent</p>
-                      <h4 className="text-4xl font-display font-bold text-black">{dashboardStats.totalSpent}</h4>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                          -
-                      </p>
-                   </div>
-                </motion.div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                     <div className="w-12 h-12 bg-accent-orange/10 rounded-2xl flex items-center justify-center text-accent-orange">
+                        <CreditCard size={24} />
+                     </div>
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Spent</p>
+                        <h4 className="text-4xl font-display font-bold text-black">{dashboardStats.totalSpent}</h4>
+                     </div>
+                  </motion.div>
 
-                <motion.div variants={itemVariants} className="bg-black rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between aspect-square text-white">
-                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
-                      <Clock size={24} />
-                   </div>
-                   <div className="space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Next Payment</p>
-                      <h4 className="text-4xl font-display font-bold">{dashboardStats.nextPaymentTitle}</h4>
-                      <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{dashboardStats.nextPaymentSubtitle}</p>
-                   </div>
-                </motion.div>
+                  <motion.div variants={itemVariants} className="bg-black rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between aspect-square text-white">
+                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
+                        <Clock size={24} />
+                     </div>
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Next Payment</p>
+                        <h4 className="text-3xl font-display font-bold">{dashboardStats.unpaidBookings?.[0] ? `LKR ${dashboardStats.unpaidBookings[0].amount?.toLocaleString()}` : '-'}</h4>
+                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{dashboardStats.unpaidBookings?.[0]?.listingTitle || '-'}</p>
+                     </div>
+                  </motion.div>
 
-                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
-                   <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
-                      <MapPin size={24} />
-                   </div>
-                   <div className="space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Stay</p>
-                      <h4 className="text-xl font-display font-bold text-black">{dashboardStats.currentStayLocation}</h4>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{dashboardStats.currentStay}</p>
-                   </div>
-                </motion.div>
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                     <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
+                        <MapPin size={24} />
+                     </div>
+                     <div className="space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Current Stay{dashboardStats.currentStays?.length > 1 ? 's' : ''}</p>
+                        {dashboardStats.currentStays?.length > 0 ? (
+                          <div className="space-y-2 max-h-[140px] overflow-y-auto">
+                            {dashboardStats.currentStays.map((stay: any) => (
+                              <div key={stay.bookingId} className="border-b border-gray-50 pb-1 last:border-0">
+                                <h4 className="font-display font-bold text-sm text-black leading-tight">{stay.title}</h4>
+                                <p className="text-[8px] text-gray-400 font-medium truncate">{stay.address || 'Address not set'}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <>
+                            <h4 className="text-xl font-display font-bold text-black">None</h4>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">No active stays</p>
+                          </>
+                        )}
+                     </div>
+                  </motion.div>
+                </div>
               </motion.div>
             )}
 
@@ -403,86 +423,103 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="space-y-6"
               >
-               {paySuccess && (
-                 <div className="bg-green-100 text-green-700 rounded-[2rem] px-6 py-4 text-sm font-medium mb-4">
-                   {paySuccess}
-                 </div>
-               )}
+                {showPaySuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    onClick={() => setShowPaySuccess(false)}
+                  >
+                    <motion.div
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      className="bg-white rounded-[3rem] p-12 shadow-2xl max-w-md mx-6 text-center space-y-6"
+                    >
+                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle2 size={40} className="text-green-600" />
+                      </div>
+                      <h3 className="text-3xl font-display font-bold text-black">Payment Successful!</h3>
+                      <p className="text-gray-500 font-medium">Your booking has been confirmed. The owner will be notified.</p>
+                      <button
+                        onClick={() => setShowPaySuccess(false)}
+                        className="bg-black text-white px-10 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"
+                      >
+                        Done
+                      </button>
+                    </motion.div>
+                  </motion.div>
+                )}
+
                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
                   <div className="flex justify-between items-center mb-10">
                      <h3 className="text-2xl font-display font-bold">Payment History</h3>
-                     <button
-                         onClick={handlePayNextMonth}
-                         disabled={payLoading}
-                         className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10 disabled:opacity-50"
-                       >
-                         {payLoading ? 'Redirecting to Stripe...' : 'Pay Next Month'}
-                       </button>
-                   </div>
+                  </div>
 
-                   <div className="space-y-4">
-                      {payments.map((payment, i) => (
-                        <motion.div 
-                          variants={itemVariants}
-                          key={payment.id} 
-                          className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
-                        >
-                           <div className="flex items-center gap-6 mb-4 md:mb-0">
-                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${payment.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                                 {payment.status === 'Paid' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
+                  {(dashboardStats.unpaidBookings?.length > 0) && (
+                    <div className="mb-10 pb-10 border-b border-gray-50">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Select a booking to pay</p>
+                      <div className="space-y-4">
+                        {dashboardStats.unpaidBookings.map((ub: any) => (
+                          <div key={ub._id} className="flex items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl transition-all border border-transparent hover:border-gray-50">
+                            <div className="flex items-center gap-4">
+                              <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
+                                <Clock size={24} />
                               </div>
                               <div>
-                                 <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
-                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.date} • {payment.time}</p>
+                                <h4 className="font-bold text-black">{ub.listingTitle}</h4>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">LKR {ub.amount?.toLocaleString()} • {ub.listingAddress || 'Address not set'}</p>
                               </div>
-                           </div>
-
-                           <div className="flex items-center gap-12">
-                              <div className="text-right">
-                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Method</p>
-                                 <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">
-                                    {payment.method}
-                                 </span>
-                              </div>
-                              {payment.status === 'Pending' && payment.method === 'Physical' ? (
-                                <button 
-                                  onClick={handleRemindOwner}
-                                  className="flex items-center gap-2 px-6 py-3 bg-accent-orange text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-black transition-all shadow-md"
-                                >
-                                   <Bell size={12} className="animate-bounce" />
-                                   Remind Owner
-                                </button>
-                              ) : (
-                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-200 border border-gray-50 group-hover:text-accent-orange transition-colors">
-                                   <ExternalLink size={16} />
-                                </div>
-                              )}
-                           </div>
-                        </motion.div>
-                      ))}
-                   </div>
-                </div>
-
-                <motion.div variants={itemVariants} className="bg-accent-orange rounded-[2.5rem] p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8">
-                   <div className="space-y-4 text-center md:text-left">
-                      <div className="flex items-center justify-center md:justify-start gap-3">
-                         <AlertCircle size={24} />
-                         <h4 className="text-xl font-bold font-display uppercase tracking-widest">Physical Payment Tip</h4>
+                            </div>
+                            <button
+                              onClick={() => handlePayBooking(ub._id)}
+                              disabled={payLoading}
+                              className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all disabled:opacity-50"
+                            >
+                              {payLoading ? 'Redirecting...' : 'Pay Now'}
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                      <p className="text-white/80 text-sm max-w-md font-medium">
-                        Always ensure the owner updates the system immediately after a physical payment. Use the "Remind" button if they forget!
-                      </p>
-                   </div>
-                   <div className="w-32 h-32 relative">
-                      <motion.div 
-                        animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-                        transition={{ repeat: Infinity, duration: 4 }}
-                        className="w-full h-full bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md"
-                      >
-                         <CreditCard size={48} className="text-white" />
-                      </motion.div>
-                   </div>
-                </motion.div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                     {payments.filter(p => p.paymentStatus === 'paid').map((payment) => (
+                       <motion.div 
+                         variants={itemVariants}
+                         key={payment.id} 
+                         className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
+                       >
+                          <div className="flex items-center gap-6 mb-4 md:mb-0">
+                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
+                                <CheckCircle2 size={24} />
+                             </div>
+                             <div>
+                                <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.date} • {payment.time}</p>
+                             </div>
+                          </div>
+
+                          <div className="flex items-center gap-12">
+                             <div className="text-right">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Method</p>
+                                <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">
+                                   {payment.method}
+                                </span>
+                             </div>
+                             <div className="flex items-center gap-2 text-green-500 font-bold text-[10px] uppercase tracking-widest">
+                                <CheckCircle2 size={16} /> Paid
+                             </div>
+                          </div>
+                       </motion.div>
+                     ))}
+                     {payments.filter(p => p.paymentStatus === 'paid').length === 0 && (
+                       <div className="text-center py-10 text-gray-400 font-medium">
+                         <p>No payment history yet.</p>
+                       </div>
+                     )}
+                  </div>
+               </div>
+
               </motion.div>
             )}
 
@@ -525,6 +562,7 @@ const StudentDashboard = () => {
                             <p className="text-sm text-gray-500 mt-2">{listing.location?.address || listing.address || ''}</p>
                             <div className="mt-4 flex gap-3">
                               <Link to={`/boarding/${lid}`} className="px-4 py-2 bg-black text-white rounded-full text-xs font-bold">View</Link>
+                              <button onClick={() => handleRemoveSaved(s._id)} className="px-4 py-2 bg-red-500 text-white rounded-full text-xs font-bold hover:bg-red-600 transition-all">Remove</button>
                             </div>
                           </div>
                         </div>

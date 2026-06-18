@@ -59,7 +59,13 @@ const totalRevenue = bookings
   .reduce((sum, booking) => sum + Number(booking.amount || 0), 0);
 
     const activeBoardings = listings.filter((listing) => listing.isAvailable).length;
-    const monthlyRevenue = listings.reduce((sum, listing) => sum + Number(listing.price || 0), 0);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const paidThisMonth = await Booking.find({
+      paymentStatus: 'paid',
+      updatedAt: { $gte: monthStart },
+    });
+    const monthlyRevenue = paidThisMonth.reduce((sum, b) => sum + (b.amount || 0), 0);
 
     res.json({
       summary: {

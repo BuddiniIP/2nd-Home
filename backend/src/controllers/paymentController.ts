@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { getStripe } from '../config/stripe.js';
 import Booking from '../models/Booking.js';
+import Listing from '../models/Listing.js';
 import { FRONTEND_URL } from '../config/env.js';
 
 export const createCheckoutSession: RequestHandler = async (req, res, next) => {
@@ -15,8 +16,8 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    if (booking.paymentStatus === 'paid') {
-      res.status(400).json({ message: 'Booking is already paid' });
+    if (booking.paymentStatus === 'paid' || booking.paymentStatus === 'processing') {
+      res.status(400).json({ message: 'Booking is already paid or payment is in progress' });
       return;
     }
 
@@ -30,7 +31,7 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
             product_data: {
               name: (booking.listing as any)?.title || 'Boarding Payment',
             },
-            unit_amount: Math.round(booking.amount * 100),
+            unit_amount: Math.round(booking.amount),
           },
           quantity: 1,
         },
@@ -39,11 +40,12 @@ export const createCheckoutSession: RequestHandler = async (req, res, next) => {
         bookingId: booking._id.toString(),
         studentId,
       },
-      success_url: `${baseUrl}/student-dashboard?tab=payments`,
-      cancel_url: `${baseUrl}/student-dashboard?tab=payments`,
+      success_url: `${baseUrl}/student-dashboard?tab=payments&payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/student-dashboard?tab=payments&payment=cancel`,
     });
 
     booking.stripeSessionId = session.id;
+    booking.paymentId = session.id;
     booking.paymentStatus = 'processing';
     await booking.save();
 
@@ -72,7 +74,7 @@ export const verifySession: RequestHandler = async (req, res, next) => {
     if (session.payment_status === 'paid') {
       await Booking.findByIdAndUpdate(bookingId, {
         paymentStatus: 'paid',
-        paymentId: session.id,
+        paymentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.id,
         status: 'confirmed',
       });
       res.json({ verified: true, paid: true });
@@ -98,18 +100,43 @@ export const getMyPayments: RequestHandler = async (req, res, next) => {
 
 export const getOwnerPayments: RequestHandler = async (req, res, next) => {
   try {
-    const bookings = await Booking.find()
-      .populate({
-        path: 'listing',
-        match: { owner: req.user!.id },
-        select: 'title',
-      })
+    const listings = await Listing.find({ owner: req.user!.id }).select('_id').lean();
+    const listingIds = listings.map((l: any) => l._id);
+
+    const bookings = await Booking.find({ listing: { $in: listingIds } })
+      .populate('listing', 'title')
       .populate('student', 'firstName lastName email')
       .sort({ createdAt: -1 })
       .lean();
 
-    const filtered = bookings.filter((b) => b.listing);
-    res.json(filtered);
+    res.json(bookings);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getOwnerStats: RequestHandler = async (req, res, next) => {
+  try {
+    const ownerId = req.user!.id;
+    const listings = await Listing.find({ owner: ownerId }).select('_id').lean();
+    const listingIds = listings.map((l: any) => l._id);
+
+    const paidBookings = await Booking.find({ listing: { $in: listingIds }, paymentStatus: 'paid' }).lean();
+    const totalRevenue = paidBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+    const uniqueStudents = new Set(paidBookings.map((b) => b.student?.toString()));
+    const totalStudents = uniqueStudents.size;
+
+    const pendingConfirmations = await Booking.countDocuments({
+      listing: { $in: listingIds },
+      paymentStatus: 'processing',
+    });
+
+    res.json({
+      totalRevenue: `LKR ${totalRevenue.toLocaleString()}`,
+      totalStudents,
+      pendingConfirmations,
+    });
   } catch (err) {
     next(err);
   }
@@ -127,7 +154,7 @@ export const getDashboardStats: RequestHandler = async (req, res, next) => {
 
     const unpaidBookings = await Booking.find({
       student: studentId,
-      paymentStatus: { $in: ['unpaid', 'processing'] },
+      paymentStatus: 'unpaid',
     })
       .populate('listing', 'title location.address')
       .sort({ createdAt: -1 })

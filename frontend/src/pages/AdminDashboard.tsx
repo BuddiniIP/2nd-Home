@@ -201,7 +201,7 @@ const AdminDashboard = () => {
 
   const fetchBoardingReports = async () => {
     try {
-         const response = await fetch(`${apiBase}/api/reports/admin/reports`, {
+         const response = await fetch(`${apiBase}/api/admin/reports`, {
             headers: getAdminHeaders(),
          });
       const data = await response.json();
@@ -693,7 +693,7 @@ const AdminDashboard = () => {
                                 const isPaid = payment.paymentStatus === 'paid';
                                 return (
                                 <tr key={payment._id} className="bg-gray-50 hover:bg-white transition-all shadow-sm group">
-                                   <td className="px-6 py-6 rounded-l-[2rem] font-mono text-xs">{payment._id.slice(-8)}</td>
+                                   <td className="px-6 py-6 rounded-l-[2rem] font-mono text-xs">{String(payment._id).slice(-8)}</td>
                                    <td className="px-6 py-6 font-bold text-sm">{studentName || 'Unknown'}</td>
                                    <td className="px-6 py-6 text-sm text-gray-500">{payment.listing?.title || 'N/A'}</td>
                                    <td className="px-6 py-6 font-display font-bold">LKR {(payment.amount || 0).toLocaleString()}</td>

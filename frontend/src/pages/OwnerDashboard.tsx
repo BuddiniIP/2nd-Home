@@ -72,7 +72,7 @@ const OwnerDashboard = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const response = await fetch('http://localhost:5001/api/auth/me', {
+        const response = await fetch(`${apiBase}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
@@ -119,6 +119,7 @@ const OwnerDashboard = () => {
   const [ownerNotifications, setOwnerNotifications] = useState<any[]>([]);
   const [myBoardings, setMyBoardings] = useState<any[]>([]);
   const [studentPayments, setStudentPayments] = useState<any[]>([]);
+  const [ownerStats, setOwnerStats] = useState<any>({ totalRevenue: 'LKR 0', totalStudents: 0, pendingConfirmations: 0 });
    const [selectedBoardingId, setSelectedBoardingId] = useState<string | null>(null);
    const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
    const [boardingTitle, setBoardingTitle] = useState('');
@@ -267,6 +268,21 @@ const OwnerDashboard = () => {
    }, [apiBase, userProfile]);
 
    useEffect(() => {
+      const fetchOwnerStats = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          const res = await fetch(`${apiBase}/api/payments/owner/stats`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (res.ok) setOwnerStats(data);
+        } catch { /* ignore */ }
+      };
+      if (activeTab === 'overview') fetchOwnerStats();
+   }, [activeTab]);
+
+   useEffect(() => {
       const fetchOwnerPayments = async () => {
         try {
           const token = localStorage.getItem('token');
@@ -287,6 +303,27 @@ const OwnerDashboard = () => {
               date: new Date(b.createdAt).toLocaleDateString(),
               type: b.paymentId ? 'Card' : 'Unpaid',
             })));
+            const unique = new Map<string, any>();
+            data.forEach((b: any) => {
+              if (b.student?._id) {
+                const sid = b.student._id;
+                if (!unique.has(sid)) {
+                  unique.set(sid, {
+                    id: sid,
+                    name: `${b.student.firstName || ''} ${b.student.lastName || ''}`.trim() || 'Unknown',
+                    phone: b.student.email || '',
+                    boarding: (b.listing as any)?.title || 'N/A',
+                    faculty: '-',
+                    university: '-',
+                    status: b.paymentStatus === 'paid' ? 'Paid' : 'Unpaid',
+                  });
+                } else if (b.paymentStatus !== 'paid') {
+                  const existing = unique.get(sid);
+                  existing.status = 'Unpaid';
+                }
+              }
+            });
+            setMyStudents(Array.from(unique.values()));
           }
         } catch { /* ignore */ }
       };
@@ -515,7 +552,7 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Revenue</p>
-                        <h4 className="text-4xl font-display font-bold text-black">LKR 0</h4>
+                        <h4 className="text-4xl font-display font-bold text-black">{ownerStats.totalRevenue}</h4>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>
@@ -526,7 +563,7 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total Students</p>
-                        <h4 className="text-4xl font-display font-bold">0 Stays</h4>
+                        <h4 className="text-4xl font-display font-bold">{ownerStats.totalStudents} Stays</h4>
                         <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>
@@ -537,7 +574,7 @@ const OwnerDashboard = () => {
                      </div>
                      <div className="space-y-2">
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Pending Actions</p>
-                        <h4 className="text-4xl font-display font-bold text-black">0 Items</h4>
+                        <h4 className="text-4xl font-display font-bold text-black">{ownerStats.pendingConfirmations} Item{ownerStats.pendingConfirmations !== 1 ? 's' : ''}</h4>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">-</p>
                      </div>
                   </motion.div>

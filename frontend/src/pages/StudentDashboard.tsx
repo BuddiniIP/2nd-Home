@@ -127,12 +127,25 @@ const StudentDashboard = () => {
             listingTitle: b.listing?.title || 'Boarding',
           }));
           setPayments(mapped);
-          if (sessionStorage.getItem('paymentReturn') === 'true') {
-            sessionStorage.removeItem('paymentReturn');
-            const justPaid = mapped.find(p => p.paymentStatus === 'paid');
-            if (justPaid) {
-              setShowPaySuccess(true);
-            }
+          const params = new URLSearchParams(location.search);
+          const sessionId = params.get('session_id');
+          const paymentStatus = params.get('payment');
+          if (paymentStatus === 'success' && sessionId) {
+            try {
+              const token = localStorage.getItem('token');
+              if (token) {
+                const verifyRes = await fetch(`${apiBase}/api/payments/verify-session`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ sessionId }),
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyData.paid) {
+                  setShowPaySuccess(true);
+                  window.history.replaceState({}, '', `${window.location.pathname}?tab=payments`);
+                }
+              }
+            } catch { /* ignore */ }
           }
         }
       } catch { /* ignore */ }

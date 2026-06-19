@@ -21,6 +21,12 @@ const bookingSchema = new mongoose.Schema(
       default: "pending",
     },
 
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "processing", "paid", "failed", "cancelled"],
+      default: "unpaid",
+    },
+
     amount: {
       type: Number,
       required: true,
@@ -36,11 +42,8 @@ const bookingSchema = new mongoose.Schema(
       default: null,
     },
 
-    paymentStatus: {
-      type: String,
-      enum: ["unpaid", "processing", "paid", "failed"],
-      default: "unpaid",
-    },
+    month: { type: Number, default: null },
+    year: { type: Number, default: null },
   },
   { timestamps: true }
 );
@@ -49,5 +52,6 @@ bookingSchema.index({ student: 1 });
 bookingSchema.index({ listing: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ createdAt: -1 });
+bookingSchema.index({ student: 1, listing: 1, month: 1, year: 1 });
 
 export default mongoose.model("Booking", bookingSchema);

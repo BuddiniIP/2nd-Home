@@ -26,7 +26,22 @@ const StudentDashboard = () => {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
-  const [showRawSaved, setShowRawSaved] = useState(false);
+  const [currentBoarding, setCurrentBoarding] = useState<{ current: any[]; previous: any[] }>({ current: [], previous: [] });
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
+  const [payMsg, setPayMsg] = useState<string | null>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [payLoading, setPayLoading] = useState(false);
+  const [bookLoading, setBookLoading] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [payFilter, setPayFilter] = useState<'all' | 'paid' | 'unpaid' | 'booked'>('all');
+  const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>({
+    totalSpent: "LKR 0",
+    unpaidBookings: [],
+    currentStays: [],
+  });
+  const [showPaySuccess, setShowPaySuccess] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -66,7 +81,7 @@ const StudentDashboard = () => {
       } catch { /* ignore */ }
     };
     if (activeTab === 'overview') fetchStats();
-  }, [activeTab]);
+  }, [activeTab, refreshKey]);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -102,7 +117,23 @@ const StudentDashboard = () => {
     };
 
     if (activeTab === 'saved') fetchSaved();
-  }, [activeTab]);
+  }, [activeTab, refreshKey]);
+
+  useEffect(() => {
+    const fetchCurrent = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch(`${apiBase}/api/students/current`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && data) setCurrentBoarding(data);
+        else setCurrentBoarding({ current: [], previous: [] });
+      } catch { setCurrentBoarding({ current: [], previous: [] }); }
+    };
+    if (activeTab === 'current') fetchCurrent();
+  }, [activeTab, refreshKey]);
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -113,19 +144,28 @@ const StudentDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (res.ok && Array.isArray(data)) {
-          const mapped = data.map((b: any) => ({
-            id: b._id,
-            _id: b._id,
-            amount: b.amount,
-            paymentStatus: b.paymentStatus || 'unpaid',
-            status: b.paymentStatus === 'paid' ? 'Paid' : 'Pending',
-            method: b.paymentId ? 'Card' : 'Unpaid',
-            date: new Date(b.createdAt).toLocaleDateString(),
-            time: new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            listing: b.listing,
-            listingTitle: b.listing?.title || 'Boarding',
-          }));
+        const rawBookings = Array.isArray(data) ? data : (data?.bookings || []);
+        if (res.ok) {
+          const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          const mapped = rawBookings.map((b: any) => {
+            const m = b.month || (b.startDate ? new Date(b.startDate).getMonth() + 1 : 1);
+            const y = b.year || (b.startDate ? new Date(b.startDate).getFullYear() : new Date().getFullYear());
+            return {
+              id: b._id,
+              _id: b._id,
+              amount: b.amount,
+              paymentStatus: b.paymentStatus || 'unpaid',
+              status: b.paymentStatus === 'paid' ? 'Paid' : 'Pending',
+              method: b.paymentId ? 'Card' : 'Unpaid',
+              date: new Date(b.createdAt).toLocaleDateString(),
+              time: new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              listing: b.listing,
+              listingTitle: b.listing?.title || 'Boarding',
+              month: m,
+              year: y,
+              monthName: monthNames[m],
+            };
+          });
           setPayments(mapped);
           const params = new URLSearchParams(location.search);
           const sessionId = params.get('session_id');
@@ -134,15 +174,32 @@ const StudentDashboard = () => {
             try {
               const token = localStorage.getItem('token');
               if (token) {
+                if (sessionStorage.getItem(`verified_${sessionId}`)) return;
+                sessionStorage.setItem(`verified_${sessionId}`, '1');
+                console.log('[Payment] verifying session:', sessionId);
                 const verifyRes = await fetch(`${apiBase}/api/payments/verify-session`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ sessionId }),
                 });
                 const verifyData = await verifyRes.json();
+                console.log('[Payment] verify result:', verifyData);
                 if (verifyData.paid) {
+                  navigate(`${window.location.pathname}?tab=payments`, { replace: true });
                   setShowPaySuccess(true);
-                  window.history.replaceState({}, '', `${window.location.pathname}?tab=payments`);
+                  setRefreshKey(k => k + 1);
+                  const savedRes = await fetch(`${apiBase}/api/students/saved`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  const savedData = await savedRes.json();
+                  if (savedRes.ok && Array.isArray(savedData)) {
+                    const map = new Map<string, any>();
+                    savedData.forEach((s: any) => {
+                      const lid = s.listing?._id || s.listing?.id || String(s.listing);
+                      if (!map.has(lid)) map.set(lid, s);
+                    });
+                    setSavedListings(Array.from(map.values()));
+                  }
                 }
               }
             } catch { /* ignore */ }
@@ -151,7 +208,7 @@ const StudentDashboard = () => {
       } catch { /* ignore */ }
     };
     if (activeTab === 'payments') fetchPayments();
-  }, [activeTab]);
+  }, [activeTab, refreshKey]);
 
 
 
@@ -186,18 +243,6 @@ const StudentDashboard = () => {
     { id: 'profile', label: 'Edit Profile', icon: <UserIcon size={18} /> },
   ];
 
-  const [currentBoarding, setCurrentBoarding] = useState<any>(null);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [payLoading, setPayLoading] = useState(false);
-  const [paySuccess, setPaySuccess] = useState<string | null>(null);
-  const [studentNotifications, setStudentNotifications] = useState<any[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<any>({
-    totalSpent: "LKR 0",
-    unpaidBookings: [],
-    currentStays: [],
-  });
-  const [showPaySuccess, setShowPaySuccess] = useState(false);
-
   const handlePayBooking = async (bookingId: string) => {
     setPayLoading(true);
     try {
@@ -225,6 +270,42 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleBookNow = async (listingId: string, price: number) => {
+    setBookLoading(listingId);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const now = new Date();
+      const end = new Date(now);
+      end.setMonth(end.getMonth() + 1);
+      const res = await fetch(`${apiBase}/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          listing: listingId,
+          startDate: now.toISOString(),
+          endDate: end.toISOString(),
+          amount: price,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSavedListings(prev => prev.map(s => {
+          const lid = s.listing?._id || s.listing?.id || String(s.listing);
+          if (lid === listingId) s.bookingStatus = 'unpaid';
+          return s;
+        }));
+        setActiveTab('payments');
+      } else {
+        alert(data.message || 'Failed to book');
+      }
+    } catch {
+      alert('Failed to create booking');
+    } finally {
+      setBookLoading(null);
+    }
+  };
+
   const handleRemoveSaved = async (savedId: string) => {
     try {
       const token = localStorage.getItem('token');
@@ -240,6 +321,31 @@ const StudentDashboard = () => {
         alert(data.message || 'Cannot remove saved listing');
       }
     } catch { /* ignore */ }
+  };
+
+  const handleRemoveStay = async (bookingId: string) => {
+    if (confirmRemove !== bookingId) { setConfirmRemove(bookingId); return; }
+    setRemoveLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${apiBase}/api/payments/${bookingId}/checkout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setCurrentBoarding(prev => {
+          const stay = prev.current.find((s: any) => s.bookingId === bookingId);
+          return {
+            current: prev.current.filter((s: any) => s.bookingId !== bookingId),
+            previous: stay ? [stay, ...prev.previous] : prev.previous,
+          };
+        });
+        setPayMsg('Stay moved to Previous Stays.');
+        setRefreshKey(k => k + 1);
+      }
+    } catch { /* ignore */ }
+    finally { setRemoveLoading(false); setConfirmRemove(null); }
   };
 
   const handleRemindOwner = () => {
@@ -365,7 +471,7 @@ const StudentDashboard = () => {
               </motion.div>
             )}
 
-            {activeTab === 'current' && (
+             {activeTab === 'current' && (
               <motion.div
                 key="current"
                 variants={containerVariants}
@@ -374,62 +480,117 @@ const StudentDashboard = () => {
                 exit="exit"
                 className="space-y-8"
               >
-                {currentBoarding ? (
-                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
-                     <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
-                        <img src={currentBoarding.image} alt={currentBoarding.title} className="w-full h-full object-cover" />
-                     </div>
-                     <div className="flex-1 space-y-8 py-4">
-                        <div className="space-y-4">
-                           <div className="flex items-center gap-3">
-                              <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
-                              <span className="px-4 py-1.5 bg-accent-orange/10 text-accent-orange rounded-full text-[8px] font-bold uppercase tracking-widest">Active</span>
-                           </div>
-                           <h2 className="text-4xl font-display font-bold tracking-tight">{currentBoarding.title}</h2>
-                           <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
-                              <MapPin size={16} className="text-accent-orange" />
-                              {currentBoarding.location}
-                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-8 py-6 border-y border-gray-50">
-                           <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
-                              <p className="font-bold text-black">{currentBoarding.owner}</p>
-                           </div>
-                           <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
-                              <p className="font-bold text-black">LKR {currentBoarding.monthlyRent?.toLocaleString() || 0}</p>
-                           </div>
-                           <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
-                              <p className="font-bold text-black">{currentBoarding.startDate}</p>
-                           </div>
-                           <div className="space-y-2">
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
-                              <p className="font-bold text-black">{currentBoarding.phone}</p>
-                           </div>
-                        </div>
-
-                        <div className="flex gap-4">
-                           <button className="flex-1 bg-black text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all">
-                              View Full Agreement
-                           </button>
-                           <button className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
-                              <Phone size={24} />
-                           </button>
-                        </div>
-                     </div>
+                {payMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-2xl font-medium text-sm flex items-center gap-3"
+                  >
+                    <CheckCircle2 size={20} className="text-green-600 shrink-0" />
+                    {payMsg}
+                    <button onClick={() => setPayMsg(null)} className="ml-auto text-green-500 hover:text-green-700">&times;</button>
                   </motion.div>
-                ) : (
-                    <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
-                      <div className="w-24 h-24 bg-gray-50 rounded-full flex flex-col items-center justify-center mx-auto mb-6 text-gray-300">
-                        <HomeIcon size={32} />
-                      </div>
-                      <h3 className="font-display font-bold text-2xl mb-4 text-black">No Current Boarding</h3>
-                      <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't booked any boarding yet. Explore verified listings and find your second home!</p>
-                    </motion.div>
-                  )}
+                )}
+
+                {currentBoarding.current.length > 0 && (
+                  <div>
+                    <h3 className="text-2xl font-display font-bold mb-6 text-black">Current Stays</h3>
+                    <div className="space-y-6">
+                      {currentBoarding.current.map((stay: any) => (
+                        <motion.div key={stay.bookingId} variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
+                          <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
+                            <img src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 space-y-8 py-4">
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3">
+                                <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
+                                <span className="px-4 py-1.5 bg-accent-orange/10 text-accent-orange rounded-full text-[8px] font-bold uppercase tracking-widest">Active</span>
+                              </div>
+                              <h2 className="text-4xl font-display font-bold tracking-tight">{stay.title}</h2>
+                              <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+                                <MapPin size={16} className="text-accent-orange" />
+                                {stay.location}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-6 py-6 border-y border-gray-50">
+                              <div className="space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
+                                <p className="font-bold text-black">{stay.owner}</p>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
+                                <p className="font-bold text-black">LKR {stay.monthlyRent?.toLocaleString() || 0}</p>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
+                                <p className="font-bold text-black">{stay.startDate}</p>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
+                                <p className="font-bold text-black">{stay.phone}</p>
+                              </div>
+                              <div className="space-y-2">
+                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Boarded / Capacity</p>
+                                 <p className="font-bold text-black">{stay.currentOccupants || 0} / {stay.capacity || 0}</p>
+                               </div>
+                            </div>
+                            <div className="flex gap-4">
+                              <button
+                                onClick={() => handleRemoveStay(stay.bookingId)}
+                                disabled={removeLoading && confirmRemove === stay.bookingId}
+                                className="flex-1 bg-red-500 text-white py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50"
+                              >
+                                {removeLoading && confirmRemove === stay.bookingId
+                                  ? 'Removing...'
+                                  : confirmRemove === stay.bookingId
+                                    ? 'Are you sure? Click again to confirm'
+                                    : 'Remove Boarding'}
+                              </button>
+                              <button className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all">
+                                <Phone size={24} />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentBoarding.previous.length > 0 && (
+                  <div className="mt-12">
+                    <h3 className="text-2xl font-display font-bold mb-6 text-gray-500">Previous Stays</h3>
+                    <div className="space-y-4">
+                      {currentBoarding.previous.map((stay: any) => (
+                        <motion.div key={stay.bookingId} variants={itemVariants} className="bg-gray-50 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row gap-6 items-start opacity-70">
+                          <div className="w-full sm:w-32 h-24 rounded-2xl overflow-hidden shrink-0">
+                            <img src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <h4 className="font-display font-bold text-lg text-black">{stay.title}</h4>
+                            <p className="text-sm text-gray-500 font-medium flex items-center gap-1"><MapPin size={14} /> {stay.location}</p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
+                              <span>Owner: {stay.owner}</span>
+                              <span>LKR {stay.monthlyRent?.toLocaleString() || 0}/mo</span>
+                              <span>Check-in: {stay.startDate}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {currentBoarding.current.length === 0 && currentBoarding.previous.length === 0 && (
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex flex-col items-center justify-center mx-auto mb-6 text-gray-300">
+                      <HomeIcon size={32} />
+                    </div>
+                    <h3 className="font-display font-bold text-2xl mb-4 text-black">No Boarding History</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't booked any boarding yet. Explore verified listings and find your second home!</p>
+                  </motion.div>
+                )}
               </motion.div>
             )}
 
@@ -468,77 +629,112 @@ const StudentDashboard = () => {
                   </motion.div>
                 )}
 
+               <div className="flex gap-2 mb-4 flex-wrap">
+                  {(['all', 'unpaid', 'paid', 'booked'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setPayFilter(f)}
+                      className={`px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${payFilter === f ? 'bg-black text-white' : 'bg-white text-gray-400 hover:bg-gray-50'}`}
+                    >
+                      {f === 'all' ? 'All' : f === 'paid' ? 'Paid' : f === 'unpaid' ? 'Unpaid' : 'Booked'}
+                    </button>
+                  ))}
+                </div>
+
                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
                   <div className="flex justify-between items-center mb-10">
                      <h3 className="text-2xl font-display font-bold">Payment History</h3>
                   </div>
 
-                  {(dashboardStats.unpaidBookings?.length > 0) && (
-                    <div className="mb-10 pb-10 border-b border-gray-50">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Select a booking to pay</p>
-                      <div className="space-y-4">
-                        {dashboardStats.unpaidBookings.map((ub: any) => (
-                          <div key={ub._id} className="flex items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl transition-all border border-transparent hover:border-gray-50">
-                            <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
-                                <Clock size={24} />
+                  {(() => {
+                    const now = new Date();
+                    const curMonth = now.getMonth() + 1;
+                    const curYear = now.getFullYear();
+                    const unpaid = payments.filter(p =>
+                      (p.paymentStatus === 'unpaid' || p.paymentStatus === 'processing') &&
+                      p.month === curMonth && p.year === curYear
+                    );
+                    if (payFilter !== 'paid' && unpaid.length > 0) {
+                      return (
+                        <div className="mb-10 pb-10 border-b border-gray-50">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Pending Payments</p>
+                          <div className="space-y-4">
+                            {unpaid.map((ub: any) => (
+                              <div key={ub._id} className="flex items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl transition-all border border-transparent hover:border-gray-50">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
+                                    <Clock size={24} />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-black">{ub.listingTitle}</h4>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{ub.monthName} {ub.year} • LKR {ub.amount?.toLocaleString()}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handlePayBooking(ub._id)}
+                                  disabled={payLoading}
+                                  className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all disabled:opacity-50"
+                                >
+                                  {payLoading ? 'Redirecting...' : 'Pay Now'}
+                                </button>
                               </div>
-                              <div>
-                                <h4 className="font-bold text-black">{ub.listingTitle}</h4>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">LKR {ub.amount?.toLocaleString()} • {ub.listingAddress || 'Address not set'}</p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handlePayBooking(ub._id)}
-                              disabled={payLoading}
-                              className="bg-black text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all disabled:opacity-50"
-                            >
-                              {payLoading ? 'Redirecting...' : 'Pay Now'}
-                            </button>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {(payFilter === 'all' || payFilter === 'paid') && (
+                    <div className="space-y-6">
+                      {(() => {
+                        const paid = payments.filter(p => p.paymentStatus === 'paid');
+                        if (paid.length === 0) return <div className="text-center py-10 text-gray-400 font-medium"><p>No payment history yet.</p></div>;
+                        const groups: Record<string, typeof paid> = {};
+                        paid.forEach(p => {
+                          const key = `${p.monthName} ${p.year}`;
+                          if (!groups[key]) groups[key] = [];
+                          groups[key].push(p);
+                        });
+                        return Object.entries(groups).sort((a, b) => {
+                          const [aM, aY] = a[0].split(' ');
+                          const [bM, bY] = b[0].split(' ');
+                          const monthIdx = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                          return (Number(bY) - Number(aY)) || (monthIdx.indexOf(bM) - monthIdx.indexOf(aM));
+                        }).map(([month, items]) => (
+                          <div key={month}>
+                            <h4 className="text-lg font-display font-bold text-black mb-4 pb-2 border-b border-gray-100">{month}</h4>
+                            <div className="space-y-3">
+                              {items.map((payment) => (
+                                <motion.div variants={itemVariants} key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group">
+                                  <div className="flex items-center gap-5 mb-3 md:mb-0">
+                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
+                                      <CheckCircle2 size={20} />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-black">{payment.listingTitle}</h4>
+                                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">LKR {payment.amount.toLocaleString()} • {payment.monthName} {payment.year}</p>
+                                      <p className="text-[9px] text-gray-300 font-medium">{payment.date} • {payment.time}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">{payment.method}</span>
+                                    <span className="flex items-center gap-1.5 text-green-600 font-bold text-[10px] uppercase tracking-widest"><CheckCircle2 size={14} /> Paid</span>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   )}
-
-                  <div className="space-y-6">
-                     {(() => {
-                       const paid = payments.filter(p => p.paymentStatus === 'paid');
-                       if (paid.length === 0) return <div className="text-center py-10 text-gray-400 font-medium"><p>No payment history yet.</p></div>;
-                       const groups: Record<string, typeof paid> = {};
-                       paid.forEach(p => {
-                         const d = new Date(p.date);
-                         const key = `${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
-                         if (!groups[key]) groups[key] = [];
-                         groups[key].push(p);
-                       });
-                       return Object.entries(groups).map(([month, items]) => (
-                         <div key={month}>
-                           <h4 className="text-lg font-display font-bold text-black mb-4 pb-2 border-b border-gray-100">{month}</h4>
-                           <div className="space-y-3">
-                             {items.map((payment) => (
-                               <motion.div variants={itemVariants} key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group">
-                                 <div className="flex items-center gap-5 mb-3 md:mb-0">
-                                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
-                                     <CheckCircle2 size={20} />
-                                   </div>
-                                   <div>
-                                     <h4 className="font-bold text-black">LKR {payment.amount.toLocaleString()}</h4>
-                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{payment.listingTitle}</p>
-                                     <p className="text-[9px] text-gray-300 font-medium">{payment.date} • {payment.time}</p>
-                                   </div>
-                                 </div>
-                                 <div className="flex items-center gap-4">
-                                   <span className="px-4 py-1.5 bg-gray-100 rounded-full text-[9px] font-bold uppercase tracking-widest text-black">{payment.method}</span>
-                                   <span className="flex items-center gap-1.5 text-green-600 font-bold text-[10px] uppercase tracking-widest"><CheckCircle2 size={14} /> Paid</span>
-                                 </div>
-                               </motion.div>
-                             ))}
-                           </div>
-                         </div>
-                       ));
-                     })()}
-                  </div>
+                  {payFilter !== 'all' && payFilter !== 'paid' && (
+                    <div className="text-center py-10 text-gray-400 font-medium">
+                      <p>{payFilter === 'unpaid' ? 'No unpaid bookings.' : 'No booked boardings.'}</p>
+                    </div>
+                  )}
                </div>
 
               </motion.div>
@@ -569,37 +765,51 @@ const StudentDashboard = () => {
                     <p className="text-gray-500 max-w-sm mx-auto font-medium">You haven't saved any boardings yet.</p>
                   </motion.div>
                 ) : (
-                  savedListings.map((s) => {
+                    savedListings.map((s: any) => {
                     const listing = s.listing || {};
                     const lid = listing._id || listing.id || s.listing;
+                    const status = s.bookingStatus;
                     return (
                       <motion.div variants={itemVariants} key={s._id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50">
                         <div className="flex gap-4 items-center">
-                          <div className="w-28 h-20 rounded-[1rem] overflow-hidden bg-gray-100">
+                          <div className="w-28 h-20 rounded-[1rem] overflow-hidden bg-gray-100 relative">
                             <img src={listing.images?.[0] || '/images/house_white.jpg'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
+                            {status === 'paid' && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <span className="bg-green-500 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">Booked</span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1">
                             <h4 className="font-bold text-lg">{listing.title || 'Untitled Listing'}</h4>
                             <p className="text-sm text-gray-500 mt-2">{listing.location?.address || listing.address || ''}</p>
-                            <div className="mt-4 flex gap-3">
-                              <Link to={`/boarding/${lid}`} className="px-4 py-2 bg-black text-white rounded-full text-xs font-bold">View</Link>
-                              <button onClick={() => handleRemoveSaved(s._id)} className="px-4 py-2 bg-red-500 text-white rounded-full text-xs font-bold hover:bg-red-600 transition-all">Remove</button>
+                            <div className="mt-4 flex gap-2 flex-wrap">
+                              <Link to={`/boarding/${lid}`} className="px-3 py-2 bg-black text-white rounded-full text-[10px] font-bold">View</Link>
+                              {(!status || status === 'cancelled') ? (
+                                <button
+                                  onClick={() => handleBookNow(lid, listing.price || 0)}
+                                  disabled={bookLoading === lid}
+                                  className="px-3 py-2 bg-accent-orange text-white rounded-full text-[10px] font-bold hover:bg-black transition-all disabled:opacity-50"
+                                >
+                                  {bookLoading === lid ? 'Booking...' : 'Book Now'}
+                                </button>
+                              ) : status === 'paid' ? (
+                                <span className="px-3 py-2 bg-green-100 text-green-700 rounded-full text-[10px] font-bold">Booked</span>
+                              ) : (
+                                <button
+                                  onClick={() => { setActiveTab('payments'); }}
+                                  className="px-3 py-2 bg-accent-orange text-white rounded-full text-[10px] font-bold hover:bg-black transition-all"
+                                >
+                                  Pay Now
+                                </button>
+                              )}
+                              <button onClick={() => handleRemoveSaved(s._id)} className="px-3 py-2 bg-red-500 text-white rounded-full text-[10px] font-bold hover:bg-red-600 transition-all">Remove</button>
                             </div>
                           </div>
                         </div>
                       </motion.div>
                     );
                   })
-                )}
-                {savedListings.length > 0 && (
-                  <div className="col-span-1 md:col-span-2 mt-4">
-                    <button onClick={() => setShowRawSaved(v => !v)} className="text-xs font-bold text-accent-orange">
-                      {showRawSaved ? 'Hide raw saved data' : 'Show raw saved data'}
-                    </button>
-                    {showRawSaved && (
-                      <pre className="text-xs p-4 bg-black/5 rounded mt-2 overflow-auto max-h-60">{JSON.stringify(savedListings, null, 2)}</pre>
-                    )}
-                  </div>
                 )}
               </motion.div>
             )}

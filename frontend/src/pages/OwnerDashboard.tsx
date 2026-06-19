@@ -119,8 +119,10 @@ const OwnerDashboard = () => {
   const [ownerNotifications, setOwnerNotifications] = useState<any[]>([]);
   const [myBoardings, setMyBoardings] = useState<any[]>([]);
   const [studentPayments, setStudentPayments] = useState<any[]>([]);
-  const [ownerStats, setOwnerStats] = useState<any>({ totalRevenue: 'LKR 0', totalStudents: 0, pendingConfirmations: 0 });
-   const [selectedBoardingId, setSelectedBoardingId] = useState<string | null>(null);
+   const [ownerStats, setOwnerStats] = useState<any>({ totalRevenue: 'LKR 0', totalStudents: 0, activeStays: 0, pendingConfirmations: 0 });
+   const [ownerRefreshKey, setOwnerRefreshKey] = useState(0);
+   const [recountingBoardingId, setRecountingBoardingId] = useState<string | null>(null);
+    const [selectedBoardingId, setSelectedBoardingId] = useState<string | null>(null);
    const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
    const [boardingTitle, setBoardingTitle] = useState('');
    const [boardingDescription, setBoardingDescription] = useState('');
@@ -131,7 +133,7 @@ const OwnerDashboard = () => {
    const [boardingLatitude, setBoardingLatitude] = useState('');
    const [boardingLongitude, setBoardingLongitude] = useState('');
    const [boardingCapacity, setBoardingCapacity] = useState('');
-   const [remainingBeds, setRemainingBeds] = useState('');
+   
    const [selectedGenderPreference, setSelectedGenderPreference] = useState('mixed');
    const [billsIncluded, setBillsIncluded] = useState<'yes' | 'no'>('yes');
    const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
@@ -166,7 +168,6 @@ const OwnerDashboard = () => {
       setBoardingLatitude(String(latitude));
       setBoardingLongitude(String(longitude));
       setBoardingCapacity(String(boarding.capacity ?? ''));
-      setRemainingBeds(String(boarding.isAvailable ? boarding.capacity ?? '' : 0));
       setBoardingError('');
       setBoardingSuccess('');
       setActiveTab('add-boarding');
@@ -184,7 +185,6 @@ const OwnerDashboard = () => {
       setBoardingLatitude('');
       setBoardingLongitude('');
       setBoardingCapacity('');
-      setRemainingBeds('');
       setSelectedGenderPreference('mixed');
       setBillsIncluded('yes');
       setSelectedFeatures([]);
@@ -253,6 +253,7 @@ const OwnerDashboard = () => {
                   images: boarding.images || [],
                   price: Number(boarding.price || 0),
                   capacity: Number(boarding.capacity || 0),
+                  currentOccupants: Number(boarding.currentOccupants || 0),
                   available: Boolean(boarding.isAvailable),
                   amenities: boarding.amenities || [],
                   raw: boarding,
@@ -264,8 +265,8 @@ const OwnerDashboard = () => {
          }
       };
 
-      fetchOwnerBoardings();
-   }, [apiBase, userProfile]);
+      if (activeTab === 'my-boardings' || activeTab === 'overview') fetchOwnerBoardings();
+   }, [apiBase, userProfile, activeTab, ownerRefreshKey]);
 
    useEffect(() => {
       const fetchOwnerStats = async () => {
@@ -280,6 +281,12 @@ const OwnerDashboard = () => {
         } catch { /* ignore */ }
       };
       if (activeTab === 'overview') fetchOwnerStats();
+   }, [activeTab, ownerRefreshKey]);
+
+   useEffect(() => {
+      if (activeTab !== 'overview' && activeTab !== 'my-boardings') return;
+      const interval = setInterval(() => setOwnerRefreshKey(k => k + 1), 10000);
+      return () => clearInterval(interval);
    }, [activeTab]);
 
    useEffect(() => {
@@ -327,7 +334,7 @@ const OwnerDashboard = () => {
           }
         } catch { /* ignore */ }
       };
-      if (activeTab === 'payments') fetchOwnerPayments();
+      if (activeTab === 'payments' || activeTab === 'my-students') fetchOwnerPayments();
    }, [activeTab]);
 
    const toggleFeature = (feature: string) => {
@@ -382,8 +389,7 @@ const OwnerDashboard = () => {
          const priceValue = Number(boardingPrice);
          const capacityValue = Number(boardingCapacity);
          const latitudeValue = Number(boardingLatitude);
-         const longitudeValue = Number(boardingLongitude);
-         const remainingBedsValue = Number(remainingBeds);
+          const longitudeValue = Number(boardingLongitude);
 
          if (!boardingTitle.trim()) throw new Error('Property name is required.');
          if (!boardingAddress.trim()) throw new Error('Location / address is required.');
@@ -422,7 +428,7 @@ const OwnerDashboard = () => {
                   ...selectedFeatures,
                ].filter(Boolean),
                capacity: capacityValue,
-               isAvailable: remainingBedsValue > 0,
+               isAvailable: capacityValue > 0,
             }),
          });
 
@@ -482,6 +488,30 @@ const OwnerDashboard = () => {
       } catch (error: any) {
          alert(error.message || 'Failed to delete boarding listing.');
       }
+   };
+
+   const handleRecount = async (boardingId: string) => {
+      setRecountingBoardingId(boardingId);
+      try {
+         const token = localStorage.getItem('token');
+         if (!token) return;
+         const res = await fetch(`${apiBase}/api/boardings/${boardingId}/recount`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+         });
+         const data = await res.json();
+         if (res.ok) {
+            setMyBoardings((current) =>
+               current.map((b) =>
+                  b.id === data.id
+                     ? { ...b, currentOccupants: Number(data.currentOccupants || 0), available: Boolean(data.isAvailable) }
+                     : b
+               )
+            );
+            setOwnerRefreshKey(k => k + 1);
+         }
+      } catch { /* ignore */ }
+      finally { setRecountingBoardingId(null); }
    };
 
   return (
@@ -562,9 +592,9 @@ const OwnerDashboard = () => {
                         <Users size={24} />
                      </div>
                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total Students</p>
-                        <h4 className="text-4xl font-display font-bold">{ownerStats.totalStudents} Stays</h4>
-                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">-</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active Stays</p>
+                        <h4 className="text-4xl font-display font-bold">{ownerStats.activeStays} Stay{ownerStats.activeStays !== 1 ? 's' : ''}</h4>
+                        <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{ownerStats.totalStudents} Total Students</p>
                      </div>
                   </motion.div>
 
@@ -728,15 +758,15 @@ const OwnerDashboard = () => {
                                           </div>
                                        </div>
 
-                                       <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-50">
-                                          <div>
-                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rent</p>
-                                             <p className="text-lg font-bold text-accent-orange">LKR {boarding.price.toLocaleString()}</p>
-                                          </div>
-                                          <div>
-                                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Capacity</p>
-                                             <p className="text-lg font-bold">{boarding.capacity} beds</p>
-                                          </div>
+                                        <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-50">
+                                           <div>
+                                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Monthly Rent</p>
+                                              <p className="text-lg font-bold text-accent-orange">LKR {boarding.price.toLocaleString()}</p>
+                                           </div>
+                                             <div>
+                                                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Boarded / Capacity</p>
+                                                <p className="text-lg font-bold">{boarding.currentOccupants} / {boarding.capacity}</p>
+                                             </div>
                                        </div>
 
                                        <div className="flex flex-wrap gap-2">
@@ -755,14 +785,22 @@ const OwnerDashboard = () => {
                                           >
                                              Manage Property
                                           </button>
-                                          <button
-                                             type="button"
-                                             onClick={() => handleDeleteBoarding(boarding.id)}
-                                             className="px-5 py-4 rounded-full border border-red-200 text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
-                                          >
-                                             Delete
-                                          </button>
-                                       </div>
+                                           <button
+                                              type="button"
+                                              onClick={() => handleRecount(boarding.id)}
+                                              disabled={recountingBoardingId === boarding.id}
+                                              className="px-4 py-4 rounded-full border border-blue-200 text-blue-500 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all disabled:opacity-50"
+                                           >
+                                              {recountingBoardingId === boarding.id ? '...' : 'Recount'}
+                                           </button>
+                                           <button
+                                              type="button"
+                                              onClick={() => handleDeleteBoarding(boarding.id)}
+                                              className="px-5 py-4 rounded-full border border-red-200 text-red-500 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                                           >
+                                              Delete
+                                           </button>
+                                        </div>
                                     </div>
                                  </motion.div>
                               ))}
@@ -931,48 +969,36 @@ const OwnerDashboard = () => {
                           </div>
                        </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest University</label>
-                             <select
-                               value={boardingUniversity}
-                               onChange={(e) => setBoardingUniversity(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
-                               required
-                             >
-                               <option value="">Select university</option>
-                               {universities.map((university) => (
-                                 <option key={university} value={university}>{university}</option>
-                               ))}
-                             </select>
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
-                             <select
-                               value={boardingFaculty}
-                               onChange={(e) => setBoardingFaculty(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
-                               required
-                             >
-                               <option value="">Select faculty</option>
-                               {faculties.map((faculty) => (
-                                 <option key={faculty} value={faculty}>{faculty}</option>
-                               ))}
-                             </select>
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Availability</label>
-                             <input
-                               type="number"
-                               min="0"
-                               placeholder="Beds remaining"
-                               value={remainingBeds}
-                               onChange={(e) => setRemainingBeds(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
-                               required
-                             />
-                          </div>
-                       </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                           <div className="space-y-2">
+                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest University</label>
+                              <select
+                                value={boardingUniversity}
+                                onChange={(e) => setBoardingUniversity(e.target.value)}
+                                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                required
+                              >
+                                <option value="">Select university</option>
+                                {universities.map((university) => (
+                                  <option key={university} value={university}>{university}</option>
+                                ))}
+                              </select>
+                           </div>
+                           <div className="space-y-2">
+                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
+                              <select
+                                value={boardingFaculty}
+                                onChange={(e) => setBoardingFaculty(e.target.value)}
+                                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                required
+                              >
+                                <option value="">Select faculty</option>
+                                {faculties.map((faculty) => (
+                                  <option key={faculty} value={faculty}>{faculty}</option>
+                                ))}
+                              </select>
+                           </div>
+                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                           <div className="space-y-2">
@@ -1012,12 +1038,12 @@ const OwnerDashboard = () => {
                              />
                           </div>
                           <div className="space-y-2">
-                             <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Total Beds</label>
+                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Capacity</label>
                              <input
                                type="number"
                                min="1"
-                               placeholder="4"
-                               value={boardingCapacity}
+                                placeholder="Max students"
+                                value={boardingCapacity}
                                onChange={(e) => setBoardingCapacity(e.target.value)}
                                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required

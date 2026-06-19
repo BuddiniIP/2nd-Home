@@ -1,5 +1,6 @@
 import { RequestHandler } from 'express';
 import Listing from '../models/Listing.js';
+import Booking from '../models/Booking.js';
 import { createListingSchema, updateListingSchema, queryListingSchema } from '../validation/listingSchemas.js';
 import mongoose from 'mongoose';
 import multer from 'multer';
@@ -58,6 +59,7 @@ const mapListing = (doc: any) => ({
     : null,
   amenities: doc.amenities || [],
   capacity: doc.capacity,
+  currentOccupants: doc.currentOccupants,
   isAvailable: doc.isAvailable,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
@@ -192,6 +194,34 @@ export const deleteBoarding: RequestHandler = async (req: any, res, next) => {
 
     await doc.deleteOne();
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const recountOccupants: RequestHandler = async (req: any, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
+
+    const listing = await Listing.findById(id).exec();
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    const isOwner = listing.owner.toString() === req.user.id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    const activeCount = await Booking.countDocuments({
+      listing: id,
+      paymentStatus: 'paid',
+      status: { $ne: 'cancelled' },
+    });
+
+    listing.currentOccupants = activeCount;
+    listing.isAvailable = listing.currentOccupants < listing.capacity;
+    await listing.save();
+
+    res.json(mapListing(listing));
   } catch (err) {
     next(err);
   }

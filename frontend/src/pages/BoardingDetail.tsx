@@ -38,6 +38,7 @@ type BoardingResponse = {
   } | null;
   amenities: string[];
   capacity: number;
+  currentOccupants: number;
   isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
@@ -88,6 +89,28 @@ const BoardingDetail = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [isAlreadySaved, setIsAlreadySaved] = useState(false);
 
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!id) return;
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch(`${apiBase}/api/students/saved`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data)) {
+          const already = data.some((s: any) => {
+            const lid = s.listing?._id || s.listing?.id || String(s.listing);
+            return lid === id;
+          });
+          setIsAlreadySaved(already);
+        }
+      } catch { /* ignore */ }
+    };
+    checkSaved();
+  }, [apiBase, id]);
+
   const handleSaveListing = async () => {
     if (!boarding?.id) return;
     if (actionLoading) return;
@@ -96,19 +119,45 @@ const BoardingDetail = () => {
     setActionLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${apiBase}/api/students/saved`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ listing: boarding.id }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to save listing');
+      if (isAlreadySaved) {
+        const res = await fetch(`${apiBase}/api/students/saved`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data)) {
+          const found = data.find((s: any) => {
+            const lid = s.listing?._id || s.listing?.id || String(s.listing);
+            return lid === boarding.id;
+          });
+          if (found) {
+            const delRes = await fetch(`${apiBase}/api/students/saved/${found._id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (delRes.ok) {
+              setIsAlreadySaved(false);
+              setActionMessage('Listing removed from saved.');
+              setActionLoading(false);
+              return;
+            }
+          }
+        }
+      } else {
+        const response = await fetch(`${apiBase}/api/students/saved`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ listing: boarding.id }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to save listing');
+        }
+        setIsAlreadySaved(true);
+        setActionMessage('Listing saved successfully.');
       }
-      setActionMessage('Listing saved successfully.');
     } catch (err: any) {
       setActionError(err.message || 'Failed to save listing.');
     } finally {
@@ -353,8 +402,8 @@ const BoardingDetail = () => {
                       <p className="mt-2 text-3xl font-display font-bold text-black">LKR {boarding.price.toLocaleString()}</p>
                     </div>
                     <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Capacity</p>
-                      <p className="mt-2 text-3xl font-display font-bold text-black">{boarding.capacity}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Boarded / Capacity</p>
+                      <p className="mt-2 text-3xl font-display font-bold text-black">{boarding.currentOccupants || 0} / {boarding.capacity}</p>
                     </div>
                     <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
                       <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Posted</p>
@@ -448,7 +497,7 @@ const BoardingDetail = () => {
                   <div className="rounded-[2rem] bg-white/10 backdrop-blur-sm p-5 space-y-3">
                     <div className="flex items-center gap-3 text-sm font-bold">
                       <Users size={18} />
-                      <span>{boarding.capacity} student{boarding.capacity > 1 ? 's' : ''}</span>
+                      <span>{boarding.currentOccupants || 0} / {boarding.capacity} boarded</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm font-bold">
                       <Bed size={18} />
@@ -473,9 +522,9 @@ const BoardingDetail = () => {
                       type="button"
                       disabled={actionLoading}
                       onClick={handleSaveListing}
-                      className="w-full rounded-full bg-white text-black py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`w-full rounded-full py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed ${isAlreadySaved ? 'bg-accent-orange text-white' : 'bg-white text-black'}`}
                     >
-                      {actionLoading ? 'Processing...' : 'Save listing'}
+                      {actionLoading ? 'Processing...' : isAlreadySaved ? 'Saved' : 'Save listing'}
                     </button>
                     {actionMessage && (
                       <p className="text-sm text-green-600 font-bold">{actionMessage}</p>

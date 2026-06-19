@@ -5,6 +5,7 @@ import {
   createBoarding,
   updateBoarding,
   deleteBoarding,
+  recountOccupants,
   listingImageUpload,
   uploadListingImages,
 } from '../controllers/listingController.js';
@@ -19,5 +20,6 @@ router.post('/upload-images', protect, listingImageUpload.array('images', 10), u
 router.post('/', protect, createBoarding);
 router.put('/:id', protect, updateBoarding);
 router.delete('/:id', protect, deleteBoarding);
+router.post('/:id/recount', protect, recountOccupants);
 
 export default router;

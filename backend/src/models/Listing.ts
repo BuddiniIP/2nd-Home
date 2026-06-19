@@ -10,6 +10,7 @@ export interface IListing extends Document {
   owner: mongoose.Types.ObjectId;
   amenities: string[];
   capacity: number;
+  currentOccupants: number;
   isAvailable: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +30,7 @@ const ListingSchema = new Schema<IListing>(
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     amenities: { type: [String], default: [] },
     capacity: { type: Number, default: 1 },
+    currentOccupants: { type: Number, default: 0 },
     isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }

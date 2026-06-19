@@ -48,6 +48,8 @@ const Search = () => {
             image: imagePath ? `${apiBase}${imagePath}` : '/images/house_orange.jpg',
             rating: 4.5,
             type: boarding.capacity > 1 ? 'double' : 'single',
+            currentOccupants: Number(boarding.currentOccupants || 0),
+            capacity: Number(boarding.capacity || 0),
             gender,
             faculty,
             university,
@@ -367,11 +369,14 @@ const Search = () => {
                   </div>
                   <div className="space-y-2 px-2">
                     <h3 className="text-xl font-display font-bold tracking-tight text-black group-hover:text-accent-orange transition-colors">{item.title}</h3>
-                    <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                       <MapPin size={12} className="text-accent-orange" />
-                       <span>{item.location}</span>
-                    </div>
-                    <div className="flex items-end justify-between pt-4">
+                     <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                        <MapPin size={12} className="text-accent-orange" />
+                        <span>{item.location}</span>
+                     </div>
+                     <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        {item.currentOccupants} / {item.capacity} boarded
+                     </div>
+                     <div className="flex items-end justify-between pt-4">
                        <p className="text-2xl font-display font-bold text-black">LKR {item.price.toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-1">/ mo</span></p>
                        <div className="bg-black text-white w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-accent-orange transition-colors shadow-lg shadow-black/5">
                           <ChevronDown className="-rotate-90" size={18} />

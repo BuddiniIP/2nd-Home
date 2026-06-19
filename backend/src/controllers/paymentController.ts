@@ -2,7 +2,114 @@ import { RequestHandler } from 'express';
 import { getStripe } from '../config/stripe.js';
 import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { FRONTEND_URL } from '../config/env.js';
+
+const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+export const ensureCurrentMonthBooking = async (studentId: string) => {
+  try {
+    const user = await User.findById(studentId).lean();
+    const now = new Date();
+    const curMonth = now.getMonth() + 1;
+    const curYear = now.getFullYear();
+
+    const allUnpaid = await Booking.find({
+      student: studentId,
+      paymentStatus: { $in: ['unpaid', 'processing'] },
+    }).sort({ createdAt: -1 }).lean();
+
+    const seen = new Map<string, number>();
+    const toDelete: string[] = [];
+    for (const b of allUnpaid) {
+      const lid = b.listing?.toString() || '';
+      const key = `${lid}_${b.month || ''}_${b.year || ''}`;
+      const idx = seen.get(key);
+      if (idx !== undefined) {
+        toDelete.push(b._id.toString());
+      } else {
+        seen.set(key, 0);
+      }
+    }
+
+    if (!user?.currentBoarding) {
+      if (allUnpaid.length > 1) {
+        const keepId = allUnpaid[0]._id;
+        for (const b of allUnpaid) {
+          if (b._id.toString() !== keepId.toString()) {
+            toDelete.push(b._id.toString());
+          }
+        }
+      }
+    } else {
+      const curListingId = user.currentBoarding.toString();
+      for (const b of allUnpaid) {
+        const lid = b.listing?.toString() || '';
+        const by = b.year || 0;
+        const bm = b.month || 0;
+        if (lid === curListingId && (by > curYear || (by === curYear && bm > curMonth))) {
+          toDelete.push(b._id.toString());
+        }
+      }
+    }
+
+    const uniqueIds = [...new Set(toDelete)];
+    if (uniqueIds.length > 0) {
+      await Booking.deleteMany({ _id: { $in: uniqueIds } });
+    }
+
+    if (user?.currentBoarding) {
+      const lastPaid = await Booking.findOne({
+        student: studentId,
+        listing: user.currentBoarding,
+        paymentStatus: 'paid',
+      }).sort({ year: -1, month: -1 }).lean();
+      if (lastPaid) {
+        const paidMonth = lastPaid.month || (lastPaid.startDate ? new Date(lastPaid.startDate).getMonth() + 1 : 0);
+        const paidYear = lastPaid.year || (lastPaid.startDate ? new Date(lastPaid.startDate).getFullYear() : 0);
+        if (paidYear < curYear || (paidYear === curYear && paidMonth < curMonth)) {
+          const exists = await Booking.findOne({
+            student: studentId,
+            listing: user.currentBoarding,
+            month: curMonth,
+            year: curYear,
+          });
+          if (!exists) {
+            const fromLastPaid = await Booking.findById(lastPaid._id).populate('listing', 'price');
+            const amount = (fromLastPaid as any)?.listing?.price || lastPaid.amount || 0;
+            const startDate = new Date(curYear, curMonth - 1, 1);
+            const endDate = new Date(curYear, curMonth, 0);
+            await Booking.create({
+              student: studentId,
+              listing: user.currentBoarding,
+              startDate, endDate, amount,
+              status: 'pending', paymentStatus: 'unpaid',
+              month: curMonth, year: curYear,
+            });
+          }
+        }
+      }
+    }
+  } catch { /* silently fail */ }
+};
+
+const notifyOwnerOnPayment = async (booking: any) => {
+  try {
+    const listing = await Listing.findById(booking.listing).lean();
+    if (!listing?.owner) return;
+    const student = await User.findById(booking.student).select('firstName lastName').lean();
+    const studentName = student ? `${student.firstName} ${student.lastName}` : 'A student';
+    await Notification.create({
+      recipient: listing.owner,
+      type: 'payment',
+      title: 'Payment Received',
+      message: `${studentName} has paid LKR ${booking.amount?.toLocaleString()} for ${(listing as any).title || 'boarding'}.`,
+      link: '/owner-dashboard?tab=payments',
+      relatedId: booking._id,
+    });
+  } catch { /* notify silently */ }
+};
 
 export const createCheckoutSession: RequestHandler = async (req, res, next) => {
   try {
@@ -71,12 +178,33 @@ export const verifySession: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    if (session.payment_status === 'paid') {
-      await Booking.findByIdAndUpdate(bookingId, {
-        paymentStatus: 'paid',
-        paymentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.id,
-        status: 'confirmed',
-      });
+    const isPaid = session.payment_status === 'paid' || session.status === 'complete';
+    if (isPaid) {
+      const existing = await Booking.findById(bookingId);
+      if (!existing) {
+        res.status(404).json({ message: 'Booking not found' });
+        return;
+      }
+
+      const isAlreadyProcessed = existing.paymentStatus === 'paid';
+
+      if (!isAlreadyProcessed) {
+        existing.paymentStatus = 'paid';
+        existing.paymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
+        existing.status = 'confirmed';
+        await existing.save();
+
+        await User.findByIdAndUpdate(existing.student, { currentBoarding: existing.listing });
+        await notifyOwnerOnPayment(existing);
+
+        const listingDoc = await Listing.findById(existing.listing);
+        if (listingDoc) {
+          listingDoc.currentOccupants += 1;
+          listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
+          await listingDoc.save();
+        }
+      }
+
       res.json({ verified: true, paid: true });
     } else {
       res.json({ verified: true, paid: false });
@@ -88,7 +216,10 @@ export const verifySession: RequestHandler = async (req, res, next) => {
 
 export const getMyPayments: RequestHandler = async (req, res, next) => {
   try {
-    const bookings = await Booking.find({ student: req.user!.id })
+    await ensureCurrentMonthBooking(req.user!.id);
+    const bookings = await Booking.find({
+      student: req.user!.id,
+    })
       .populate('listing', 'title images')
       .sort({ createdAt: -1 })
       .lean();
@@ -124,17 +255,21 @@ export const getOwnerStats: RequestHandler = async (req, res, next) => {
     const paidBookings = await Booking.find({ listing: { $in: listingIds }, paymentStatus: 'paid' }).lean();
     const totalRevenue = paidBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
-    const uniqueStudents = new Set(paidBookings.map((b) => b.student?.toString()));
+    const activePaidBookings = paidBookings.filter((b: any) => b.status !== 'cancelled');
+    const uniqueStudents = new Set(activePaidBookings.map((b) => b.student?.toString()));
     const totalStudents = uniqueStudents.size;
+
+    const activeStays = activePaidBookings.length;
 
     const pendingConfirmations = await Booking.countDocuments({
       listing: { $in: listingIds },
-      paymentStatus: 'processing',
+      paymentStatus: { $in: ['unpaid', 'processing'] },
     });
 
     res.json({
       totalRevenue: `LKR ${totalRevenue.toLocaleString()}`,
       totalStudents,
+      activeStays,
       pendingConfirmations,
     });
   } catch (err) {
@@ -145,16 +280,20 @@ export const getOwnerStats: RequestHandler = async (req, res, next) => {
 export const getDashboardStats: RequestHandler = async (req, res, next) => {
   try {
     const studentId = req.user!.id;
+    await ensureCurrentMonthBooking(studentId);
 
-    const paidBookings = await Booking.find({ student: studentId, paymentStatus: 'paid' })
+    const allPaidBookings = await Booking.find({ student: studentId, paymentStatus: 'paid' })
       .populate('listing', 'title location.address')
       .sort({ createdAt: -1 })
       .lean();
-    const totalSpent = paidBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+    const totalSpent = allPaidBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+    const activePaid = allPaidBookings.filter((b: any) => b.status !== 'cancelled');
 
     const unpaidBookings = await Booking.find({
       student: studentId,
-      paymentStatus: 'unpaid',
+      paymentStatus: { $in: ['unpaid', 'processing'] },
+      status: { $ne: 'cancelled' },
     })
       .populate('listing', 'title location.address')
       .sort({ createdAt: -1 })
@@ -169,7 +308,7 @@ export const getDashboardStats: RequestHandler = async (req, res, next) => {
         listingTitle: (b.listing as any)?.title || 'Boarding',
         listingAddress: (b.listing as any)?.location?.address || '',
       })),
-      currentStays: paidBookings.map((b) => ({
+      currentStays: activePaid.map((b) => ({
         bookingId: b._id,
         title: (b.listing as any)?.title || 'Boarding',
         address: (b.listing as any)?.location?.address || '',
@@ -198,7 +337,38 @@ export const confirmPayment: RequestHandler = async (req, res, next) => {
     booking.paymentStatus = 'paid';
     booking.status = 'confirmed';
     await booking.save();
+    await User.findByIdAndUpdate(booking.student, { currentBoarding: booking.listing });
+    await notifyOwnerOnPayment(booking);
+    const listingDoc = await Listing.findById(booking.listing);
+    if (listingDoc) {
+      listingDoc.currentOccupants += 1;
+      listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
+      await listingDoc.save();
+    }
     res.json({ message: 'Payment confirmed' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const checkoutStudent: RequestHandler = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+    if (!booking) { res.status(404).json({ message: 'Booking not found' }); return; }
+    booking.status = 'cancelled';
+    await booking.save();
+    const user = await User.findById(booking.student);
+    if (user && user.currentBoarding?.toString() === booking.listing?.toString()) {
+      await User.findByIdAndUpdate(user._id, { $unset: { currentBoarding: '' } });
+    }
+    const listingDoc = await Listing.findById(booking.listing);
+    if (listingDoc) {
+      listingDoc.currentOccupants = Math.max(0, listingDoc.currentOccupants - 1);
+      listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
+      await listingDoc.save();
+    }
+    res.json({ message: 'Student checked out successfully' });
   } catch (err) {
     next(err);
   }

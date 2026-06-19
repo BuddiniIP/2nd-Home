@@ -5,9 +5,12 @@ import Booking from "../models/Booking.js";
 // Create booking (student)
 export const createBooking = async (req: Request, res: Response) => {
   try {
+    const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
     const booking = await Booking.create({
       student: req.user?.id,
       ...req.body,
+      month: startDate.getMonth() + 1,
+      year: startDate.getFullYear(),
     });
 
     res.status(201).json(booking);

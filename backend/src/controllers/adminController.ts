@@ -223,3 +223,26 @@ export const getAdminReports: RequestHandler = async (_req, res, next) => {
     next(err);
   }
 };
+
+export const createUser: RequestHandler = async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, password, role, phone, university } = req.body;
+    if (!firstName || !lastName || !email || !password || !role) {
+      res.status(400).json({ message: 'firstName, lastName, email, password, and role are required' });
+      return;
+    }
+    if (!Object.values(UserRole).includes(role)) {
+      res.status(400).json({ message: `Invalid role. Must be one of: ${Object.values(UserRole).join(', ')}` });
+      return;
+    }
+    const exists = await User.findOne({ email });
+    if (exists) {
+      res.status(400).json({ message: 'Email already in use' });
+      return;
+    }
+    const user = await User.create({ firstName, lastName, email, password, role, phone, university });
+    res.status(201).json({ id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -108,6 +108,32 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authorized' });
+      return;
+    }
+    const allowed = ['firstName', 'lastName', 'phone', 'university', 'profilePicture'];
+    const updates: Record<string, any> = {};
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ message: 'No valid fields to update' });
+      return;
+    }
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true }).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {

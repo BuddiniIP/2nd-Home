@@ -351,6 +351,47 @@ export const confirmPayment: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const handleStripeWebhook: RequestHandler = async (req, res, next) => {
+  try {
+    const sig = req.headers['stripe-signature'] as string;
+    if (!sig) {
+      res.status(400).json({ message: 'Missing stripe-signature header' });
+      return;
+    }
+    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!secret) {
+      console.warn('STRIPE_WEBHOOK_SECRET not set — skipping webhook verification');
+      res.status(200).json({ received: true });
+      return;
+    }
+    const event = getStripe().webhooks.constructEvent(req.body, sig, secret);
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      const bookingId = session.metadata?.bookingId;
+      if (bookingId) {
+        const booking = await Booking.findById(bookingId);
+        if (booking && booking.paymentStatus !== 'paid') {
+          booking.paymentStatus = 'paid';
+          booking.paymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
+          booking.status = 'confirmed';
+          await booking.save();
+          await User.findByIdAndUpdate(booking.student, { currentBoarding: booking.listing });
+          await notifyOwnerOnPayment(booking);
+          const listingDoc = await Listing.findById(booking.listing);
+          if (listingDoc) {
+            listingDoc.currentOccupants += 1;
+            listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
+            await listingDoc.save();
+          }
+        }
+      }
+    }
+    res.json({ received: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const checkoutStudent: RequestHandler = async (req, res, next) => {
   try {
     const { bookingId } = req.params;

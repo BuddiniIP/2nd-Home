@@ -13,6 +13,8 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BoardingDetail from './pages/BoardingDetail';
 import Notifications from './pages/Notifications';
+import Profile from './pages/Profile';
+import Chat from './pages/Chat';
 import VerifierDashboard from './pages/VerifierDashboard';
 
 export default function App() {
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="/verifier-dashboard" element={<VerifierDashboard />} />
           <Route path="/boarding/:id" element={<BoardingDetail />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/chat" element={<Chat />} />
         </Route>
       </Routes>
     </Router>

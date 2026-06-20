@@ -14,6 +14,8 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import { handleStripeWebhook } from './controllers/paymentController.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import { rateLimit } from "./middleware/rateLimit.js";
@@ -38,6 +40,9 @@ const allowedOrigins = new Set([
 fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
 
 // Middleware
+// Stripe webhook — must be before global express.json() to get raw body
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.has(origin)) {
@@ -65,6 +70,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/verifications', verificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
   res.send('2nd Home API is running...');

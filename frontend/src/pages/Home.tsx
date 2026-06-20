@@ -85,6 +85,7 @@ const PopularUniversities = () => {
                 className="group relative w-72 h-96 rounded-3xl overflow-hidden bg-gray-100 cursor-pointer flex-shrink-0"
               >
                 <img 
+                  loading="lazy"
                   src={uni.image} 
                   alt={uni.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
@@ -147,6 +148,7 @@ const HighlightSection = () => {
             className="aspect-[16/10] rounded-[3rem] overflow-hidden shadow-2xl"
           >
             <img 
+              loading="lazy"
               src="/images/house_orange.jpg" 
               alt="Safe Student Housing"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" 

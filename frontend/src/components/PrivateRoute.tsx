@@ -10,7 +10,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
 
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
     return <Navigate to="/" replace />;

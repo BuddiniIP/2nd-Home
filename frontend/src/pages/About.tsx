@@ -35,7 +35,7 @@ const About = () => {
             className="flex-[0.8] w-full"
           >
              <div className="aspect-[4/5] rounded-[4rem] overflow-hidden shadow-2xl">
-                <img src="https://images.unsplash.com/photo-1523240715639-960c609559c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Students collaborating" className="w-full h-full object-cover" />
+                <img loading="lazy" src="https://images.unsplash.com/photo-1523240715639-960c609559c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Students collaborating" className="w-full h-full object-cover" />
              </div>
           </motion.div>
         </div>
@@ -79,16 +79,16 @@ const About = () => {
               viewport={{ once: true }}
               className="aspect-[16/10] rounded-[3rem] overflow-hidden"
             >
-               <img src="https://images.unsplash.com/photo-1541339907198-e08759dfc3ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="University campus" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" />
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="aspect-[16/10] rounded-[3rem] overflow-hidden"
-            >
-               <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Students social area" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" />
+               <img loading="lazy" src="https://images.unsplash.com/photo-1541339907198-e08759dfc3ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="University campus" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" />
+             </motion.div>
+             <motion.div 
+               initial={{ opacity: 0, y: 30 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: 0.2 }}
+               className="aspect-[16/10] rounded-[3rem] overflow-hidden"
+             >
+                <img loading="lazy" src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Students social area" className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" />
             </motion.div>
          </div>
       </section>

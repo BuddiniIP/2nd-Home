@@ -395,7 +395,7 @@ const StudentDashboard = () => {
 
           <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
-                <img src="/images/house_white.jpg" alt="Profile" className="w-full h-full object-cover" />
+                 <img loading="lazy" src="/images/house_white.jpg" alt="Profile" className="w-full h-full object-cover" />
              </div>
              <div className="text-center">
                 <h3 className="font-display font-bold text-xl">
@@ -517,9 +517,9 @@ const StudentDashboard = () => {
                       {currentBoarding.current.map((stay: any) => (
                         <motion.div key={stay.bookingId} variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
                           <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
-                            <img src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 space-y-8 py-4">
+                             <img loading="lazy" src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
+                           </div>
+                           <div className="flex-1 space-y-8 py-4">
                             <div className="space-y-4">
                               <div className="flex items-center gap-3">
                                 <span className="px-4 py-1.5 bg-green-100 text-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest">Verified Stay</span>
@@ -583,9 +583,9 @@ const StudentDashboard = () => {
                       {currentBoarding.previous.map((stay: any) => (
                         <motion.div key={stay.bookingId} variants={itemVariants} className="bg-gray-50 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row gap-6 items-start opacity-70">
                           <div className="w-full sm:w-32 h-24 rounded-2xl overflow-hidden shrink-0">
-                            <img src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 space-y-2">
+                             <img loading="lazy" src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
+                           </div>
+                           <div className="flex-1 space-y-2">
                             <h4 className="font-display font-bold text-lg text-black">{stay.title}</h4>
                             <p className="text-sm text-gray-500 font-medium flex items-center gap-1"><MapPin size={14} /> {stay.location}</p>
                             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-500">
@@ -791,7 +791,7 @@ const StudentDashboard = () => {
                       <motion.div variants={itemVariants} key={s._id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50">
                         <div className="flex gap-4 items-center">
                           <div className="w-28 h-20 rounded-[1rem] overflow-hidden bg-gray-100 relative">
-                            <img src={listing.images?.[0] || '/images/house_white.jpg'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
+                             <img loading="lazy" src={listing.images?.[0] || '/images/house_white.jpg'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
                             {status === 'paid' && (
                               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                 <span className="bg-green-500 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">Booked</span>
@@ -847,7 +847,7 @@ const StudentDashboard = () => {
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
                          <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                                 <img loading="lazy" src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
                             </div>
                             <button 
                               type="button"

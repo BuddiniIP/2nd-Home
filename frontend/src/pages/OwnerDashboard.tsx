@@ -305,7 +305,7 @@ const OwnerDashboard = () => {
 
    useEffect(() => {
       if (activeTab !== 'overview' && activeTab !== 'my-boardings') return;
-      const interval = setInterval(() => setOwnerRefreshKey(k => k + 1), 10000);
+      const interval = setInterval(() => setOwnerRefreshKey(k => k + 1), 30000);
       return () => clearInterval(interval);
    }, [activeTab]);
 
@@ -559,7 +559,7 @@ const OwnerDashboard = () => {
           
           <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
-                <img src="/images/house_orange.jpg" alt="Profile" className="w-full h-full object-cover" />
+                 <img loading="lazy" src="/images/house_orange.jpg" alt="Profile" className="w-full h-full object-cover" />
              </div>
              <div className="text-center">
                 <h3 className="font-display font-bold text-xl">
@@ -756,7 +756,7 @@ const OwnerDashboard = () => {
                               {myBoardings.map((boarding) => (
                                  <motion.div variants={itemVariants} key={boarding.id} className="bg-white rounded-[3rem] overflow-hidden shadow-sm border border-gray-50 group">
                                     <div className="aspect-[16/9] relative overflow-hidden">
-                                       <img src={boarding.image} alt={boarding.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                        <img loading="lazy" src={boarding.image} alt={boarding.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                                        <div className="absolute top-6 left-6">
                                           <div className={`px-4 py-2 rounded-full backdrop-blur-md flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest ${boarding.available ? 'bg-green-500/90 text-white' : 'bg-black/50 text-white'}`}>
                                              {boarding.available ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
@@ -1167,7 +1167,7 @@ const OwnerDashboard = () => {
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
                           <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                                 <img loading="lazy" src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
                              </div>
                              <button type="button" onClick={() => document.getElementById('owner-profile-upload')?.click()} className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg">
                                 <Camera size={16} />

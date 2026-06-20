@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const [role, setRole] = useState<'student' | 'owner' | 'admin'>('student');
@@ -41,8 +42,11 @@ const Login = () => {
       localStorage.setItem('userId', data.user._id || data.user.id);
       if (data.user.profilePicture) localStorage.setItem('profilePicture', data.user.profilePicture);
 
-      // Navigate strictly by the backend-provided role
-      if (data.user.role === 'admin') {
+      // Navigate to return URL if present, otherwise by role
+      const from = (location.state as any)?.from;
+      if (from) {
+        navigate(from);
+      } else if (data.user.role === 'admin') {
         navigate('/admin-dashboard');
       } else if (data.user.role === 'student') {
         navigate('/student-dashboard');

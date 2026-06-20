@@ -555,19 +555,19 @@ const AdminDashboard = () => {
                                              <div className="relative p-4 sm:p-5">
                                                 <div className="grid grid-cols-3 gap-3 rounded-[2.25rem] overflow-hidden h-[280px] sm:h-[320px]">
                                                    <div className="col-span-2 row-span-2 relative overflow-hidden rounded-[2rem] bg-gray-200">
-                                                      <img src={primaryImage} alt={boarding.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                                                      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-white text-[10px] font-bold uppercase tracking-[0.25em]">
-                                                         Main image
-                                                      </div>
-                                                   </div>
-                                                   <div className="relative overflow-hidden rounded-[2rem] bg-gray-200">
-                                                      <img src={secondaryImages[0] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                                                   </div>
-                                                   <div className="relative overflow-hidden rounded-[2rem] bg-gray-200">
-                                                      <img src={secondaryImages[1] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-                                                   </div>
-                                                   <div className="relative overflow-hidden rounded-[2rem] bg-gray-200 xl:col-start-3">
-                                                      <img src={secondaryImages[2] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                                                       <img loading="lazy" src={primaryImage} alt={boarding.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                                                       <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-white text-[10px] font-bold uppercase tracking-[0.25em]">
+                                                          Main image
+                                                       </div>
+                                                    </div>
+                                                    <div className="relative overflow-hidden rounded-[2rem] bg-gray-200">
+                                                       <img loading="lazy" src={secondaryImages[0] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                                                    </div>
+                                                    <div className="relative overflow-hidden rounded-[2rem] bg-gray-200">
+                                                       <img loading="lazy" src={secondaryImages[1] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                                                    </div>
+                                                    <div className="relative overflow-hidden rounded-[2rem] bg-gray-200 xl:col-start-3">
+                                                       <img loading="lazy" src={secondaryImages[2] || primaryImage} alt={`${boarding.title} detail`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
                                                       {images.length > 4 && (
                                                          <div className="absolute inset-0 bg-black/55 flex items-center justify-center text-white font-bold text-lg backdrop-blur-sm">
                                                             +{images.length - 4}
@@ -684,7 +684,7 @@ const AdminDashboard = () => {
                 <motion.div key="payments" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8" >
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50">
                       <h3 className="text-2xl font-display font-bold">Transaction History</h3>
-                      <button className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"><CreditCard size={14} /> Export CSV</button>
+                       <button onClick={() => { console.log('Export CSV clicked'); alert('Coming soon'); }} className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"><CreditCard size={14} /> Export CSV</button>
                    </div>
                    <div className="overflow-x-auto">
                       <table className="w-full text-left border-separate border-spacing-y-4">
@@ -723,17 +723,42 @@ const AdminDashboard = () => {
                                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${isUnread ? 'bg-accent-orange text-white' : 'bg-black text-white'}`}>{senderName.charAt(0)}</div>
                                   <div><h4 className="font-bold text-black flex items-center gap-3">{senderName}{isUnread && <span className="w-2 h-2 bg-accent-orange rounded-full"></span>}</h4><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{msg.email || senderName} • {dateStr}</p></div>
                                </div>
-                               <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-all">Mark as read</button>
+                                <button onClick={async () => {
+                                  const token = localStorage.getItem('token');
+                                  await fetch(`${apiBase}/api/admin/messages/${msg._id || msg.id}/read`, {
+                                    method: 'PATCH',
+                                    headers: { Authorization: `Bearer ${token}` },
+                                  });
+                                  fetchMessages();
+                                }} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-all">Mark as read</button>
                             </div>
                             <h5 className="font-bold text-black mb-2">{msg.subject}</h5>
                             <p className="text-gray-500 text-sm leading-relaxed mb-6">{msg.message}</p>
                             
                             {msg.type === 'verification' && (
                               <div className="flex gap-4 pt-6 border-t border-gray-100">
-                                 <button onClick={() => alert('Boarding Verified!')} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
+                                 <button onClick={async () => {
+                                   const token = localStorage.getItem('token');
+                                   try {
+                                     const res = await fetch(`${apiBase}/api/admin/messages/${msg._id || msg.id}/approve`, {
+                                       method: 'PATCH',
+                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                     });
+                                     if (res.ok) { alert('Boarding Verified!'); fetchMessages(); } else { alert('Failed to verify'); }
+                                   } catch { alert('Failed to verify'); }
+                                 }} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
                                     Approve & Verify
                                  </button>
-                                 <button onClick={() => alert('Rejection sent to owner')} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
+                                 <button onClick={async () => {
+                                   const token = localStorage.getItem('token');
+                                   try {
+                                     const res = await fetch(`${apiBase}/api/admin/messages/${msg._id || msg.id}/reject`, {
+                                       method: 'PATCH',
+                                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                     });
+                                     if (res.ok) { alert('Rejection sent to owner'); fetchMessages(); } else { alert('Failed to reject'); }
+                                   } catch { alert('Failed to reject'); }
+                                 }} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
                                     Reject
                                  </button>
                               </div>
@@ -942,10 +967,11 @@ const AdminDashboard = () => {
                                     key={image + index}
                                     className={`${index === 0 ? 'col-span-2 row-span-2' : 'col-span-1'} rounded-[2rem] overflow-hidden bg-gray-100 relative`}
                                  >
-                                    <img
-                                       src={normalizeBoardingImage(image)}
-                                       alt={`${selectedBoarding.title} ${index + 1}`}
-                                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                                     <img
+                                        loading="lazy"
+                                        src={normalizeBoardingImage(image)}
+                                        alt={`${selectedBoarding.title} ${index + 1}`}
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                                     />
                                     {index === 0 && (
                                        <div className="absolute left-4 top-4 px-3 py-1.5 rounded-full bg-black/65 backdrop-blur text-white text-[10px] font-bold uppercase tracking-[0.25em]">
@@ -1073,7 +1099,7 @@ const AdminDashboard = () => {
                                  : existingImagePaths.map((imagePath, index) => ({ id: `${imagePath}-${index}`, src: normalizeBoardingImage(imagePath), label: `Current image ${index + 1}` }))
                               ).map((image) => (
                                  <div key={image.id} className="rounded-[1.5rem] overflow-hidden bg-gray-100 border border-gray-100 aspect-square relative">
-                                    <img src={image.src} alt={image.label} className="w-full h-full object-cover" />
+                                     <img loading="lazy" src={image.src} alt={image.label} className="w-full h-full object-cover" />
                                     <div className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-2 backdrop-blur-sm">
                                        {boardingImages.length ? 'New upload' : 'Current'}
                                     </div>

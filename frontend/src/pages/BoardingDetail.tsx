@@ -322,7 +322,8 @@ const BoardingDetail = () => {
                 <img
                   src={activeImage}
                   alt={boarding.title}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
                 <div className="absolute left-6 right-6 bottom-6 md:left-10 md:right-10 md:bottom-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
@@ -351,6 +352,7 @@ const BoardingDetail = () => {
                     <img
                       src={image}
                       alt={`${boarding.title} preview ${index + 1}`}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
@@ -468,6 +470,7 @@ const BoardingDetail = () => {
                   </div>
                   {hasCoordinates ? (
                     <div className="h-[360px] rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm">
+                      {/* Maps Embed API key restricted by referrer - intentional exposure */}
                       <iframe
                         title="Boarding location map"
                         width="100%"

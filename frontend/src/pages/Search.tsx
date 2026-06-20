@@ -380,6 +380,7 @@ const Search = () => {
                     <img 
                       src={item.image} 
                       alt={item.title} 
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" 
                       referrerPolicy="no-referrer"
                     />
@@ -452,7 +453,7 @@ const Search = () => {
                  <div className="pt-2 space-y-3">
                     {filteredProperties.slice(0, 3).map(p => (
                        <div key={p.id} className="flex items-center gap-4 p-3 bg-[#F8F8F8] rounded-2xl">
-                          <img src={p.image} className="w-12 h-12 rounded-xl object-cover" />
+                           <img loading="lazy" src={p.image} className="w-12 h-12 rounded-xl object-cover" />
                           <div>
                              <p className="text-xs font-bold">{p.title}</p>
                              <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{p.price.toLocaleString()} LKR</p>

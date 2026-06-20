@@ -56,13 +56,13 @@ const Contact = () => {
           {/* Decorative Image Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-32 mb-20">
              <div className="aspect-square rounded-[3rem] overflow-hidden shadow-sm">
-                <img src="/images/house_white.jpg" alt="Office Life" className="w-full h-full object-cover" />
-             </div>
-             <div className="aspect-square rounded-[3rem] overflow-hidden shadow-sm mt-12">
-                <img src="/images/house_orange.jpg" alt="Team Work" className="w-full h-full object-cover" />
-             </div>
-             <div className="aspect-square rounded-[3rem] overflow-hidden shadow-sm">
-                <img src="/images/town.jpg" alt="Student Community" className="w-full h-full object-cover" />
+                 <img loading="lazy" src="/images/house_white.jpg" alt="Office Life" className="w-full h-full object-cover" />
+              </div>
+              <div className="aspect-square rounded-[3rem] overflow-hidden shadow-sm mt-12">
+                 <img loading="lazy" src="/images/house_orange.jpg" alt="Team Work" className="w-full h-full object-cover" />
+              </div>
+              <div className="aspect-square rounded-[3rem] overflow-hidden shadow-sm">
+                 <img loading="lazy" src="/images/town.jpg" alt="Student Community" className="w-full h-full object-cover" />
              </div>
           </div>
         </div>

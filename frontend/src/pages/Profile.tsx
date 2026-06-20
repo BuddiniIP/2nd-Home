@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, User, Save, Camera, Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const loc = useLocation();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -40,7 +41,7 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (!token) { navigate('/login'); return; }
+    if (!token) { navigate('/login', { state: { from: '/profile' } }); return; }
     fetch(`${apiBase}/api/auth/me`, { headers: authHeaders })
       .then(async r => { const data = await r.json(); if (!r.ok) throw new Error(data.message); return data; })
       .then(data => setForm({
@@ -107,7 +108,7 @@ const Profile = () => {
             <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
               <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative overflow-hidden">
                 {form.profilePicture ? (
-                  <img src={`${apiBase}${form.profilePicture}`} className="w-full h-full object-cover" />
+                  <img loading="lazy" src={`${apiBase}${form.profilePicture}`} className="w-full h-full object-cover" />
                 ) : (
                   <User size={32} />
                 )}

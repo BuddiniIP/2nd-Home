@@ -195,7 +195,7 @@ const HowItWorks = () => {
                     transition={{ duration: 1 }}
                     className="aspect-[16/10] rounded-[3rem] overflow-hidden shadow-2xl bg-gray-100"
                   >
-                    <img src={step.image} alt={step.title} className="w-full h-full object-cover" />
+                    <img loading="lazy" src={step.image} alt={step.title} className="w-full h-full object-cover" />
                   </motion.div>
                 </div>
               </div>

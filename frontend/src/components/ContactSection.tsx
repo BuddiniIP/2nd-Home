@@ -12,9 +12,16 @@ export function ContactSection() {
 	const [form, setForm] = useState({ name: '', email: '', message: '' });
 	const [submitting, setSubmitting] = useState(false);
 	const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+	const [emailError, setEmailError] = useState('');
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(form.email)) {
+			setEmailError('Please enter a valid email address');
+			return;
+		}
+		setEmailError('');
 		setSubmitting(true);
 		setStatus('idle');
 		try {
@@ -65,7 +72,8 @@ export function ContactSection() {
 						</div>
 						<div className="flex flex-col gap-2">
 							<Label htmlFor="email">Email</Label>
-							<Input id="email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+							<Input id="email" type="email" placeholder="your@email.com" value={form.email} onChange={(e) => { setForm({ ...form, email: e.target.value }); setEmailError(''); }} required />
+							{emailError && <p className="text-red-500 text-xs">{emailError}</p>}
 						</div>
 						<div className="flex flex-col gap-2">
 							<Label htmlFor="message">Message</Label>

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User, { UserRole } from '../models/User.js';
 import { z } from 'zod';
 import { JWT_EXPIRES_IN, JWT_SECRET } from '../config/env.js';
@@ -139,9 +140,62 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
     if (!req.user) { res.status(401).json({ message: 'Not authorized' }); return; }
     const file = (req as any).file;
     if (!file) { res.status(400).json({ message: 'No file uploaded' }); return; }
-    const url = `/uploads/profiles/${file.filename}`;
+    const url = file.path || `/uploads/profiles/${file.filename}`;
     await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
     res.json({ url, path: url });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ message: 'Email is required' });
+      return;
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: 'No account with that email address' });
+      return;
+    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    (user as any).resetPasswordToken = resetTokenHash;
+    (user as any).resetPasswordExpires = new Date(Date.now() + 3600000);
+    await user.save();
+    res.json({ message: 'Password reset link sent to your email', resetToken });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      res.status(400).json({ message: 'Token and password are required' });
+      return;
+    }
+    if (password.length < 6) {
+      res.status(400).json({ message: 'Password must be at least 6 characters' });
+      return;
+    }
+    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpires: { $gt: new Date() },
+    } as any);
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired token' });
+      return;
+    }
+    user.password = password;
+    (user as any).resetPasswordToken = undefined;
+    (user as any).resetPasswordExpires = undefined;
+    await user.save();
+    res.json({ message: 'Password reset successful' });
   } catch (error: any) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }

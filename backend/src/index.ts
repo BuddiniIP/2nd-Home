@@ -38,8 +38,12 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:5173',
 ]);
 
-fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
-fs.mkdirSync(path.resolve(uploadsDir, 'profiles'), { recursive: true });
+// Create local upload dirs only when Cloudinary is not configured
+const isCloudinaryConfigured = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+if (!isCloudinaryConfigured) {
+  fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
+  fs.mkdirSync(path.resolve(uploadsDir, 'profiles'), { recursive: true });
+}
 
 // Middleware
 // Stripe webhook — must be before global express.json() to get raw body
@@ -59,7 +63,9 @@ app.use(cors({
 app.use(express.json());
 app.use(rateLimit);
 app.use(inputSanitize);
-app.use('/uploads', express.static(uploadsDir));
+if (!isCloudinaryConfigured) {
+  app.use('/uploads', express.static(uploadsDir));
+}
 
 // Routes
 app.use('/api/auth', authRoutes);

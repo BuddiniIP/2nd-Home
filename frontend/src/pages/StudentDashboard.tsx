@@ -847,7 +847,7 @@ const StudentDashboard = () => {
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
                          <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                                <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
                             </div>
                             <button 
                               type="button"

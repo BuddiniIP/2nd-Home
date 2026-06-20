@@ -50,7 +50,7 @@ const Search = () => {
             id: boarding.id,
             title: boarding.title,
             location: boarding.location?.address || boarding.address || 'Unknown location',
-            image: imagePath ? `${apiBase}${imagePath}` : '/images/house_orange.jpg',
+            image: imagePath ? (imagePath.startsWith('http') ? imagePath : `${apiBase}${imagePath}`) : '/images/house_orange.jpg',
             rating: 4.5, // TODO: replace with real rating from API
             type: boarding.capacity > 1 ? 'double' : 'single',
             currentOccupants: Number(boarding.currentOccupants || 0),

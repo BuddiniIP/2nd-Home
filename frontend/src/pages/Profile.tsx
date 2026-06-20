@@ -107,7 +107,7 @@ const Profile = () => {
             <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
               <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative overflow-hidden">
                 {form.profilePicture ? (
-                  <img src={`${apiBase}${form.profilePicture}`} className="w-full h-full object-cover" />
+                  <img src={form.profilePicture ? (form.profilePicture.startsWith('http') ? form.profilePicture : `${apiBase}${form.profilePicture}`) : ''} className="w-full h-full object-cover" />
                 ) : (
                   <User size={32} />
                 )}

@@ -3,41 +3,9 @@ import Listing from '../models/Listing.js';
 import Booking from '../models/Booking.js';
 import { createListingSchema, updateListingSchema, queryListingSchema } from '../validation/listingSchemas.js';
 import mongoose from 'mongoose';
-import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { getListingUpload } from '../config/cloudinary.js';
 
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const listingUploadDir = path.resolve(currentDir, '../../uploads/listings');
-
-fs.mkdirSync(listingUploadDir, { recursive: true });
-
-const listingStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, listingUploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `listing-${uniqueSuffix}${extension}`);
-  },
-});
-
-export const listingImageUpload = multer({
-  storage: listingStorage,
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-  },
-  fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      cb(new Error('Only image files are allowed'));
-      return;
-    }
-
-    cb(null, true);
-  },
-});
+export const listingImageUpload = getListingUpload();
 
 const mapListing = (doc: any) => ({
   id: doc._id.toString(),
@@ -248,7 +216,7 @@ export const uploadListingImages: RequestHandler = async (req: any, res, next) =
       return;
     }
 
-    const images = files.map((file) => `/uploads/listings/${file.filename}`);
+    const images = files.map((file) => file.path || `/uploads/listings/${file.filename}`);
 
     res.status(201).json({
       message: 'Images uploaded successfully',

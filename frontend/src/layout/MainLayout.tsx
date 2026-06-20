@@ -7,7 +7,8 @@ import Cursor from '../components/Cursor';
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('student');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,18 +16,23 @@ const Header = () => {
   useEffect(() => {
     const auth = localStorage.getItem('isLoggedIn');
     const role = localStorage.getItem('userRole');
+    const storedPic = localStorage.getItem('profilePicture');
     setIsLoggedIn(auth === 'true');
-    setUserRole(role || 'student');
+    setUserRole(role);
+    setProfilePic(storedPic);
     setMobileOpen(false);
+    const token = localStorage.getItem('token');
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
     const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
         const res = await fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
-          if (data.profilePicture) localStorage.setItem('profilePicture', data.profilePicture);
+          if (data.profilePicture) {
+            localStorage.setItem('profilePicture', data.profilePicture);
+            setProfilePic(data.profilePicture);
+          }
         }
       } catch { /* ignore */ }
     };
@@ -123,7 +129,7 @@ const Header = () => {
                     whileHover={{ scale: 1.1 }}
                     className="w-10 h-10 rounded-full overflow-hidden border-2 border-accent-orange shadow-sm"
                   >
-                    <img src={localStorage.getItem('profilePicture') ? `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}${localStorage.getItem('profilePicture')}` : (userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80")} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={profilePic ? (profilePic.startsWith('http') ? profilePic : `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}${profilePic}`) : (userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80")} alt="Profile" className="w-full h-full object-cover" />
                   </motion.div>
                 </Link>
               </div>

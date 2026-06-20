@@ -269,7 +269,7 @@ const OwnerDashboard = () => {
                title: boarding.title,
                description: boarding.description,
                location: boarding.location?.address || boarding.address || 'Unknown location',
-               image: boarding.images?.[0] ? `${apiBase}${boarding.images[0]}` : '/images/house_orange.jpg',
+                image: boarding.images?.[0] ? (boarding.images[0].startsWith('http') ? boarding.images[0] : `${apiBase}${boarding.images[0]}`) : '/images/house_orange.jpg',
                images: boarding.images || [],
                price: Number(boarding.price || 0),
                capacity: Number(boarding.capacity || 0),
@@ -463,7 +463,7 @@ const OwnerDashboard = () => {
             title: data.title,
             description: data.description,
             location: data.location?.address || boardingAddress.trim(),
-            image: data.images?.[0] ? `${apiBase}${data.images[0]}` : '/images/house_orange.jpg',
+            image: data.images?.[0] ? (data.images[0].startsWith('http') ? data.images[0] : `${apiBase}${data.images[0]}`) : '/images/house_orange.jpg',
             images: data.images || [],
             price: Number(data.price || priceValue),
             capacity: Number(data.capacity || capacityValue),
@@ -1167,7 +1167,7 @@ const OwnerDashboard = () => {
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
                           <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                                <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
                              </div>
                              <button type="button" onClick={() => document.getElementById('owner-profile-upload')?.click()} className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg">
                                 <Camera size={16} />

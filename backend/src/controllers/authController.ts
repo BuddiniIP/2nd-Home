@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import User, { UserRole } from '../models/User.js';
 import { z } from 'zod';
 import { JWT_EXPIRES_IN, JWT_SECRET } from '../config/env.js';
+import { deleteCloudinaryImage } from '../config/cloudinary.js';
 
 const generateToken = (id: string, role: string) => {
   return jwt.sign({ id, role }, JWT_SECRET, {
@@ -141,8 +142,13 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
     const file = (req as any).file;
     if (!file) { res.status(400).json({ message: 'No file uploaded' }); return; }
     const url = file.path;
-    console.log(`[Cloudinary] Profile picture uploaded: ${url}`);
+    // Delete old picture from Cloudinary before saving new one
+    const currentUser = await User.findById(req.user.id).select('profilePicture');
+    if (currentUser?.profilePicture) {
+      await deleteCloudinaryImage(currentUser.profilePicture);
+    }
     await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
+    console.log(`[Cloudinary] Profile picture saved for user ${req.user.id}: ${url}`);
     res.json({ url, path: url });
   } catch (error: any) {
     res.status(500).json({ message: 'Server Error', error: error.message });

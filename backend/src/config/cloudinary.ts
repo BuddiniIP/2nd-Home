@@ -75,6 +75,20 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
   cb(null, true);
 };
 
+export const deleteCloudinaryImage = async (url: string | undefined) => {
+  if (!url || !url.includes('res.cloudinary.com')) return;
+  const match = url.match(/\/upload\/v\d+\/(.+)\.\w+$/);
+  if (match) {
+    const publicId = match[1];
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`[Cloudinary] Deleted old image: ${publicId}`);
+    } catch {
+      // ignore if already gone
+    }
+  }
+};
+
 export const getProfileUpload = () => {
   ensureCloudinary();
   return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter });

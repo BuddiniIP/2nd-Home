@@ -1,10 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 
+const EVENT_PATTERN = /(\s+on\w+\s*=\s*["'][^"']*["'])/gi;
+const JS_PROTOCOL = /javascript\s*:/gi;
+const MONGO_OPS = /^\$/;
+
 const sanitize = (value: any): any => {
   if (typeof value === "string") {
     return value
       .replace(/<script.*?>.*?<\/script>/gi, "")
-      .replace(/[<>]/g, "");
+      .replace(/[<>]/g, "")
+      .replace(EVENT_PATTERN, "")
+      .replace(JS_PROTOCOL, "");
   }
 
   if (Array.isArray(value)) {
@@ -15,6 +21,7 @@ const sanitize = (value: any): any => {
     const result: any = {};
 
     for (const key in value) {
+      if (MONGO_OPS.test(key)) continue;
       result[key] = sanitize(value[key]);
     }
 
@@ -24,21 +31,42 @@ const sanitize = (value: any): any => {
   return value;
 };
 
+const deepSanitizeObject = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(deepSanitizeObject);
+  }
+
+  if (obj && typeof obj === "object") {
+    const result: any = {};
+    for (const key of Object.keys(obj)) {
+      if (MONGO_OPS.test(key)) continue;
+      result[key] = deepSanitizeObject(obj[key]);
+    }
+    return result;
+  }
+
+  if (typeof obj === "string") {
+    return obj
+      .replace(/<script.*?>.*?<\/script>/gi, "")
+      .replace(/[<>]/g, "")
+      .replace(EVENT_PATTERN, "")
+      .replace(JS_PROTOCOL, "");
+  }
+
+  return obj;
+};
+
 export const inputSanitize = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  req.body = sanitize(req.body);
+  req.body = deepSanitizeObject(req.body);
   if (req.query && typeof req.query === 'object') {
-    for (const key of Object.keys(req.query)) {
-      (req.query as any)[key] = sanitize((req.query as any)[key]);
-    }
+    req.query = deepSanitizeObject(req.query) as any;
   }
   if (req.params && typeof req.params === 'object') {
-    for (const key of Object.keys(req.params)) {
-      (req.params as any)[key] = sanitize((req.params as any)[key]);
-    }
+    req.params = deepSanitizeObject(req.params) as any;
   }
   next();
 };

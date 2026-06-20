@@ -21,5 +21,6 @@ const conversationSchema = new Schema<IConversation>(
 
 conversationSchema.index({ participants: 1 });
 conversationSchema.index({ updatedAt: -1 });
+conversationSchema.index({ 'participants.0': 1, 'participants.1': 1 }, { unique: true });
 
 export default mongoose.model<IConversation>('Conversation', conversationSchema);

@@ -44,5 +44,6 @@ const verificationAssignmentSchema = new mongoose.Schema(
 
 verificationAssignmentSchema.index({ verifier: 1, status: 1 });
 verificationAssignmentSchema.index({ status: 1, createdAt: -1 });
+verificationAssignmentSchema.index({ listing: 1 });
 
 export default mongoose.model("VerificationAssignment", verificationAssignmentSchema);

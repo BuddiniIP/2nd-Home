@@ -24,17 +24,21 @@ const listingStorage = multer.diskStorage({
   },
 });
 
+const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp)$/i;
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
 export const listingImageUpload = multer({
   storage: listingStorage,
   limits: {
     fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      cb(new Error('Only image files are allowed'));
+    const extOk = ALLOWED_EXTENSIONS.test(path.extname(file.originalname).toLowerCase());
+    const mimeOk = ALLOWED_MIME.includes(file.mimetype);
+    if (!extOk || !mimeOk) {
+      cb(new Error('Only image files (jpg, jpeg, png, gif, webp) are allowed'));
       return;
     }
-
     cb(null, true);
   },
 });
@@ -94,7 +98,7 @@ export const listBoardings: RequestHandler = async (req, res, next) => {
     }
 
     const skip = (page - 1) * limit;
-    const mongooseQuery = Listing.find(filter).populate('owner', 'firstName lastName email profilePicture');
+    const mongooseQuery = Listing.find(filter).populate('owner', 'firstName lastName email profilePicture').lean();
 
     if (sort) {
       mongooseQuery.sort(sort);
@@ -118,7 +122,7 @@ export const getBoardingById: RequestHandler = async (req, res, next) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid id' });
 
-    const doc = await Listing.findById(id).populate('owner', 'firstName lastName email profilePicture').exec();
+    const doc = await Listing.findById(id).populate('owner', 'firstName lastName email profilePicture').lean();
     if (!doc) return res.status(404).json({ message: 'Listing not found' });
 
     res.json(mapListing(doc));

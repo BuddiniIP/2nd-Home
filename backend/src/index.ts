@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
+import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -41,7 +44,13 @@ const allowedOrigins = new Set([
 fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
 fs.mkdirSync(path.resolve(uploadsDir, 'profiles'), { recursive: true });
 
+// Trust proxy for rate limiter to get correct IP behind reverse proxy
+app.set('trust proxy', 1);
+
 // Middleware
+app.use(helmet());
+app.use(morgan('dev'));
+
 // Stripe webhook — must be before global express.json() to get raw body
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
@@ -56,7 +65,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 app.use(rateLimit);
 app.use(inputSanitize);
 app.use('/uploads', express.static(uploadsDir));
@@ -82,6 +91,26 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(async () => {
+    try {
+      await mongoose.connection.close();
+      console.log('MongoDB connection closed.');
+    } catch {
+      // ignore close errors
+    }
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

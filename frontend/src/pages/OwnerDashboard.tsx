@@ -305,7 +305,7 @@ const OwnerDashboard = () => {
 
    useEffect(() => {
       if (activeTab !== 'overview' && activeTab !== 'my-boardings') return;
-      const interval = setInterval(() => setOwnerRefreshKey(k => k + 1), 10000);
+      const interval = setInterval(() => setOwnerRefreshKey(k => k + 1), 30000);
       return () => clearInterval(interval);
    }, [activeTab]);
 

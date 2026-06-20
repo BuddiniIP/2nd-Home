@@ -31,7 +31,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     const { firstName, lastName, email, password, role, phone, university } = parsedParams.data;
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email }).lean();
 
     if (userExists) {
       res.status(400).json({ message: 'User already exists' });
@@ -154,7 +154,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select('-password').lean();
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;

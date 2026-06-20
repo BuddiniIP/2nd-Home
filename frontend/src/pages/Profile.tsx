@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, User, Save, Camera, Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -40,7 +41,7 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (!token) { navigate('/login'); return; }
+    if (!token) { navigate('/login', { state: { from: '/profile' } }); return; }
     fetch(`${apiBase}/api/auth/me`, { headers: authHeaders })
       .then(async r => { const data = await r.json(); if (!r.ok) throw new Error(data.message); return data; })
       .then(data => setForm({

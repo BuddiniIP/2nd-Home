@@ -64,7 +64,7 @@ const totalRevenue = bookings
     const paidThisMonth = await Booking.find({
       paymentStatus: 'paid',
       updatedAt: { $gte: monthStart },
-    });
+    }).lean();
     const monthlyRevenue = paidThisMonth.reduce((sum, b) => sum + (b.amount || 0), 0);
 
     res.json({
@@ -154,7 +154,8 @@ export const getAdminPayments: RequestHandler = async (_req, res, next) => {
   try {
     const payments = await Booking.find()
       .populate("student", "firstName lastName email")
-      .populate("listing", "title");
+      .populate("listing", "title")
+      .lean();
 
     res.json(payments);
   } catch (err) {
@@ -213,7 +214,8 @@ export const getAdminReports: RequestHandler = async (_req, res, next) => {
       .populate("reporter", "firstName lastName email")
       .populate("targetListing")
       .populate("targetUser")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({
       data: reports,
@@ -235,7 +237,7 @@ export const createUser: RequestHandler = async (req, res, next) => {
       res.status(400).json({ message: `Invalid role. Must be one of: ${Object.values(UserRole).join(', ')}` });
       return;
     }
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ email }).lean();
     if (exists) {
       res.status(400).json({ message: 'Email already in use' });
       return;

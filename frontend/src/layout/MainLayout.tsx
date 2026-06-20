@@ -5,6 +5,14 @@ import { Bell, Menu, X } from 'lucide-react';
 import logo from '../assets/logo.png';
 import Cursor from '../components/Cursor';
 
+const navItems = [
+  { label: 'Home', path: '/' },
+  { label: 'Search', path: '/search' },
+  { label: 'About', path: '/about' },
+  { label: 'How It Works', path: '/how-it-works' },
+  { label: 'Contact', path: '/contact' },
+];
+
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState('student');
@@ -44,7 +52,7 @@ const Header = () => {
 
   const profilePath =
     userRole === 'admin'
-      ? '/admin-dashboard'
+      ? '/profile'
       : userRole === 'owner'
         ? '/owner-dashboard?tab=profile'
         : userRole === 'verifier'
@@ -74,16 +82,15 @@ const Header = () => {
             />
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {['Home', 'Search', 'About', 'How It Works', 'Contact'].map((item) => {
-              const path = item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`);
-              const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
               return (
-              <motion.div key={item} whileHover={{ y: -2 }}>
+              <motion.div key={item.label} whileHover={{ y: -2 }}>
                 <Link 
-                  to={path} 
+                  to={item.path} 
                   className={`transition-colors ${isActive ? 'text-accent-orange font-bold' : 'hover:text-accent-orange'}`}
                 >
-                  {item}
+                  {item.label}
                 </Link>
               </motion.div>
               );
@@ -154,12 +161,11 @@ const Header = () => {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="md:hidden bg-white/95 backdrop-blur-md rounded-3xl mt-3 p-6 shadow-xl border border-gray-100 space-y-4">
-            {['Home', 'Search', 'About', 'How It Works', 'Contact'].map((item) => {
-              const path = item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`);
-              const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
               return (
-                <Link key={item} to={path} className={`block text-sm font-bold transition-colors ${isActive ? 'text-accent-orange' : 'text-black hover:text-accent-orange'}`}>
-                  {item}
+                <Link key={item.label} to={item.path} className={`block text-sm font-bold transition-colors ${isActive ? 'text-accent-orange' : 'text-black hover:text-accent-orange'}`}>
+                  {item.label}
                 </Link>
               );
             })}
@@ -203,7 +209,7 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">For Students</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/how-it-works" className="hover:text-accent-orange transition-colors">How it Works</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Safety Tips</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Safety Tips</Link></li>
             </ul>
           </div>
 
@@ -211,8 +217,8 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">For Owners</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/login" className="hover:text-accent-orange transition-colors">List Your Property</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Verification Process</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Owner Guidelines</Link></li>
+              <li><Link to="/how-it-works" className="hover:text-accent-orange transition-colors">Verification Process</Link></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-accent-orange transition-colors">Owner Guidelines</a></li>
             </ul>
           </div>
 
@@ -220,8 +226,8 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">Support</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Contact Us</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">FAQ</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Terms of Service</Link></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-accent-orange transition-colors">FAQ</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-accent-orange transition-colors">Terms of Service</a></li>
             </ul>
           </div>
         </div>
@@ -229,10 +235,10 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 text-[10px] uppercase tracking-[0.3em] font-extrabold">
            <span>© {currentYear} 2nd HOME. All rights reserved.</span>
            <div className="flex gap-12">
-             <a href="#" className="hover:text-white">Privacy</a>
-             <a href="#" className="hover:text-white">Terms</a>
-             <a href="#" className="hover:text-white">Cookies</a>
-           </div>
+              <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white">Privacy</a>
+              <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white">Terms</a>
+              <a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white">Cookies</a>
+            </div>
         </div>
       </div>
     </footer>

@@ -26,7 +26,8 @@ export const getAllReports = async (req: Request, res: Response) => {
     const reports = await Report.find()
       .populate("reporter", "firstName lastName email")
       .populate("targetListing")
-      .populate("targetUser");
+      .populate("targetUser")
+      .lean();
 
     res.json(reports);
   } catch (error: any) {

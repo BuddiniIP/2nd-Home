@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { motion, useSpring, useMotionValue } from 'framer-motion';
+import { motion, useSpring, useMotionValue, useReducedMotion } from 'framer-motion';
 
 const Cursor = () => {
+  const prefersReduced = useReducedMotion();
   const [isHovering, setIsHovering] = useState(false);
+
+  if (prefersReduced) return null;
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   

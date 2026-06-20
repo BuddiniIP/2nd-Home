@@ -26,7 +26,7 @@ export const createConversation: RequestHandler = async (req, res, next) => {
     }
     const existing = await Conversation.findOne({
       participants: { $all: [req.user!.id, participantId], $size: 2 },
-    });
+    }).lean();
     if (existing) {
       res.json(existing);
       return;
@@ -50,7 +50,7 @@ export const getMessages: RequestHandler = async (req, res, next) => {
     const conversation = await Conversation.findOne({
       _id: req.params.id,
       participants: req.user!.id,
-    });
+    }).lean();
     if (!conversation) {
       res.status(404).json({ message: 'Conversation not found' });
       return;

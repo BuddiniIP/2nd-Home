@@ -44,4 +44,6 @@ const reportSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+reportSchema.index({ status: 1 });
+
 export default mongoose.model("Report", reportSchema);

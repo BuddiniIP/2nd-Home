@@ -53,5 +53,7 @@ bookingSchema.index({ listing: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ createdAt: -1 });
 bookingSchema.index({ student: 1, listing: 1, month: 1, year: 1 });
+bookingSchema.index({ paymentStatus: 1 });
+bookingSchema.index({ student: 1, month: 1, year: 1 });
 
 export default mongoose.model("Booking", bookingSchema);

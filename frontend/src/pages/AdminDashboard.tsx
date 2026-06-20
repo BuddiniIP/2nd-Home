@@ -684,7 +684,7 @@ const AdminDashboard = () => {
                 <motion.div key="payments" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8" >
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50">
                       <h3 className="text-2xl font-display font-bold">Transaction History</h3>
-                      <button className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"><CreditCard size={14} /> Export CSV</button>
+                       <button onClick={() => { console.log('Export CSV clicked'); alert('Coming soon'); }} className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"><CreditCard size={14} /> Export CSV</button>
                    </div>
                    <div className="overflow-x-auto">
                       <table className="w-full text-left border-separate border-spacing-y-4">

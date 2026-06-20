@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Send, MessageSquare, User, ArrowLeft } from 'lucide-react';
 
 const Chat = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -18,7 +19,7 @@ const Chat = () => {
   const msgsEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!token) { navigate('/login'); return; }
+    if (!token) { navigate('/login', { state: { from: '/chat' } }); return; }
     fetch(`${apiBase}/api/chat/conversations`, { headers: authHeaders })
       .then(r => r.json())
       .then(setConversations)
@@ -36,6 +37,17 @@ const Chat = () => {
   useEffect(() => {
     msgsEnd.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (!activeConv) return;
+    const interval = setInterval(() => {
+      fetch(`${apiBase}/api/chat/conversations/${activeConv._id}/messages`, { headers: authHeaders })
+        .then(r => r.json())
+        .then(setMessages)
+        .catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [activeConv, apiBase]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

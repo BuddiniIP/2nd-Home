@@ -2,6 +2,20 @@ import { Request, Response, NextFunction } from "express";
 
 const requests = new Map<string, { count: number; resetTime: number }>();
 
+const WINDOW_MS = 15 * 60 * 1000; // 15 mins
+const MAX_REQUESTS = 100;
+const CLEANUP_INTERVAL = 60 * 1000; // 1 min
+
+// Periodic cleanup of expired entries
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of requests) {
+    if (now > entry.resetTime) {
+      requests.delete(ip);
+    }
+  }
+}, CLEANUP_INTERVAL);
+
 export const rateLimit = (
   req: Request,
   res: Response,
@@ -10,21 +24,20 @@ export const rateLimit = (
   const ip = req.ip || "unknown";
   const now = Date.now();
 
-  const windowMs = 15 * 60 * 1000; // 15 mins
-  const maxRequests = 100;
-
   const current = requests.get(ip);
 
   if (!current || now > current.resetTime) {
     requests.set(ip, {
       count: 1,
-      resetTime: now + windowMs,
+      resetTime: now + WINDOW_MS,
     });
 
     return next();
   }
 
-  if (current.count >= maxRequests) {
+  if (current.count >= MAX_REQUESTS) {
+    const retryAfter = Math.ceil((current.resetTime - now) / 1000);
+    res.set('Retry-After', String(retryAfter));
     return res.status(429).json({
       message: "Too many requests. Try again later.",
     });

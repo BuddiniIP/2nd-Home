@@ -19,13 +19,29 @@ export const createBooking = async (req: Request, res: Response) => {
       return;
     }
 
+    const numAmount = Number(amount);
+    if (numAmount < listingDoc.price) {
+      res.status(400).json({ message: `Amount (${numAmount}) cannot be less than listing price (${listingDoc.price})` });
+      return;
+    }
+
     const startDate = rawStartDate ? new Date(rawStartDate) : new Date();
+    const parsedEndDate = new Date(endDate);
+    if (isNaN(startDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+      res.status(400).json({ message: 'Invalid date format' });
+      return;
+    }
+    if (parsedEndDate <= startDate) {
+      res.status(400).json({ message: 'End date must be after start date' });
+      return;
+    }
+
     const booking = await Booking.create({
       student: req.user?.id,
       listing,
       startDate,
-      endDate: new Date(endDate),
-      amount: Number(amount),
+      endDate: parsedEndDate,
+      amount: numAmount,
       month: startDate.getMonth() + 1,
       year: startDate.getFullYear(),
     });

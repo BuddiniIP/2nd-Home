@@ -91,7 +91,7 @@ export const ensureCurrentMonthBooking = async (studentId: string) => {
         }
       }
     }
-  } catch { /* silently fail */ }
+  } catch (e) { console.error('ensureCurrentMonthBooking error:', e); }
 };
 
 const notifyOwnerOnPayment = async (booking: any) => {
@@ -108,7 +108,7 @@ const notifyOwnerOnPayment = async (booking: any) => {
       link: '/owner-dashboard?tab=payments',
       relatedId: booking._id,
     });
-  } catch { /* notify silently */ }
+  } catch (e) { console.error('notifyOwnerOnPayment error:', e); }
 };
 
 export const createCheckoutSession: RequestHandler = async (req, res, next) => {
@@ -172,9 +172,15 @@ export const verifySession: RequestHandler = async (req, res, next) => {
 
     const session = await getStripe().checkout.sessions.retrieve(sessionId);
     const bookingId = session.metadata?.bookingId;
+    const sessionStudentId = session.metadata?.studentId;
 
     if (!bookingId) {
       res.status(400).json({ message: 'No booking linked to this session' });
+      return;
+    }
+
+    if (sessionStudentId !== req.user!.id) {
+      res.status(403).json({ message: 'This session does not belong to you' });
       return;
     }
 
@@ -197,12 +203,9 @@ export const verifySession: RequestHandler = async (req, res, next) => {
         await User.findByIdAndUpdate(existing.student, { currentBoarding: existing.listing });
         await notifyOwnerOnPayment(existing);
 
-        const listingDoc = await Listing.findById(existing.listing);
-        if (listingDoc) {
-          listingDoc.currentOccupants += 1;
-          listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
-          await listingDoc.save();
-        }
+        await Listing.findByIdAndUpdate(existing.listing, {
+          $inc: { currentOccupants: 1 },
+        });
       }
 
       res.json({ verified: true, paid: true });
@@ -339,12 +342,9 @@ export const confirmPayment: RequestHandler = async (req, res, next) => {
     await booking.save();
     await User.findByIdAndUpdate(booking.student, { currentBoarding: booking.listing });
     await notifyOwnerOnPayment(booking);
-    const listingDoc = await Listing.findById(booking.listing);
-    if (listingDoc) {
-      listingDoc.currentOccupants += 1;
-      listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
-      await listingDoc.save();
-    }
+    await Listing.findByIdAndUpdate(booking.listing, {
+      $inc: { currentOccupants: 1 },
+    });
     res.json({ message: 'Payment confirmed' });
   } catch (err) {
     next(err);
@@ -360,8 +360,7 @@ export const handleStripeWebhook: RequestHandler = async (req, res, next) => {
     }
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!secret) {
-      console.warn('STRIPE_WEBHOOK_SECRET not set — skipping webhook verification');
-      res.status(200).json({ received: true });
+      res.status(500).json({ message: 'Stripe webhook secret not configured' });
       return;
     }
     const event = getStripe().webhooks.constructEvent(req.body, sig, secret);
@@ -377,12 +376,9 @@ export const handleStripeWebhook: RequestHandler = async (req, res, next) => {
           await booking.save();
           await User.findByIdAndUpdate(booking.student, { currentBoarding: booking.listing });
           await notifyOwnerOnPayment(booking);
-          const listingDoc = await Listing.findById(booking.listing);
-          if (listingDoc) {
-            listingDoc.currentOccupants += 1;
-            listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
-            await listingDoc.save();
-          }
+          await Listing.findByIdAndUpdate(booking.listing, {
+            $inc: { currentOccupants: 1 },
+          });
         }
       }
     }
@@ -397,18 +393,31 @@ export const checkoutStudent: RequestHandler = async (req, res, next) => {
     const { bookingId } = req.params;
     const booking = await Booking.findById(bookingId);
     if (!booking) { res.status(404).json({ message: 'Booking not found' }); return; }
+
+    // Issue Stripe refund if the booking was already paid
+    if (booking.paymentStatus === 'paid' && booking.paymentId) {
+      try {
+        const stripe = getStripe();
+        const paymentIntentId = typeof booking.paymentId === 'string' && booking.paymentId.startsWith('pi_')
+          ? booking.paymentId
+          : undefined;
+        if (paymentIntentId) {
+          await stripe.refunds.create({ payment_intent: paymentIntentId });
+        }
+      } catch (refundErr) {
+        console.error('Stripe refund failed:', refundErr);
+      }
+    }
+
     booking.status = 'cancelled';
     await booking.save();
     const user = await User.findById(booking.student);
     if (user && user.currentBoarding?.toString() === booking.listing?.toString()) {
       await User.findByIdAndUpdate(user._id, { $unset: { currentBoarding: '' } });
     }
-    const listingDoc = await Listing.findById(booking.listing);
-    if (listingDoc) {
-      listingDoc.currentOccupants = Math.max(0, listingDoc.currentOccupants - 1);
-      listingDoc.isAvailable = listingDoc.currentOccupants < listingDoc.capacity;
-      await listingDoc.save();
-    }
+    await Listing.findByIdAndUpdate(booking.listing, {
+      $inc: { currentOccupants: -1 },
+    });
     res.json({ message: 'Student checked out successfully' });
   } catch (err) {
     next(err);

@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import User, { UserRole } from "../models/User.js";
 import Notification from "../models/Notification.js";
 
 interface ContactBody {
@@ -16,11 +17,15 @@ export const submitContact: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    // Notify admins
-    const admins = await import("../models/User.js").then((m) => m.default.find({ role: "admin" }).select("_id"));
-    const notifications = admins.map((admin: { _id: unknown }) => ({
+    if (message.length > 1000) {
+      res.status(400).json({ message: "Message too long (max 1000 characters)" });
+      return;
+    }
+
+    const admins = await User.find({ role: UserRole.ADMIN }).select("_id").lean();
+    const notifications = admins.map((admin) => ({
       recipient: admin._id,
-      type: "contact",
+      type: "contact" as const,
       title: "New Contact Message",
       message: `From ${name} (${email}): ${message.slice(0, 200)}`,
     }));

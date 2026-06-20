@@ -1,24 +1,21 @@
 import { v2 as cloudinary } from 'cloudinary';
 import multer, { StorageEngine } from 'multer';
-import path from 'path';
-import fs from 'fs';
 
-let _cloudinaryChecked = false;
-let _cloudinaryConfigured = false;
+let _initialized = false;
 
-const useCloudinary = () => {
-  if (!_cloudinaryChecked) {
-    _cloudinaryConfigured = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
-    if (_cloudinaryConfigured) {
-      cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-        api_key: process.env.CLOUDINARY_API_KEY!,
-        api_secret: process.env.CLOUDINARY_API_SECRET!,
-      });
-    }
-    _cloudinaryChecked = true;
+const ensureCloudinary = () => {
+  if (_initialized) return;
+  const name = process.env.CLOUDINARY_CLOUD_NAME;
+  const key = process.env.CLOUDINARY_API_KEY;
+  const secret = process.env.CLOUDINARY_API_SECRET;
+  if (!name || !key || !secret) {
+    throw new Error(
+      'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your .env file. ' +
+      'Get free credentials at https://cloudinary.com/register'
+    );
   }
-  return _cloudinaryConfigured;
+  cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret });
+  _initialized = true;
 };
 
 const cloudinaryStorage = (folder: string): StorageEngine => ({
@@ -54,43 +51,11 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
 };
 
 export const getProfileUpload = () => {
-  const limits = { fileSize: 5 * 1024 * 1024 };
-
-  if (useCloudinary()) {
-    return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits, fileFilter });
-  }
-
-  const currentDir = path.dirname(new URL(import.meta.url).pathname);
-  const dir = path.resolve(currentDir, '../../uploads/profiles');
-  fs.mkdirSync(dir, { recursive: true });
-  const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, dir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-      cb(null, `${Date.now()}-${safe}`);
-    },
-  });
-  return multer({ storage, limits, fileFilter });
+  ensureCloudinary();
+  return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter });
 };
 
 export const getListingUpload = () => {
-  const limits = { fileSize: 10 * 1024 * 1024 };
-
-  if (useCloudinary()) {
-    return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits, fileFilter });
-  }
-
-  const currentDir = path.dirname(new URL(import.meta.url).pathname);
-  const dir = path.resolve(currentDir, '../../uploads/listings');
-  fs.mkdirSync(dir, { recursive: true });
-  const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, dir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-      cb(null, `listing-${Date.now()}-${safe}`);
-    },
-  });
-  return multer({ storage, limits, fileFilter });
+  ensureCloudinary();
+  return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
 };

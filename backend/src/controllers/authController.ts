@@ -140,7 +140,7 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
     if (!req.user) { res.status(401).json({ message: 'Not authorized' }); return; }
     const file = (req as any).file;
     if (!file) { res.status(400).json({ message: 'No file uploaded' }); return; }
-    const url = file.path || `/uploads/profiles/${file.filename}`;
+    const url = file.path;
     await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
     res.json({ url, path: url });
   } catch (error: any) {

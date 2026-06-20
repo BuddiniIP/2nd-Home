@@ -216,7 +216,7 @@ export const uploadListingImages: RequestHandler = async (req: any, res, next) =
       return;
     }
 
-    const images = files.map((file) => file.path || `/uploads/listings/${file.filename}`);
+    const images = files.map((file) => file.path);
 
     res.status(201).json({
       message: 'Images uploaded successfully',

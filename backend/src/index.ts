@@ -1,8 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -28,8 +25,6 @@ import './types/express.d.ts';
 connectDB();
 
 const app = express();
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(currentDir, '../uploads');
 const allowedOrigins = new Set([
   FRONTEND_URL,
   'http://localhost:3000',
@@ -37,13 +32,6 @@ const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]);
-
-// Create local upload dirs only when Cloudinary is not configured
-const isCloudinaryConfigured = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
-if (!isCloudinaryConfigured) {
-  fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
-  fs.mkdirSync(path.resolve(uploadsDir, 'profiles'), { recursive: true });
-}
 
 // Middleware
 // Stripe webhook — must be before global express.json() to get raw body
@@ -63,9 +51,6 @@ app.use(cors({
 app.use(express.json());
 app.use(rateLimit);
 app.use(inputSanitize);
-if (!isCloudinaryConfigured) {
-  app.use('/uploads', express.static(uploadsDir));
-}
 
 // Routes
 app.use('/api/auth', authRoutes);

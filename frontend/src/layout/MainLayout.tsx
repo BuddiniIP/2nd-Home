@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import logo from '../assets/logo.png';
 import Cursor from '../components/Cursor';
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState('student');
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,9 +17,21 @@ const Header = () => {
     const role = localStorage.getItem('userRole');
     setIsLoggedIn(auth === 'true');
     setUserRole(role || 'student');
+    setMobileOpen(false);
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profilePicture) localStorage.setItem('profilePicture', data.profilePicture);
+        }
+      } catch { /* ignore */ }
+    };
+    if (auth === 'true') fetchProfile();
   }, [location]);
-
-  const [userRole, setUserRole] = useState('student');
 
   const dashboardPath =
     userRole === 'admin'
@@ -40,6 +54,9 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('profilePicture');
     setIsLoggedIn(false);
     navigate('/');
   };
@@ -57,19 +74,26 @@ const Header = () => {
             />
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {['Home', 'Search', 'About', 'How It Works', 'Contact'].map((item) => (
+            {['Home', 'Search', 'About', 'How It Works', 'Contact'].map((item) => {
+              const path = item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`);
+              const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+              return (
               <motion.div key={item} whileHover={{ y: -2 }}>
                 <Link 
-                  to={item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`)} 
-                  className="hover:text-accent-orange transition-colors"
+                  to={path} 
+                  className={`transition-colors ${isActive ? 'text-accent-orange font-bold' : 'hover:text-accent-orange'}`}
                 >
                   {item}
                 </Link>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
         
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
             <>
@@ -99,7 +123,7 @@ const Header = () => {
                     whileHover={{ scale: 1.1 }}
                     className="w-10 h-10 rounded-full overflow-hidden border-2 border-accent-orange shadow-sm"
                   >
-                    <img src={userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={localStorage.getItem('profilePicture') ? `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}${localStorage.getItem('profilePicture')}` : (userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80")} alt="Profile" className="w-full h-full object-cover" />
                   </motion.div>
                 </Link>
               </div>
@@ -126,6 +150,34 @@ const Header = () => {
           )}
         </div>
       </nav>
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="md:hidden bg-white/95 backdrop-blur-md rounded-3xl mt-3 p-6 shadow-xl border border-gray-100 space-y-4">
+            {['Home', 'Search', 'About', 'How It Works', 'Contact'].map((item) => {
+              const path = item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`);
+              const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
+              return (
+                <Link key={item} to={path} className={`block text-sm font-bold transition-colors ${isActive ? 'text-accent-orange' : 'text-black hover:text-accent-orange'}`}>
+                  {item}
+                </Link>
+              );
+            })}
+            <hr className="border-gray-100" />
+            {isLoggedIn ? (
+              <>
+                <Link to={dashboardPath} className="block text-sm font-bold text-black hover:text-accent-orange">Dashboard</Link>
+                <button onClick={handleLogout} className="block text-sm font-bold text-gray-400 hover:text-black">Logout</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="block text-sm font-bold text-black hover:text-accent-orange">Login</Link>
+                <Link to="/signup" className="block text-sm font-bold text-accent-orange">Sign Up</Link>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

@@ -68,6 +68,26 @@ const StudentDashboard = () => {
     fetchUser();
   }, []);
 
+  const handleProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/upload/profile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserProfile((prev: any) => prev ? { ...prev, profilePicture: data.url || data.profilePicture } : prev);
+      }
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -176,14 +196,12 @@ const StudentDashboard = () => {
               if (token) {
                 if (sessionStorage.getItem(`verified_${sessionId}`)) return;
                 sessionStorage.setItem(`verified_${sessionId}`, '1');
-                console.log('[Payment] verifying session:', sessionId);
                 const verifyRes = await fetch(`${apiBase}/api/payments/verify-session`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ sessionId }),
                 });
                 const verifyData = await verifyRes.json();
-                console.log('[Payment] verify result:', verifyData);
                 if (verifyData.paid) {
                   navigate(`${window.location.pathname}?tab=payments`, { replace: true });
                   setShowPaySuccess(true);
@@ -828,8 +846,8 @@ const StudentDashboard = () => {
                       {/* Profile Picture Upload */}
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
                          <div className="relative group">
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                               <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" className="w-full h-full object-cover" />
+                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
                             </div>
                             <button 
                               type="button"
@@ -838,7 +856,7 @@ const StudentDashboard = () => {
                             >
                                <Camera size={16} />
                             </button>
-                            <input type="file" id="profile-upload" className="hidden" accept="image/*" />
+                             <input type="file" id="profile-upload" className="hidden" accept="image/*" onChange={handleProfileUpload} />
                          </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Profile Photo</h4>
@@ -861,7 +879,7 @@ const StudentDashboard = () => {
                         <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="pt-6">
-                        <button type="button" className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
+                        <button type="button" onClick={() => navigate('/profile')} className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
                           Update Profile Settings
                         </button>
                       </div>

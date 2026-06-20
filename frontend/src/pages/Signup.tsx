@@ -22,7 +22,15 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [university, setUniversity] = useState('');
+  const [gender, setGender] = useState('');
+  const [year, setYear] = useState('');
+  const [faculty, setFaculty] = useState('');
+  const [universityEmail, setUniversityEmail] = useState('');
+  const [nicNumber, setNicNumber] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +41,22 @@ const Signup = () => {
       return;
     }
     
+    setSubmitting(true);
     try {
       const response = await fetch(`${apiBase}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, email, password, role, phone, university: role === 'student' ? university : undefined }),
+        body: JSON.stringify({
+          firstName, lastName, email, password, role, phone,
+          university: role === 'student' ? university : undefined,
+          gender: role === 'student' ? gender : undefined,
+          year: role === 'student' ? year : undefined,
+          faculty: role === 'student' ? faculty : undefined,
+          universityEmail: role === 'student' ? universityEmail : undefined,
+          nicNumber: role === 'owner' ? nicNumber : undefined,
+          whatsappNumber: role === 'owner' ? whatsappNumber : undefined,
+          recoveryEmail: role === 'owner' ? recoveryEmail : undefined,
+        }),
       });
       const data = await response.json();
       
@@ -48,6 +67,8 @@ const Signup = () => {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('token', data.token);
+      localStorage.setItem('userId', data.user._id || data.user.id);
+      if (data.user.profilePicture) localStorage.setItem('profilePicture', data.user.profilePicture);
       
       if (data.user.role === 'admin') {
         navigate('/admin-dashboard');
@@ -56,6 +77,8 @@ const Signup = () => {
       }
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -227,7 +250,7 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Gender</label>
-                          <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select Gender</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -240,7 +263,7 @@ const Signup = () => {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University Email</label>
-                        <input type="email" placeholder="name@university.edu" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        <input type="email" placeholder="name@university.edu" value={universityEmail} onChange={e => setUniversityEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
@@ -252,7 +275,7 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Year</label>
-                          <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             <option value="1">Year 1</option>
                             <option value="2">Year 2</option>
@@ -263,7 +286,7 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Faculty</label>
-                          <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={faculty} onChange={e => setFaculty(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
                           </select>
@@ -278,7 +301,7 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">NIC Number</label>
-                          <input type="text" placeholder="XXXXXXXXXV / 20XXXXXXXXX" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="text" placeholder="XXXXXXXXXV / 20XXXXXXXXX" value={nicNumber} onChange={e => setNicNumber(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
@@ -288,19 +311,19 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">WhatsApp Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Recovery Email</label>
-                          <input type="email" placeholder="owner_recovery@email.com" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="email" placeholder="owner_recovery@email.com" value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                     </>
                   )}
 
                   <div className="pt-6">
-                    <button type="submit" className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange hover:text-white transition-all shadow-xl shadow-black/10">
-                      Create {role === 'student' ? 'Student' : 'Owner'} Account
+                    <button type="submit" disabled={submitting} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange hover:text-white transition-all shadow-xl shadow-black/10 disabled:opacity-50">
+                      {submitting ? 'Creating...' : `Create ${role === 'student' ? 'Student' : 'Owner'} Account`}
                     </button>
                   </div>
                 </form>

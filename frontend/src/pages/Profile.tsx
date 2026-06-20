@@ -31,7 +31,9 @@ const Profile = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setForm(prev => ({ ...prev, profilePicture: data.url || data.path }));
+        const url = data.url || data.path;
+        setForm(prev => ({ ...prev, profilePicture: url }));
+        localStorage.setItem('profilePicture', url);
       }
     } catch {}
     finally { setUploadingPic(false); }

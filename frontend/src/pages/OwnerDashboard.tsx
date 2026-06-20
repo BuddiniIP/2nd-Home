@@ -85,6 +85,26 @@ const OwnerDashboard = () => {
     fetchUser();
   }, []);
 
+  const handleOwnerProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/upload/profile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserProfile((prev: any) => prev ? { ...prev, profilePicture: data.url || data.profilePicture } : prev);
+      }
+    } catch { /* ignore */ }
+  };
+
    const containerVariants: any = {
     hidden: { opacity: 0 },
     visible: {
@@ -1144,14 +1164,15 @@ const OwnerDashboard = () => {
                    <h3 className="text-2xl font-display font-bold mb-10">Owner Settings</h3>
                    <form className="space-y-8">
                       <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
-                         <div className="relative">
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                               <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Avatar" className="w-full h-full object-cover" />
-                            </div>
-                            <button className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors">
-                               <Camera size={16} />
-                            </button>
-                         </div>
+                          <div className="relative group">
+                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                                <img src={userProfile?.profilePicture ? `${apiBase}${userProfile.profilePicture}` : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                             </div>
+                             <button type="button" onClick={() => document.getElementById('owner-profile-upload')?.click()} className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg">
+                                <Camera size={16} />
+                             </button>
+                             <input type="file" id="owner-profile-upload" className="hidden" accept="image/*" onChange={handleOwnerProfileUpload} />
+                          </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Official Profile Picture</h4>
                             <p className="text-xs text-gray-400 max-w-[200px]">This photo will be visible to students when they view your boardings.</p>
@@ -1169,8 +1190,8 @@ const OwnerDashboard = () => {
                         </div>
                       </div>
                       <div className="pt-6">
-                        <button type="button" className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
-                          Save Official Settings
+                        <button type="button" onClick={() => navigate('/profile')} className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">
+                          Edit Official Settings
                         </button>
                       </div>
                    </form>

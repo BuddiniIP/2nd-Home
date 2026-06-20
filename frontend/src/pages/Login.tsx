@@ -11,10 +11,12 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     
     try {
       const response = await fetch(`${apiBase}/api/auth/login`, {
@@ -36,6 +38,8 @@ const Login = () => {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('token', data.token);
       localStorage.setItem('userRole', data.user.role);
+      localStorage.setItem('userId', data.user._id || data.user.id);
+      if (data.user.profilePicture) localStorage.setItem('profilePicture', data.user.profilePicture);
 
       // Navigate strictly by the backend-provided role
       if (data.user.role === 'admin') {
@@ -47,6 +51,8 @@ const Login = () => {
       }
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -128,7 +134,7 @@ const Login = () => {
             </div>
             
             <div className="pt-6">
-              <button type="submit" className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10">
+                <button type="submit" disabled={submitting} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 disabled:opacity-50">
                 Sign In to 2nd Home
               </button>
             </div>

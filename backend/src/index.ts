@@ -15,6 +15,7 @@ import messageRoutes from './routes/messageRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
 import { handleStripeWebhook } from './controllers/paymentController.js';
 import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
@@ -71,6 +72,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/verifications', verificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/', (req, res) => {
   res.send('2nd Home API is running...');

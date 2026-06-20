@@ -39,6 +39,7 @@ const allowedOrigins = new Set([
 ]);
 
 fs.mkdirSync(path.resolve(uploadsDir, 'listings'), { recursive: true });
+fs.mkdirSync(path.resolve(uploadsDir, 'profiles'), { recursive: true });
 
 // Middleware
 // Stripe webhook — must be before global express.json() to get raw body

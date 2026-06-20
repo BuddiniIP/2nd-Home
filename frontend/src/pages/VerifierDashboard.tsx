@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -18,10 +18,12 @@ import {
 } from 'lucide-react';
 
 const VerifierDashboard = () => {
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [activeTab, setActiveTab] = useState('pending');
   const [inspectionModal, setInspectionModal] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [userName, setUserName] = useState('Verifier');
 
   // Form State
   const [selfie, setSelfie] = useState<string | null>(null);
@@ -45,6 +47,31 @@ const VerifierDashboard = () => {
   const [pendingVerifications, setPendingVerifications] = useState<any[]>([]);
   const [verificationHistory, setVerificationHistory] = useState<any[]>([]);
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [userRes, verRes] = await Promise.all([
+          fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${apiBase}/api/verifications/my`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUserName(`${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Verifier');
+        }
+        if (verRes.ok) {
+          const assignments = await verRes.json();
+          const all = Array.isArray(assignments) ? assignments : [];
+          setPendingVerifications(all.filter((a: any) => a.status === 'pending' || a.status === 'in_progress'));
+          setVerificationHistory(all.filter((a: any) => a.status === 'verified' || a.status === 'rejected'));
+        }
+      } catch { /* ignore */ }
+    };
+    fetchData();
+  }, [apiBase]);
+
   const toggleCheck = (item: string) => {
     const newChecklist = new Set(checklist);
     if (newChecklist.has(item)) newChecklist.delete(item);
@@ -52,19 +79,43 @@ const VerifierDashboard = () => {
     setChecklist(newChecklist);
   };
 
-  const handleInspectionSubmit = () => {
+  const handleInspectionSubmit = async () => {
     if (!selfie) {
       alert("Please upload a selfie at the boarding location first.");
       return;
     }
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${apiBase}/api/verifications/${inspectionModal._id}/inspect`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          verdict,
+          checklist: Array.from(checklist),
+          notes,
+          selfie,
+          images: boardingImages,
+        }),
+      });
+      if (res.ok) {
+        setVerificationHistory(prev => [{ ...inspectionModal, status: verdict === 'verified' ? 'verified' : 'rejected' }, ...prev]);
+        setPendingVerifications(prev => prev.filter((a: any) => a._id !== inspectionModal._id));
+        setIsSubmitted(true);
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to submit inspection');
+      }
+    } catch {
+      alert('Failed to submit inspection. Please try again.');
+    } finally {
       setIsSubmitting(false);
-      setIsSubmitted(true);
-      console.log("Report submitted to Admin", { verdict, checklist: Array.from(checklist), selfie, images: boardingImages, notes });
-    }, 2000);
+    }
   };
 
   const containerVariants: any = {
@@ -86,8 +137,8 @@ const VerifierDashboard = () => {
                 <User size={48} />
              </div>
              <div className="text-center">
-                <h3 className="font-display font-bold text-xl">Ruwan J.</h3>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Official Verifier</p>
+                 <h3 className="font-display font-bold text-xl">{userName}</h3>
+                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Official Verifier</p>
              </div>
           </div>
 
@@ -127,27 +178,32 @@ const VerifierDashboard = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {pendingVerifications.map((task) => (
-                    <div key={task.id} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 space-y-6 hover:shadow-xl hover:shadow-black/5 transition-all">
+                  {pendingVerifications.map((task: any) => {
+                    const listing = task.listing || {};
+                    const owner = listing.owner || {};
+                    const ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Owner';
+                    const deadline = task.visitDate ? new Date(task.visitDate).toLocaleDateString() : 'Not scheduled';
+                    return (
+                    <div key={task._id || task.id} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 space-y-6 hover:shadow-xl hover:shadow-black/5 transition-all">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
-                          <h4 className="text-xl font-bold">{task.title}</h4>
+                          <h4 className="text-xl font-bold">{listing.title || 'Untitled Boarding'}</h4>
                           <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
                             <MapPin size={12} className="text-[#8B5CF6]" />
-                            {task.location}
+                            {listing.address || 'Address not set'}
                           </div>
                         </div>
-                        <span className="text-[9px] font-bold bg-gray-50 px-3 py-1 rounded-full uppercase tracking-widest">{task.type}</span>
+                        <span className="text-[9px] font-bold bg-gray-50 px-3 py-1 rounded-full uppercase tracking-widest">{task.status}</span>
                       </div>
                       
                       <div className="flex items-center justify-between py-4 border-y border-gray-50">
                         <div className="space-y-1">
                           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Owner</p>
-                          <p className="text-sm font-bold">{task.owner}</p>
+                          <p className="text-sm font-bold">{ownerName}</p>
                         </div>
                         <div className="text-right space-y-1">
-                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Deadline</p>
-                          <p className="text-sm font-bold text-red-500">{task.deadline}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Visit Date</p>
+                          <p className="text-sm font-bold text-red-500">{deadline}</p>
                         </div>
                       </div>
 
@@ -158,7 +214,8 @@ const VerifierDashboard = () => {
                         Start Inspection
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -174,22 +231,29 @@ const VerifierDashboard = () => {
               >
                 <h3 className="text-2xl font-display font-bold mb-8">Verification History</h3>
                 <div className="space-y-4">
-                  {verificationHistory.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-gray-200 transition-all">
+                  {verificationHistory.map((item: any) => {
+                    const listing = item.listing || {};
+                    const owner = listing.owner || {};
+                    const ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Owner';
+                    const dateStr = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '';
+                    const isVerified = item.status === 'verified';
+                    return (
+                    <div key={item._id || item.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-gray-200 transition-all">
                       <div className="flex items-center gap-6">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${item.status === 'Verified' ? 'bg-green-500' : 'bg-red-500'}`}>
-                          {item.status === 'Verified' ? <ShieldCheck size={24} /> : <X size={24} />}
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${isVerified ? 'bg-green-500' : 'bg-red-500'}`}>
+                          {isVerified ? <ShieldCheck size={24} /> : <X size={24} />}
                         </div>
                         <div>
-                          <h4 className="font-bold text-black">{item.title}</h4>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.owner} • {item.date}</p>
+                          <h4 className="font-bold text-black">{listing.title || 'Untitled Boarding'}</h4>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{ownerName} • {dateStr}</p>
                         </div>
                       </div>
-                      <span className={`px-6 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${item.status === 'Verified' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                      <span className={`px-6 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${isVerified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                         {item.status}
                       </span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

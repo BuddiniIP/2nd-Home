@@ -10,7 +10,6 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@google/genai": "^1.29.0",
     "@types/multer": "^2.1.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",

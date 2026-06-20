@@ -160,7 +160,7 @@ const AdminDashboard = () => {
          setUsers(items);
          setVerifiers(
             items
-               .filter((user: any) => user.role === 'admin')
+               .filter((user: any) => user.role === 'verifier')
                .map((user: any) => ({
                   id: user.id,
                   name: user.name,
@@ -192,8 +192,8 @@ const AdminDashboard = () => {
          const response = await fetch(`${apiBase}/api/admin/messages`, {
             headers: getAdminHeaders(),
          });
-      const data = await response.json();
-      setMessages(data);
+      const json = await response.json();
+      setMessages(Array.isArray(json) ? json : []);
     } catch (error) {
       console.error("Error fetching messages:", error);
     }
@@ -204,8 +204,9 @@ const AdminDashboard = () => {
          const response = await fetch(`${apiBase}/api/admin/reports`, {
             headers: getAdminHeaders(),
          });
-      const data = await response.json();
-      setBoardingReports(data);
+      const json = await response.json();
+      const items = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
+      setBoardingReports(items);
     } catch (error) {
       console.error("Error fetching boarding reports:", error);
     }
@@ -354,9 +355,13 @@ const AdminDashboard = () => {
         body = { status: 'resolved', actionTaken: 'boarding_removed' };
       }
 
+      const token = localStorage.getItem('token');
       const response = await fetch(url, {
         method: 'PATCH',
-        headers: getAdminHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(body),
       });
       const data = await response.json();
@@ -392,9 +397,9 @@ const AdminDashboard = () => {
                  <button className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-accent-orange transition-all">
                     <Bell size={24} />
                  </button>
-                 {(boardingReports.length > 0 || messages.some(m => m.unread)) && (
-                   <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
-                 )}
+                  {(boardingReports.length > 0 || messages.some((m: any) => !m.isRead)) && (
+                    <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
+                  )}
                </div>
                
                         <div className="flex bg-white p-2 rounded-full shadow-sm border border-gray-100 overflow-x-auto max-w-full">
@@ -710,30 +715,35 @@ const AdminDashboard = () => {
                 <motion.div key="messages" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8" >
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50"><h3 className="text-2xl font-display font-bold">User Messages</h3></div>
                    <div className="space-y-6">
-                       {messages.map((msg) => (
-                        <div key={msg.id} className={`p-8 rounded-[2.5rem] border transition-all ${msg.unread ? 'bg-white border-accent-orange shadow-xl' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
-                           <div className="flex justify-between items-start mb-6">
-                              <div className="flex items-center gap-4">
-                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${msg.unread ? 'bg-accent-orange text-white' : 'bg-black text-white'}`}>{msg.sender.charAt(0)}</div>
-                                 <div><h4 className="font-bold text-black flex items-center gap-3">{msg.sender}{msg.unread && <span className="w-2 h-2 bg-accent-orange rounded-full"></span>}</h4><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{msg.email} • {msg.date}</p></div>
+                        {messages.map((msg: any) => {
+                           const senderName = msg.sender ? `${msg.sender.firstName || ''} ${msg.sender.lastName || ''}`.trim() || msg.sender.email || msg.email || 'Anonymous' : msg.email || 'Anonymous';
+                           const isUnread = !msg.isRead;
+                           const dateStr = msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : '';
+                           return (
+                         <div key={msg._id || msg.id} className={`p-8 rounded-[2.5rem] border transition-all ${isUnread ? 'bg-white border-accent-orange shadow-xl' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}>
+                            <div className="flex justify-between items-start mb-6">
+                               <div className="flex items-center gap-4">
+                                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${isUnread ? 'bg-accent-orange text-white' : 'bg-black text-white'}`}>{senderName.charAt(0)}</div>
+                                  <div><h4 className="font-bold text-black flex items-center gap-3">{senderName}{isUnread && <span className="w-2 h-2 bg-accent-orange rounded-full"></span>}</h4><p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{msg.email || senderName} • {dateStr}</p></div>
+                               </div>
+                               <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-all">Mark as read</button>
+                            </div>
+                            <h5 className="font-bold text-black mb-2">{msg.subject}</h5>
+                            <p className="text-gray-500 text-sm leading-relaxed mb-6">{msg.message}</p>
+                            
+                            {msg.type === 'verification' && (
+                              <div className="flex gap-4 pt-6 border-t border-gray-100">
+                                 <button onClick={() => alert('Boarding Verified!')} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
+                                    Approve & Verify
+                                 </button>
+                                 <button onClick={() => alert('Rejection sent to owner')} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
+                                    Reject
+                                 </button>
                               </div>
-                              <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-all">Mark as read</button>
-                           </div>
-                           <h5 className="font-bold text-black mb-2">{msg.subject}</h5>
-                           <p className="text-gray-500 text-sm leading-relaxed mb-6">{msg.message}</p>
-                           
-                           {msg.type === 'Verification' && msg.role === 'verifier' && (
-                             <div className="flex gap-4 pt-6 border-t border-gray-100">
-                                <button onClick={() => alert('Boarding Verified!')} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
-                                   Approve & Verify
-                                </button>
-                                <button onClick={() => alert('Rejection sent to owner')} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
-                                   Reject
-                                </button>
-                             </div>
-                           )}
-                        </div>
-                      ))}
+                            )}
+                         </div>
+                           );
+                       })}
                    </div>
                 </motion.div>
               )}
@@ -800,21 +810,37 @@ const AdminDashboard = () => {
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50">
                       <h3 className="text-2xl font-display font-bold">Reported Boardings</h3>
                    </div>
-                   <div className="space-y-6">
-                        {boardingReports.map((report) => (
-                           <div key={report.id} className="p-8 rounded-[2.5rem] bg-[#FBFBFB] border border-gray-50 space-y-6">
-                              <div className="flex justify-between items-start">
-                                 <div><h4 className="font-bold text-black">{report.boardingName}</h4><p className="text-[10px] text-gray-400 font-bold uppercase">{report.reporterName}</p></div>
-                                 <button 
-                                      onClick={() => handleBoardingAction(report.id, 'remove')}
-                                      className="px-6 py-2 bg-red-100 text-red-600 rounded-full text-[9px] font-bold uppercase hover:bg-red-200"
-                                    >
-                                       Remove Boarding
+                    <div className="space-y-6">
+                         {boardingReports.map((report: any) => {
+                           const reporterName = report.reporter ? `${report.reporter.firstName || ''} ${report.reporter.lastName || ''}`.trim() || report.reporter.email || 'Unknown' : 'Unknown';
+                           const boardingName = report.targetListing?.title || report.targetListing?.toString() || 'Unknown boarding';
+                           return (
+                            <div key={report._id || report.id} className="p-8 rounded-[2.5rem] bg-[#FBFBFB] border border-gray-50 space-y-6">
+                               <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-bold text-black">{boardingName}</h4>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase">{reporterName}</p>
+                                    <p className="text-sm text-gray-500 mt-2">{report.reason || 'No reason provided'}</p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button 
+                                       onClick={() => handleBoardingAction(report._id || report.id, 'warn')}
+                                       className="px-6 py-2 bg-yellow-100 text-yellow-600 rounded-full text-[9px] font-bold uppercase hover:bg-yellow-200"
+                                     >
+                                        Warn
                                     </button>
-                              </div>
-                           </div>
-                        ))}
-                   </div>
+                                    <button 
+                                       onClick={() => handleBoardingAction(report._id || report.id, 'remove')}
+                                       className="px-6 py-2 bg-red-100 text-red-600 rounded-full text-[9px] font-bold uppercase hover:bg-red-200"
+                                     >
+                                        Remove Boarding
+                                     </button>
+                                  </div>
+                               </div>
+                            </div>
+                           );
+                         })}
+                    </div>
                 </motion.div>
               )}
            </AnimatePresence>

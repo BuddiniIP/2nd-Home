@@ -227,6 +227,18 @@ export const recountOccupants: RequestHandler = async (req: any, res, next) => {
   }
 };
 
+export const getMyBoardings: RequestHandler = async (req: any, res, next) => {
+  try {
+    const items = await Listing.find({ owner: req.user.id })
+      .populate('owner', 'firstName lastName email profilePicture')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json({ data: items.map(mapListing) });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const uploadListingImages: RequestHandler = async (req: any, res, next) => {
   try {
     const files = (req.files ?? []) as Express.Multer.File[];

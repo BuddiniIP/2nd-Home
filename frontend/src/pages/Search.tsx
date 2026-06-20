@@ -38,7 +38,8 @@ const Search = () => {
           const amenities = boarding.amenities || [];
           const university = amenities.find((item: string) => universityLabels.includes(item)) || '';
           const faculty = amenities.find((item: string) => facultyLabels.includes(item)) || '';
-          const gender = amenities.find((item: string) => genderLabels.includes(item.toLowerCase())) || 'mixed';
+          const rawGender = amenities.find((item: string) => genderLabels.includes(item.toLowerCase())) || 'mixed';
+          const gender = rawGender.replace(/ only$/, '');
           const imagePath = boarding.images?.[0] || '';
 
           return {
@@ -394,14 +395,20 @@ const Search = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative w-full h-[70vh] rounded-[4rem] overflow-hidden shadow-sm border border-gray-100 bg-gray-50"
             >
-              <iframe 
-                width="100%" 
-                height="100%" 
-                frameBorder="0" 
-                style={{ border: 0 }}
-                src={`https://www.google.com/maps/embed/v1/search?key=YOUR_API_KEY&q=boarding+house&center=${userLocation ? `${userLocation.lat},${userLocation.lng}` : '6.9271,79.8612'}&zoom=14`}
-                allowFullScreen
-              ></iframe>
+              {import.meta.env.VITE_GOOGLE_MAPS_KEY ? (
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  frameBorder="0" 
+                  style={{ border: 0 }}
+                  src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY}&q=${userLocation ? `${userLocation.lat},${userLocation.lng}` : '6.9271,79.8612'}&zoom=14`}
+                  allowFullScreen
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm font-medium">
+                  Map unavailable — set VITE_GOOGLE_MAPS_KEY in your environment
+                </div>
+              )}
               <div className="absolute inset-0 bg-black/5 pointer-events-none" />
               <div className="absolute top-8 left-8 bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl max-w-sm space-y-4">
                  <div className="flex items-center gap-3 text-accent-orange">

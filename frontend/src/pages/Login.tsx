@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const [role, setRole] = useState<'student' | 'owner' | 'admin'>('student');
 
@@ -16,7 +17,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${apiBase}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

@@ -2,6 +2,7 @@ import express from 'express';
 import {
   listBoardings,
   getBoardingById,
+  getMyBoardings,
   createBoarding,
   updateBoarding,
   deleteBoarding,
@@ -14,6 +15,7 @@ import { protect } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.get('/', listBoardings);
+router.get('/my', protect, getMyBoardings);
 router.get('/:id', getBoardingById);
 
 router.post('/upload-images', protect, listingImageUpload.array('images', 10), uploadListingImages);

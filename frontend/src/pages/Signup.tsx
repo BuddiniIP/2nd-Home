@@ -5,6 +5,7 @@ import { User, Home as HomeIcon, Camera, ChevronLeft } from 'lucide-react';
 
 const Signup = () => {
   const navigate = useNavigate();
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [step, setStep] = useState<'role' | 'form'>('role');
   const [role, setRole] = useState<'student' | 'owner'>('student');
   const [fileName, setFileName] = useState("No file chosen");
@@ -18,6 +19,7 @@ const Signup = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [university, setUniversity] = useState('');
   const [error, setError] = useState('');
@@ -25,9 +27,14 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${apiBase}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, email, password, role, phone, university: role === 'student' ? university : undefined }),
@@ -203,7 +210,7 @@ const Signup = () => {
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Confirm Password</label>
-                      <input type="password" placeholder="••••••••" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <input type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                   </div>
 

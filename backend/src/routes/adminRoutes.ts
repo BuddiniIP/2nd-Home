@@ -8,6 +8,7 @@ import {
   getAdminReports,
   getAdminStats,
   getAdminUsers,
+  updatePaymentStatus,
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.get('/boardings', getAdminBoardings);
 router.get('/payments', getAdminPayments);
 router.get('/messages', getAdminMessages);
 router.get('/reports', getAdminReports);
+router.patch('/payments/:id/status', updatePaymentStatus);
 
 export default router;

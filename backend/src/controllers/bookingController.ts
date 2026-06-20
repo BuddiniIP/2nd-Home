@@ -2,13 +2,30 @@
 import { Request, Response } from "express";
 import Booking from "../models/Booking.js";
 
+import Listing from '../models/Listing.js';
+
 // Create booking (student)
 export const createBooking = async (req: Request, res: Response) => {
   try {
-    const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
+    const { listing, startDate: rawStartDate, endDate, amount } = req.body;
+    if (!listing || !endDate || amount == null) {
+      res.status(400).json({ message: 'listing, endDate, and amount are required' });
+      return;
+    }
+
+    const listingDoc = await Listing.findById(listing);
+    if (!listingDoc) {
+      res.status(404).json({ message: 'Listing not found' });
+      return;
+    }
+
+    const startDate = rawStartDate ? new Date(rawStartDate) : new Date();
     const booking = await Booking.create({
       student: req.user?.id,
-      ...req.body,
+      listing,
+      startDate,
+      endDate: new Date(endDate),
+      amount: Number(amount),
       month: startDate.getMonth() + 1,
       year: startDate.getFullYear(),
     });

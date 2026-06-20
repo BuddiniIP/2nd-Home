@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bell, 
@@ -7,25 +7,92 @@ import {
   AlertCircle, 
   Trash2, 
   ChevronLeft,
-  Mail,
   Zap,
   CreditCard,
   MessageSquare,
-  AlertOctagon,
   AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Notifications = () => {
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState('student');
-
-  useEffect(() => {
-    const role = localStorage.getItem('userRole');
-    setUserRole(role || 'student');
-  }, []);
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  const token = localStorage.getItem('token');
+  const authHeaders = { Authorization: `Bearer ${token}` };
+
+  const fetchNotifications = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${apiBase}/api/notifications`, { headers: authHeaders });
+      const json = await res.json();
+      setNotifications(Array.isArray(json.data) ? json.data : []);
+    } catch { /* ignore */ }
+  }, [apiBase, token]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'booking': return <Clock size={24} />;
+      case 'payment': return <CreditCard size={24} />;
+      case 'verification': return <CheckCircle2 size={24} />;
+      case 'report': return <AlertTriangle size={24} />;
+      case 'system': return <Zap size={24} />;
+      case 'message': return <MessageSquare size={24} />;
+      default: return <Bell size={24} />;
+    }
+  };
+
+  const getIconStyle = (type: string) => {
+    switch (type) {
+      case 'booking': return 'bg-blue-50 text-blue-500';
+      case 'payment': return 'bg-green-50 text-green-500';
+      case 'verification': return 'bg-purple-50 text-purple-500';
+      case 'report': return 'bg-red-50 text-red-500';
+      case 'system': return 'bg-yellow-50 text-yellow-500';
+      case 'message': return 'bg-cyan-50 text-cyan-500';
+      default: return 'bg-gray-50 text-black';
+    }
+  };
+
+  const formatTime = (createdAt: string) => {
+    const diff = Date.now() - new Date(createdAt).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(createdAt).toLocaleDateString();
+  };
+
+  const markAllRead = async () => {
+    if (!token) return;
+    try {
+      await fetch(`${apiBase}/api/notifications/read-all`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch { /* ignore */ }
+  };
+
+  const deleteNotification = async (id: string) => {
+    if (!token) return;
+    try {
+      await fetch(`${apiBase}/api/notifications/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
+      setNotifications(prev => prev.filter(n => n._id !== id));
+    } catch { /* ignore */ }
+  };
 
   const containerVariants: any = {
     hidden: { opacity: 0 },
@@ -44,14 +111,6 @@ const Notifications = () => {
       x: 0,
       transition: { type: "spring", stiffness: 100, damping: 15 }
     }
-  };
-
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-  };
-
-  const deleteNotification = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id));
   };
 
   return (
@@ -90,7 +149,7 @@ const Notifications = () => {
             {notifications.length > 0 ? (
               notifications.map((n) => (
                 <motion.div 
-                  key={n.id}
+                  key={n._id}
                   variants={itemVariants}
                   layout
                   exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
@@ -100,25 +159,21 @@ const Notifications = () => {
                       <div className="absolute top-8 right-8 w-3 h-3 bg-accent-orange rounded-full" />
                    )}
                    
-                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-                     n.type === 'urgent' ? 'bg-red-50 text-red-500' : 
-                     n.type === 'success' ? 'bg-green-50 text-green-500' : 
-                     'bg-gray-50 text-black'
-                   }`}>
-                      {n.icon}
+                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${getIconStyle(n.type)}`}>
+                      {getIcon(n.type)}
                    </div>
 
                    <div className="flex-1 space-y-2">
                       <div className="flex justify-between items-start">
                          <h3 className={`text-lg font-bold font-display ${!n.isRead ? 'text-black' : 'text-gray-500'}`}>{n.title}</h3>
-                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{n.time}</span>
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{formatTime(n.createdAt)}</span>
                       </div>
                       <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">{n.message}</p>
                    </div>
 
                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => deleteNotification(n.id)}
+                        onClick={() => deleteNotification(n._id)}
                         className="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"
                       >
                          <Trash2 size={16} />

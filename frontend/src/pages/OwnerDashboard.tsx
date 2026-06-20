@@ -233,31 +233,29 @@ const OwnerDashboard = () => {
    useEffect(() => {
       const fetchOwnerBoardings = async () => {
          try {
-            if (!userProfile?._id && !userProfile?.id) {
-               return;
-            }
+            const token = localStorage.getItem('token');
+            if (!token) return;
 
-            const response = await fetch(`${apiBase}/api/boardings`);
-            const data = await response.json();
-            const items = Array.isArray(data.data) ? data.data : [];
-            const ownerId = (userProfile._id || userProfile.id || '').toString();
+            const response = await fetch(`${apiBase}/api/boardings/my`, {
+               headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = await response.json();
+            const items = Array.isArray(json.data) ? json.data : [];
 
-            const ownedBoardings = items
-               .filter((boarding: any) => boarding.owner?.id === ownerId)
-               .map((boarding: any) => ({
-                  id: boarding.id,
-                  title: boarding.title,
-                  description: boarding.description,
-                  location: boarding.location?.address || boarding.address || 'Unknown location',
-                  image: boarding.images?.[0] ? `${apiBase}${boarding.images[0]}` : '/images/house_orange.jpg',
-                  images: boarding.images || [],
-                  price: Number(boarding.price || 0),
-                  capacity: Number(boarding.capacity || 0),
-                  currentOccupants: Number(boarding.currentOccupants || 0),
-                  available: Boolean(boarding.isAvailable),
-                  amenities: boarding.amenities || [],
-                  raw: boarding,
-               }));
+            const ownedBoardings = items.map((boarding: any) => ({
+               id: boarding.id,
+               title: boarding.title,
+               description: boarding.description,
+               location: boarding.location?.address || boarding.address || 'Unknown location',
+               image: boarding.images?.[0] ? `${apiBase}${boarding.images[0]}` : '/images/house_orange.jpg',
+               images: boarding.images || [],
+               price: Number(boarding.price || 0),
+               capacity: Number(boarding.capacity || 0),
+               currentOccupants: Number(boarding.currentOccupants || 0),
+               available: Boolean(boarding.isAvailable),
+               amenities: boarding.amenities || [],
+               raw: boarding,
+            }));
 
             setMyBoardings(ownedBoardings);
          } catch (error) {
@@ -266,7 +264,7 @@ const OwnerDashboard = () => {
       };
 
       if (activeTab === 'my-boardings' || activeTab === 'overview') fetchOwnerBoardings();
-   }, [apiBase, userProfile, activeTab, ownerRefreshKey]);
+   }, [apiBase, activeTab, ownerRefreshKey]);
 
    useEffect(() => {
       const fetchOwnerStats = async () => {

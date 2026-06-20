@@ -3,15 +3,23 @@ import multer, { StorageEngine } from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const apiKey = process.env.CLOUDINARY_API_KEY;
-const apiSecret = process.env.CLOUDINARY_API_SECRET;
+let _cloudinaryChecked = false;
+let _cloudinaryConfigured = false;
 
-const isCloudinaryConfigured = !!(cloudName && apiKey && apiSecret);
-
-if (isCloudinaryConfigured) {
-  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
-}
+const useCloudinary = () => {
+  if (!_cloudinaryChecked) {
+    _cloudinaryConfigured = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+    if (_cloudinaryConfigured) {
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+        api_key: process.env.CLOUDINARY_API_KEY!,
+        api_secret: process.env.CLOUDINARY_API_SECRET!,
+      });
+    }
+    _cloudinaryChecked = true;
+  }
+  return _cloudinaryConfigured;
+};
 
 const cloudinaryStorage = (folder: string): StorageEngine => ({
   _handleFile: (req, file, cb) => {
@@ -48,7 +56,7 @@ const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterC
 export const getProfileUpload = () => {
   const limits = { fileSize: 5 * 1024 * 1024 };
 
-  if (isCloudinaryConfigured) {
+  if (useCloudinary()) {
     return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits, fileFilter });
   }
 
@@ -69,7 +77,7 @@ export const getProfileUpload = () => {
 export const getListingUpload = () => {
   const limits = { fileSize: 10 * 1024 * 1024 };
 
-  if (isCloudinaryConfigured) {
+  if (useCloudinary()) {
     return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits, fileFilter });
   }
 

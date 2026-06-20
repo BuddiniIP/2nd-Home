@@ -18,12 +18,13 @@ const Cursor = () => {
 
     const handleHover = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      const cursor = target.style.cursor || window.getComputedStyle(target).cursor;
       if (
         target.tagName === 'BUTTON' || 
         target.tagName === 'A' || 
         target.closest('button') || 
         target.closest('a') ||
-        target.style.cursor === 'pointer'
+        cursor === 'pointer'
       ) {
         setIsHovering(true);
       } else {
@@ -31,12 +32,16 @@ const Cursor = () => {
       }
     };
 
+    const handleLeave = () => setIsHovering(false);
+
     window.addEventListener('mousemove', moveCursor);
     window.addEventListener('mouseover', handleHover);
+    window.addEventListener('mouseleave', handleLeave);
 
     return () => {
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleHover);
+      window.removeEventListener('mouseleave', handleLeave);
     };
   }, [cursorX, cursorY]);
 

@@ -8,6 +8,8 @@ import Cursor from '../components/Cursor';
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const [notifCount, setNotifCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,22 +17,37 @@ const Header = () => {
   useEffect(() => {
     const auth = localStorage.getItem('isLoggedIn');
     const role = localStorage.getItem('userRole');
+    const storedPic = localStorage.getItem('profilePicture');
     setIsLoggedIn(auth === 'true');
     setUserRole(role);
+    setProfilePic(storedPic);
     setMobileOpen(false);
+    const token = localStorage.getItem('token');
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
     const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
         const res = await fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
-          if (data.profilePicture) localStorage.setItem('profilePicture', data.profilePicture);
+          if (data.profilePicture) {
+            localStorage.setItem('profilePicture', data.profilePicture);
+            setProfilePic(data.profilePicture);
+          }
         }
       } catch { /* ignore */ }
     };
-    if (auth === 'true') fetchProfile();
+    const fetchNotifCount = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${apiBase}/api/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifCount(data.unreadCount || 0);
+        }
+      } catch { /* ignore */ }
+    };
+    if (auth === 'true') { fetchProfile(); fetchNotifCount(); }
   }, [location]);
 
   const dashboardPath =
@@ -92,9 +109,15 @@ const Header = () => {
           {isLoggedIn ? (
             <>
               <div className="relative mr-2">
-                 <Link to="/notifications" className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-black hover:text-accent-orange transition-colors relative">
+                 <Link to="/notifications" className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-black hover:text-accent-orange transition-colors relative" aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} unread)` : ''}`}>
                     <Bell size={18} />
-                    <span className="absolute top-0 right-0 w-3 h-3 bg-accent-orange border-2 border-white rounded-full" />
+                    {notifCount > 0 ? (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-accent-orange border-2 border-white rounded-full flex items-center justify-center text-[8px] font-bold text-white px-1">
+                        {notifCount > 99 ? '99+' : notifCount}
+                      </span>
+                    ) : (
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-gray-300 border-2 border-white rounded-full" />
+                    )}
                  </Link>
               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -117,7 +140,7 @@ const Header = () => {
                     whileHover={{ scale: 1.1 }}
                     className="w-10 h-10 rounded-full overflow-hidden border-2 border-accent-orange shadow-sm"
                   >
-                    <img src={localStorage.getItem('profilePicture') ? `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}${localStorage.getItem('profilePicture')}` : (userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80")} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={profilePic ? `${import.meta.env.VITE_API_BASE || 'http://localhost:5000'}${profilePic}` : (userRole === 'owner' ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80")} alt="Profile" className="w-full h-full object-cover" />
                   </motion.div>
                 </Link>
               </div>

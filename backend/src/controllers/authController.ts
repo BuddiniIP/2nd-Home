@@ -141,6 +141,7 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
     const file = (req as any).file;
     if (!file) { res.status(400).json({ message: 'No file uploaded' }); return; }
     const url = file.path;
+    console.log(`[Cloudinary] Profile picture uploaded: ${url}`);
     await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
     res.json({ url, path: url });
   } catch (error: any) {

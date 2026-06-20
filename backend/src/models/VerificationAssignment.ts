@@ -5,7 +5,7 @@ const verificationAssignmentSchema = new mongoose.Schema(
     verifier: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
       index: true,
     },
     listing: {
@@ -16,7 +16,12 @@ const verificationAssignmentSchema = new mongoose.Schema(
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
     status: {
       type: String,

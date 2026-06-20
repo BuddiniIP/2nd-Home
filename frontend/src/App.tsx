@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { MainLayout } from './layout/MainLayout';
+import PrivateRoute from './components/PrivateRoute';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import About from './pages/About';
@@ -13,9 +14,9 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import BoardingDetail from './pages/BoardingDetail';
 import Notifications from './pages/Notifications';
+import VerifierDashboard from './pages/VerifierDashboard';
 import Profile from './pages/Profile';
 import Chat from './pages/Chat';
-import VerifierDashboard from './pages/VerifierDashboard';
 
 export default function App() {
   return (
@@ -29,14 +30,14 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/student-dashboard" element={<StudentDashboard />} />
-          <Route path="/owner-dashboard" element={<OwnerDashboard />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/verifier-dashboard" element={<VerifierDashboard />} />
           <Route path="/boarding/:id" element={<BoardingDetail />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/student-dashboard" element={<PrivateRoute allowedRoles={['student']}><StudentDashboard /></PrivateRoute>} />
+          <Route path="/owner-dashboard" element={<PrivateRoute allowedRoles={['owner']}><OwnerDashboard /></PrivateRoute>} />
+          <Route path="/admin-dashboard" element={<PrivateRoute allowedRoles={['admin']}><AdminDashboard /></PrivateRoute>} />
+          <Route path="/verifier-dashboard" element={<PrivateRoute allowedRoles={['verifier']}><VerifierDashboard /></PrivateRoute>} />
+          <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
         </Route>
       </Routes>
     </Router>

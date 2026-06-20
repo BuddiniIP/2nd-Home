@@ -22,9 +22,13 @@ const Search = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchBoardings = async () => {
+      setLoading(true);
+      setError('');
       try {
         const response = await fetch(`${apiBase}/api/boardings`);
         const data = await response.json();
@@ -47,7 +51,7 @@ const Search = () => {
             title: boarding.title,
             location: boarding.location?.address || boarding.address || 'Unknown location',
             image: imagePath ? `${apiBase}${imagePath}` : '/images/house_orange.jpg',
-            rating: 4.5,
+            rating: 4.5, // TODO: replace with real rating from API
             type: boarding.capacity > 1 ? 'double' : 'single',
             currentOccupants: Number(boarding.currentOccupants || 0),
             capacity: Number(boarding.capacity || 0),
@@ -59,8 +63,10 @@ const Search = () => {
         });
 
         setProperties(mappedProperties);
-      } catch (error) {
-        console.error('Failed to fetch boardings', error);
+      } catch {
+        setError('Failed to load boardings');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -333,7 +339,32 @@ const Search = () => {
            </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
+            {Array.from({length: 8}).map((_, i) => (
+              <div key={i} className="space-y-6 animate-pulse">
+                <div className="aspect-[4/5] bg-gray-100 rounded-[3rem]" />
+                <div className="space-y-3 px-2">
+                  <div className="h-4 bg-gray-100 rounded-full w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded-full w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="text-center py-20">
+            <p className="text-red-500 font-bold mb-4">{error}</p>
+            <button onClick={() => window.location.reload()} className="px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest">Retry</button>
+          </div>
+        )}
+
         {/* Conditional View Rendering */}
+        {!loading && !error && (
+        <>
         <AnimatePresence mode="wait">
           {viewMode === 'grid' ? (
             <motion.div 
@@ -433,8 +464,9 @@ const Search = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </> )}
 
-        {filteredProperties.length === 0 && (
+        {!loading && filteredProperties.length === 0 && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

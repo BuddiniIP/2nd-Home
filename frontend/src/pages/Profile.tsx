@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, User, Save, Camera } from 'lucide-react';
+import { ChevronLeft, User, Save, Camera, Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -9,14 +9,38 @@ const Profile = () => {
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
 
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', university: '', role: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', university: '', role: '', profilePicture: '' });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [uploadingPic, setUploadingPic] = useState(false);
   const [message, setMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/'); };
+
+  const handlePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPic(true);
+    try {
+      const fd = new FormData();
+      fd.append('profilePicture', file);
+      const res = await fetch(`${apiBase}/api/auth/upload/profile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setForm(prev => ({ ...prev, profilePicture: data.url || data.path }));
+      }
+    } catch {}
+    finally { setUploadingPic(false); }
+  };
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
     fetch(`${apiBase}/api/auth/me`, { headers: authHeaders })
-      .then(r => r.json())
+      .then(async r => { const data = await r.json(); if (!r.ok) throw new Error(data.message); return data; })
       .then(data => setForm({
         firstName: data.firstName || '',
         lastName: data.lastName || '',
@@ -24,8 +48,10 @@ const Profile = () => {
         phone: data.phone || '',
         university: data.university || '',
         role: data.role || '',
+        profilePicture: data.profilePicture || '',
       }))
-      .catch(() => setMessage('Failed to load profile'));
+      .catch(() => setMessage('Failed to load profile'))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,21 +83,37 @@ const Profile = () => {
     <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="space-y-4">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
+          <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
             <ChevronLeft size={14} /> Go Back
           </button>
           <h1 className="text-5xl font-display font-bold text-black tracking-tight">My Profile</h1>
           <p className="text-gray-400 text-sm">Manage your personal information.</p>
         </div>
 
-        <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 space-y-8">
-          <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
-            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative">
-              <User size={32} />
-              <button type="button" className="absolute -bottom-1 -right-1 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center">
-                <Camera size={12} />
-              </button>
+        {loading ? (
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 space-y-8 animate-pulse">
+            <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
+              <div className="w-20 h-20 rounded-full bg-gray-100" />
+              <div className="space-y-3"><div className="h-5 bg-gray-100 rounded-full w-40" /><div className="h-3 bg-gray-100 rounded-full w-20" /></div>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({length: 4}).map((_, i) => <div key={i} className="space-y-2"><div className="h-3 bg-gray-100 rounded-full w-20" /><div className="h-12 bg-gray-100 rounded-full" /></div>)}
+            </div>
+          </div>
+        ) : (
+        <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 space-y-8">
+            <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative overflow-hidden">
+                {form.profilePicture ? (
+                  <img src={`${apiBase}${form.profilePicture}`} className="w-full h-full object-cover" />
+                ) : (
+                  <User size={32} />
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePictureUpload} className="hidden" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="absolute -bottom-1 -right-1 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center disabled:opacity-50">
+                  {uploadingPic ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                </button>
+              </div>
             <div>
               <h2 className="text-xl font-bold">{form.firstName} {form.lastName}</h2>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{form.role}</p>
@@ -111,6 +153,7 @@ const Profile = () => {
             <Save size={14} /> {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </motion.form>
+        )}
       </div>
     </div>
   );

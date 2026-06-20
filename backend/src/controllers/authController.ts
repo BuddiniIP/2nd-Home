@@ -134,6 +134,19 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+export const uploadProfilePicture = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) { res.status(401).json({ message: 'Not authorized' }); return; }
+    const file = (req as any).file;
+    if (!file) { res.status(400).json({ message: 'No file uploaded' }); return; }
+    const url = `/uploads/profiles/${file.filename}`;
+    await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
+    res.json({ url, path: url });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {

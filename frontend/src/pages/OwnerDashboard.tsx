@@ -27,8 +27,9 @@ import {
 const OwnerDashboard = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
-  const [userProfile, setUserProfile] = useState<any>(null);
+   const [userProfile, setUserProfile] = useState<any>(null);
    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+   const authHeaders = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
    const universities = [
       'University of Colombo',
@@ -776,13 +777,20 @@ const OwnerDashboard = () => {
                                        </div>
 
                                        <div className="flex gap-4 pt-4 border-t border-gray-50">
-                                          <button
-                                             type="button"
-                                             onClick={() => populateBoardingForm(boarding.raw)}
-                                             className="flex-1 py-4 rounded-full border border-black/10 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all"
-                                          >
-                                             Manage Property
-                                          </button>
+                                           <button
+                                              type="button"
+                                              onClick={() => populateBoardingForm(boarding.raw)}
+                                              className="flex-1 py-4 rounded-full border border-black/10 text-[10px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+                                           >
+                                              Manage Property
+                                           </button>
+                                           <button
+                                              type="button"
+                                              onClick={() => setShowVerifyModal(boarding)}
+                                              className="px-4 py-4 rounded-full border border-green-200 text-green-600 text-[10px] font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all"
+                                           >
+                                              Verify
+                                           </button>
                                            <button
                                               type="button"
                                               onClick={() => handleRecount(boarding.id)}
@@ -1239,13 +1247,18 @@ const OwnerDashboard = () => {
                     </div>
 
                     <button 
-                      onClick={() => {
+                      onClick={async () => {
                         setIsVerifying(true);
-                        setTimeout(() => {
-                          setVerificationRequests(prev => new Set(prev).add(showVerifyModal.id));
-                          setIsVerifying(false);
-                          setVerifySuccess(true);
-                        }, 1500);
+                        try {
+                          const res = await fetch(`${apiBase}/api/verifications/request`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...authHeaders },
+                            body: JSON.stringify({ listingId: showVerifyModal.id }),
+                          });
+                          if (res.ok) setVerifySuccess(true);
+                          else alert('Verification request failed');
+                        } catch { alert('Verification request failed'); }
+                        finally { setIsVerifying(false); }
                       }}
                       disabled={isVerifying}
                       className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-4"

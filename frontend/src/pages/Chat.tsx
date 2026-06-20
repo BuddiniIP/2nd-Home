@@ -9,6 +9,7 @@ const Chat = () => {
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
 
+  const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/'); };
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConv, setActiveConv] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -76,7 +77,7 @@ const Chat = () => {
     <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
+          <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
             <ChevronLeft size={14} /> Back
           </button>
           <h1 className="text-5xl font-display font-bold text-black tracking-tight">Messages</h1>

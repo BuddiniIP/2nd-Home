@@ -1,6 +1,29 @@
 import { RequestHandler } from "express";
 import VerificationAssignment from "../models/VerificationAssignment.js";
 
+export const requestVerification: RequestHandler = async (req, res, next) => {
+  try {
+    const { listingId } = req.body;
+    if (!listingId) {
+      res.status(400).json({ message: "listingId is required" });
+      return;
+    }
+    const existing = await VerificationAssignment.findOne({ listing: listingId, status: { $in: ["pending", "in_progress"] }, verifier: null });
+    if (existing) {
+      res.status(400).json({ message: "A verification request already exists for this listing" });
+      return;
+    }
+    const assignment = await VerificationAssignment.create({
+      listing: listingId,
+      owner: req.user!.id,
+      status: "pending",
+    });
+    res.status(201).json(assignment);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const assignVerifier: RequestHandler = async (req, res, next) => {
   try {
     const { verifierId, listingId, visitDate } = req.body;
@@ -8,12 +31,21 @@ export const assignVerifier: RequestHandler = async (req, res, next) => {
       res.status(400).json({ message: "verifierId and listingId are required" });
       return;
     }
-    const assignment = await VerificationAssignment.create({
-      verifier: verifierId,
-      listing: listingId,
-      assignedBy: req.user!.id,
-      visitDate: visitDate || null,
-    });
+    let assignment = await VerificationAssignment.findOne({ listing: listingId, verifier: null, status: "pending" });
+    if (assignment) {
+      assignment.verifier = verifierId as any;
+      assignment.assignedBy = req.user!.id as any;
+      assignment.visitDate = visitDate || null;
+      assignment.status = "pending";
+      await assignment.save();
+    } else {
+      assignment = await VerificationAssignment.create({
+        verifier: verifierId,
+        listing: listingId,
+        assignedBy: req.user!.id,
+        visitDate: visitDate || null,
+      });
+    }
     const populated = await VerificationAssignment.findById(assignment._id)
       .populate("listing", "title address")
       .populate("verifier", "firstName lastName email");
@@ -67,7 +99,7 @@ export const submitInspection: RequestHandler = async (req, res, next) => {
       res.status(404).json({ message: "Assignment not found" });
       return;
     }
-    if (assignment.verifier.toString() !== req.user!.id) {
+    if (!assignment.verifier || assignment.verifier.toString() !== req.user!.id) {
       res.status(403).json({ message: "Not authorized" });
       return;
     }

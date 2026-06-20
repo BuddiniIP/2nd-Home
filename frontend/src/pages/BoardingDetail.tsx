@@ -390,7 +390,7 @@ const BoardingDetail = () => {
                         <span className="hidden sm:block text-gray-300">•</span>
                         <span className="inline-flex items-center gap-2">
                           <Star size={18} className="text-yellow-500 fill-yellow-500" />
-                          4.8 rating
+                           --
                         </span>
                       </div>
                     </div>

@@ -56,9 +56,6 @@ const AdminDashboard = () => {
     'University of Peradeniya'
   ];
 
-  const pendingAssignments = [];
-
-  // Mock data for reported reviews
   const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => {
@@ -486,15 +483,15 @@ const AdminDashboard = () => {
                       </div>
                       <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex items-center justify-between">
                          <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Growth Rate</p>
-                            <h4 className="text-2xl font-display font-bold text-green-500">+24.5%</h4>
+                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Growth Rate</p>
+                             <h4 className="text-2xl font-display font-bold text-green-500">--</h4>
                          </div>
                          <TrendingUp size={32} className="text-green-500" />
                       </div>
                       <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex items-center justify-between">
                          <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Platform Reach</p>
-                            <h4 className="text-2xl font-display font-bold text-black">12.5k Visits</h4>
+                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Platform Reach</p>
+                             <h4 className="text-2xl font-display font-bold text-black">--</h4>
                          </div>
                          <BarChart3 size={32} className="text-black" />
                       </div>
@@ -867,32 +864,46 @@ const AdminDashboard = () => {
                   </button>
                </div>
                <div className="p-10 space-y-8">
-                  <div className="space-y-4">
-                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Select Property</label>
-                     <select className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none appearance-none cursor-pointer">
-                        <option value="">Select a boarding...</option>
-                        {pendingAssignments.map(p => <option key={p.id} value={p.id}>{p.title} ({p.location})</option>)}
-                     </select>
-                  </div>
-                  <div className="space-y-4">
-                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Visit Date</label>
-                     <input type="date" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none" />
-                  </div>
-                  <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100">
-                     <p className="text-[10px] font-bold text-accent-orange uppercase tracking-widest mb-2">Message to Verifier</p>
-                     <p className="text-[11px] text-accent-orange italic">
-                       "this is the location of the boarding, go and check this boarding in this day."
-                     </p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                       alert('Task assigned successfully!');
-                       setAssignmentModal(null);
-                    }}
-                    className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
-                  >
-                     Confirm Assignment
-                  </button>
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Select Property</label>
+                      <select id="boarding-select" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <option value="">Select a boarding...</option>
+                          {boardings.map((b: any) => <option key={b.id} value={b.id}>{b.title} ({b.location})</option>)}
+                       </select>
+                   </div>
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Visit Date</label>
+                      <input id="visit-date" type="date" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none" />
+                   </div>
+                    <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100">
+                       <p className="text-[10px] font-bold text-accent-orange uppercase tracking-widest mb-2">Message to Verifier</p>
+                       <p className="text-[11px] text-accent-orange italic">
+                         A verifier will visit the property to inspect all details.
+                       </p>
+                    </div>
+                    <button 
+                      onClick={async () => {
+                         const boardingSelect = document.querySelector<HTMLSelectElement>('#boarding-select');
+                         const dateInput = document.querySelector<HTMLInputElement>('#visit-date');
+                         const listingId = boardingSelect?.value;
+                         const verifierId = assignmentModal?._id;
+                         const visitDate = dateInput?.value;
+                         if (!listingId) { alert('Please select a property'); return; }
+                         if (!verifierId) { alert('Verifier not found'); return; }
+                         try {
+                            const res = await fetch(`${apiBase}/api/verifications/assign`, {
+                               method: 'POST',
+                               headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
+                               body: JSON.stringify({ verifierId, listingId, visitDate }),
+                            });
+                            if (res.ok) { alert('Verifier assigned successfully!'); setAssignmentModal(null); }
+                            else { const d = await res.json(); alert(d.message || 'Assignment failed'); }
+                         } catch { alert('Assignment failed'); }
+                      }}
+                      className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
+                    >
+                      Confirm Assignment
+                    </button>
                </div>
             </motion.div>
           </div>

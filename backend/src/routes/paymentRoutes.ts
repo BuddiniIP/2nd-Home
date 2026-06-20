@@ -21,6 +21,6 @@ router.get('/owner/stats', protect, authorize(UserRole.OWNER), getOwnerStats);
 router.get('/my', protect, authorize(UserRole.STUDENT), getMyPayments);
 router.get('/owner', protect, authorize(UserRole.OWNER), getOwnerPayments);
 router.patch('/:bookingId/confirm', protect, authorize(UserRole.OWNER), confirmPayment);
-router.post('/:bookingId/checkout', protect, checkoutStudent);
+router.post('/:bookingId/checkout', protect, authorize(UserRole.STUDENT), checkoutStudent);
 
 export default router;

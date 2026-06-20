@@ -19,6 +19,7 @@ const Notifications = () => {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/'); };
 
   const token = localStorage.getItem('token');
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -120,7 +121,7 @@ const Notifications = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div className="space-y-4">
               <button 
-                onClick={() => navigate(-1)}
+                onClick={goBack}
                 className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest"
               >
                 <ChevronLeft size={14} /> Go Back

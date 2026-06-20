@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 import VerificationAssignment from "../models/VerificationAssignment.js";
+import Listing from "../models/Listing.js";
+import User, { UserRole } from "../models/User.js";
 
 export const requestVerification: RequestHandler = async (req, res, next) => {
   try {
@@ -8,7 +10,16 @@ export const requestVerification: RequestHandler = async (req, res, next) => {
       res.status(400).json({ message: "listingId is required" });
       return;
     }
-    const existing = await VerificationAssignment.findOne({ listing: listingId, status: { $in: ["pending", "in_progress"] }, verifier: null });
+    const listing = await Listing.findById(listingId).select('owner').lean();
+    if (!listing) {
+      res.status(404).json({ message: "Listing not found" });
+      return;
+    }
+    if (listing.owner.toString() !== req.user!.id) {
+      res.status(403).json({ message: "Not authorized - you do not own this listing" });
+      return;
+    }
+    const existing = await VerificationAssignment.findOne({ listing: listingId, status: { $in: ["pending", "in_progress"] }, verifier: null }).lean();
     if (existing) {
       res.status(400).json({ message: "A verification request already exists for this listing" });
       return;
@@ -31,6 +42,11 @@ export const assignVerifier: RequestHandler = async (req, res, next) => {
       res.status(400).json({ message: "verifierId and listingId are required" });
       return;
     }
+    const verifierUser = await User.findById(verifierId).select('role').lean();
+    if (!verifierUser || verifierUser.role !== UserRole.VERIFIER) {
+      res.status(400).json({ message: "Specified user is not a verifier" });
+      return;
+    }
     let assignment = await VerificationAssignment.findOne({ listing: listingId, verifier: null, status: "pending" });
     if (assignment) {
       assignment.verifier = verifierId as any;
@@ -48,7 +64,8 @@ export const assignVerifier: RequestHandler = async (req, res, next) => {
     }
     const populated = await VerificationAssignment.findById(assignment._id)
       .populate("listing", "title address")
-      .populate("verifier", "firstName lastName email");
+      .populate("verifier", "firstName lastName email")
+      .lean();
     res.status(201).json(populated);
   } catch (err) {
     next(err);

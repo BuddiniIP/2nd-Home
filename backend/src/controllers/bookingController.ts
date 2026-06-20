@@ -13,7 +13,7 @@ export const createBooking = async (req: Request, res: Response) => {
       return;
     }
 
-    const listingDoc = await Listing.findById(listing);
+    const listingDoc = await Listing.findById(listing).lean();
     if (!listingDoc) {
       res.status(404).json({ message: 'Listing not found' });
       return;
@@ -39,7 +39,7 @@ export const createBooking = async (req: Request, res: Response) => {
 // Student bookings
 export const getMyBookings = async (req: Request, res: Response) => {
   try {
-    const bookings = await Booking.find({ student: req.user?.id }).populate("listing");
+    const bookings = await Booking.find({ student: req.user?.id }).populate("listing").lean();
     res.json(bookings);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -49,15 +49,10 @@ export const getMyBookings = async (req: Request, res: Response) => {
 // Owner bookings
 export const getOwnerBookings = async (req: Request, res: Response) => {
   try {
-    const bookings = await Booking.find()
-      .populate("listing")
-      .populate("student");
-
-    const ownerBookings = bookings.filter(
-      (b: any) => b.listing.owner.toString() === req.user?.id
-    );
-
-    res.json(ownerBookings);
+    const ownerListings = await Listing.find({ owner: req.user?.id }).select('_id').lean();
+    const ownerListingIds = ownerListings.map(l => l._id);
+    const bookings = await Booking.find({ listing: { $in: ownerListingIds } }).populate('listing').populate('student').lean();
+    res.json(bookings);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -68,7 +63,8 @@ export const getAllBookings = async (req: Request, res: Response) => {
   try {
     const bookings = await Booking.find()
       .populate("listing")
-      .populate("student");
+      .populate("student")
+      .lean();
 
     res.json(bookings);
   } catch (error: any) {

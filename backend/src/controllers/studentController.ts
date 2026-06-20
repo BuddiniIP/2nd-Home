@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import User from "../models/User.js";
 import SavedListing from "../models/SavedListing.js";
 import Booking from "../models/Booking.js";
-import { ensureCurrentMonthBooking } from "./paymentController.js";
 
 export const saveListing = async (req: Request, res: Response) => {
   try {
     const { listing } = req.body;
 
-    const existing = await SavedListing.findOne({ student: req.user?.id, listing });
+    const existing = await SavedListing.findOne({ student: req.user?.id, listing }).lean();
 
     if (existing) {
       return res.status(200).json({ message: "Already saved", saved: existing });
@@ -21,7 +20,7 @@ export const saveListing = async (req: Request, res: Response) => {
     // Handle duplicate key errors that may occur due to race conditions
     if (error && (error as any).code === 11000) {
       try {
-        const existingSaved = await SavedListing.findOne({ student: req.user?.id, listing: req.body.listing });
+        const existingSaved = await SavedListing.findOne({ student: req.user?.id, listing: req.body.listing }).lean();
         if (existingSaved) {
           return res.status(200).json({ message: 'Already saved', saved: existingSaved });
         }
@@ -36,7 +35,6 @@ export const saveListing = async (req: Request, res: Response) => {
 
 export const getSavedListings = async (req: Request, res: Response) => {
   try {
-    if (req.user?.id) await ensureCurrentMonthBooking(req.user.id);
     const savedListings = await SavedListing.find({ student: req.user?.id }).populate('listing');
     const listingIds = savedListings.map(s => s.listing._id || s.listing);
     const bookings = await Booking.find({

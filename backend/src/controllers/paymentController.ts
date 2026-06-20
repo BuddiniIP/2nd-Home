@@ -74,9 +74,9 @@ export const ensureCurrentMonthBooking = async (studentId: string) => {
             listing: user.currentBoarding,
             month: curMonth,
             year: curYear,
-          });
+          }).lean();
           if (!exists) {
-            const fromLastPaid = await Booking.findById(lastPaid._id).populate('listing', 'price');
+            const fromLastPaid = await Booking.findById(lastPaid._id).populate('listing', 'price').lean();
             const amount = (fromLastPaid as any)?.listing?.price || lastPaid.amount || 0;
             const startDate = new Date(curYear, curMonth - 1, 1);
             const endDate = new Date(curYear, curMonth, 0);
@@ -385,7 +385,18 @@ export const handleStripeWebhook: RequestHandler = async (req, res, next) => {
           }
         }
       }
+    } else if (event.type === 'checkout.session.expired') {
+      const session = event.data.object as any;
+      const bookingId = session.metadata?.bookingId;
+      if (bookingId) {
+        console.log(`Stripe session expired for booking ${bookingId}`);
+        await Booking.updateOne(
+          { _id: bookingId, paymentStatus: 'processing' },
+          { paymentStatus: 'unpaid' }
+        );
+      }
     }
+    // TODO: handle charge.refunded event to update booking paymentStatus
     res.json({ received: true });
   } catch (err) {
     next(err);
@@ -399,7 +410,7 @@ export const checkoutStudent: RequestHandler = async (req, res, next) => {
     if (!booking) { res.status(404).json({ message: 'Booking not found' }); return; }
     booking.status = 'cancelled';
     await booking.save();
-    const user = await User.findById(booking.student);
+    const user = await User.findById(booking.student).lean();
     if (user && user.currentBoarding?.toString() === booking.listing?.toString()) {
       await User.findByIdAndUpdate(user._id, { $unset: { currentBoarding: '' } });
     }

@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import Notification from "../models/Notification.js";
+import User, { UserRole } from "../models/User.js";
 
 interface ContactBody {
   name: string;
@@ -17,7 +18,7 @@ export const submitContact: RequestHandler = async (req, res, next) => {
     }
 
     // Notify admins
-    const admins = await import("../models/User.js").then((m) => m.default.find({ role: "admin" }).select("_id"));
+    const admins = await User.find({ role: UserRole.ADMIN }).select("_id").lean();
     const notifications = admins.map((admin: { _id: unknown }) => ({
       recipient: admin._id,
       type: "contact",

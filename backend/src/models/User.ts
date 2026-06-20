@@ -57,6 +57,29 @@ userSchema.methods.matchPassword = async function (enteredPassword: string) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+userSchema.pre('findOneAndDelete', async function () {
+  const filter = this.getFilter();
+  const userId = filter._id;
+  if (userId) {
+    const Listing = require('./Listing.js').default;
+    const Booking = require('./Booking.js').default;
+    const Notification = require('./Notification.js').default;
+    const Message = require('./Message.js').default;
+    const Conversation = require('./Conversation.js').default;
+    const Report = require('./Report.js').default;
+    const SavedListing = require('./SavedListing.js').default;
+    const VerificationAssignment = require('./VerificationAssignment.js').default;
+    await Listing.deleteMany({ owner: userId });
+    await Booking.deleteMany({ student: userId });
+    await Notification.deleteMany({ recipient: userId });
+    await Message.deleteMany({ sender: userId });
+    await Conversation.deleteMany({ participants: userId });
+    await Report.deleteMany({ $or: [{ reporter: userId }, { targetUser: userId }] });
+    await SavedListing.deleteMany({ student: userId });
+    await VerificationAssignment.deleteMany({ $or: [{ owner: userId }, { verifier: userId }, { assignedBy: userId }] });
+  }
+});
+
 const User = mongoose.model<IUser>('User', userSchema);
 
 //User.syncIndexes().catch(console.error);

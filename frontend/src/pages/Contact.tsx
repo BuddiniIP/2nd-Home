@@ -29,7 +29,7 @@ const ContactInfo = () => {
 
 const Contact = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-32">
       <ScrollExpandMedia
         mediaType="image"
         mediaSrc="/images/contact.jpg"

@@ -16,11 +16,15 @@ const Header = () => {
   useEffect(() => {
     const auth = localStorage.getItem('isLoggedIn');
     const role = localStorage.getItem('userRole');
-    const storedPic = localStorage.getItem('profilePicture');
     setIsLoggedIn(auth === 'true');
     setUserRole(role);
-    setProfilePic(storedPic);
     setMobileOpen(false);
+    const updateProfilePic = () => {
+      const pic = localStorage.getItem('profilePicture');
+      setProfilePic(pic);
+    };
+    updateProfilePic();
+    window.addEventListener('profile-pic-updated', updateProfilePic);
     const token = localStorage.getItem('token');
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
     const fetchProfile = async () => {
@@ -37,6 +41,7 @@ const Header = () => {
       } catch { /* ignore */ }
     };
     if (auth === 'true') fetchProfile();
+    return () => window.removeEventListener('profile-pic-updated', updateProfilePic);
   }, [location]);
 
   const dashboardPath =

@@ -34,6 +34,7 @@ const Profile = () => {
         const url = data.url || data.path;
         setForm(prev => ({ ...prev, profilePicture: url }));
         localStorage.setItem('profilePicture', url);
+        window.dispatchEvent(new Event('profile-pic-updated'));
       }
     } catch {}
     finally { setUploadingPic(false); }

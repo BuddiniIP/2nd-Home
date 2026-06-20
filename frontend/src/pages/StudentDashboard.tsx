@@ -83,7 +83,10 @@ const StudentDashboard = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setUserProfile((prev: any) => prev ? { ...prev, profilePicture: data.url || data.profilePicture } : prev);
+        const url = data.url || data.profilePicture;
+        setUserProfile((prev: any) => prev ? { ...prev, profilePicture: url } : prev);
+        localStorage.setItem('profilePicture', url);
+        window.dispatchEvent(new Event('profile-pic-updated'));
       }
     } catch { /* ignore */ }
   };

@@ -17,6 +17,7 @@ import Notifications from './pages/Notifications';
 import VerifierDashboard from './pages/VerifierDashboard';
 import Profile from './pages/Profile';
 import Chat from './pages/Chat';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   return (

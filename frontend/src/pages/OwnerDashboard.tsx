@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Home as HomeIcon, 
@@ -26,6 +26,7 @@ import {
 
 const OwnerDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
    const [userProfile, setUserProfile] = useState<any>(null);
    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';

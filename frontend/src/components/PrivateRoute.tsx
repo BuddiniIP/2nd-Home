@@ -12,7 +12,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
 
   if (!token) return <Navigate to="/login" replace />;
 
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
     return <Navigate to="/" replace />;
   }
 

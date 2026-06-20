@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { registerUser, loginUser, getMe, updateProfile, uploadProfilePicture } from '../controllers/authController.js';
+import { registerUser, loginUser, getMe, updateProfile, uploadProfilePicture, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,6 +16,8 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/me', protect, getMe);
 router.patch('/profile', protect, updateProfile);
 router.post('/upload/profile', protect, profileUpload.single('profilePicture'), uploadProfilePicture);

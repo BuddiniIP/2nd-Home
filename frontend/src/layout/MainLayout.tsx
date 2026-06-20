@@ -7,7 +7,7 @@ import Cursor from '../components/Cursor';
 
 const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('student');
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,7 +16,7 @@ const Header = () => {
     const auth = localStorage.getItem('isLoggedIn');
     const role = localStorage.getItem('userRole');
     setIsLoggedIn(auth === 'true');
-    setUserRole(role || 'student');
+    setUserRole(role);
     setMobileOpen(false);
     const fetchProfile = async () => {
       const token = localStorage.getItem('token');
@@ -34,22 +34,16 @@ const Header = () => {
   }, [location]);
 
   const dashboardPath =
-    userRole === 'admin'
-      ? '/admin-dashboard'
-      : userRole === 'owner'
-        ? '/owner-dashboard'
-        : userRole === 'verifier'
-          ? '/verifier-dashboard'
-          : '/student-dashboard';
+    userRole === 'admin' ? '/admin-dashboard'
+    : userRole === 'owner' ? '/owner-dashboard'
+    : userRole === 'verifier' ? '/verifier-dashboard'
+    : '/student-dashboard';
 
   const profilePath =
-    userRole === 'admin'
-      ? '/admin-dashboard'
-      : userRole === 'owner'
-        ? '/owner-dashboard?tab=profile'
-        : userRole === 'verifier'
-          ? '/verifier-dashboard?tab=profile'
-          : '/student-dashboard?tab=profile';
+    userRole === 'admin' ? '/admin-dashboard'
+    : userRole === 'owner' ? '/owner-dashboard?tab=profile'
+    : userRole === 'verifier' ? '/verifier-dashboard?tab=profile'
+    : '/student-dashboard?tab=profile';
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');

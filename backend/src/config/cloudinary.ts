@@ -3,19 +3,41 @@ import multer, { StorageEngine } from 'multer';
 
 let _initialized = false;
 
+const parseCloudinaryUrl = (url: string) => {
+  const match = url.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
+  if (!match) return null;
+  return { api_key: match[1], api_secret: match[2], cloud_name: match[3] };
+};
+
 const ensureCloudinary = () => {
   if (_initialized) return;
-  const name = process.env.CLOUDINARY_CLOUD_NAME;
-  const key = process.env.CLOUDINARY_API_KEY;
-  const secret = process.env.CLOUDINARY_API_SECRET;
-  if (!name || !key || !secret) {
+
+  let config: { cloud_name: string; api_key: string; api_secret: string } | null = null;
+
+  const url = process.env.CLOUDINARY_URL;
+  if (url) {
+    config = parseCloudinaryUrl(url);
+  }
+
+  if (!config) {
+    const name = process.env.CLOUDINARY_CLOUD_NAME;
+    const key = process.env.CLOUDINARY_API_KEY;
+    const secret = process.env.CLOUDINARY_API_SECRET;
+    if (name && key && secret) {
+      config = { cloud_name: name, api_key: key, api_secret: secret };
+    }
+  }
+
+  if (!config) {
     throw new Error(
-      'Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your .env file. ' +
+      'Cloudinary is not configured. Set CLOUDINARY_URL (or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET) in your .env file.\n' +
+      'CLOUDINARY_URL looks like: cloudinary://<api_key>:<api_secret>@<cloud_name>\n' +
       'Get free credentials at https://cloudinary.com/register'
     );
   }
-  cloudinary.config({ cloud_name: name, api_key: key, api_secret: secret });
-  console.log(`[Cloudinary] Configured — cloud name: ${name}`);
+
+  cloudinary.config(config);
+  console.log(`[Cloudinary] Configured — cloud name: ${config.cloud_name}`);
   _initialized = true;
 };
 

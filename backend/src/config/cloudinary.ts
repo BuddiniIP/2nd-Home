@@ -1,6 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import multer from 'multer';
+import multer, { StorageEngine } from 'multer';
 import path from 'path';
 import fs from 'fs';
 
@@ -14,15 +13,43 @@ if (isCloudinaryConfigured) {
   cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 }
 
+const cloudinaryStorage = (folder: string): StorageEngine => ({
+  _handleFile: (req, file, cb) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: 'image' },
+      (err, result) => {
+        if (err) { cb(err); return; }
+        cb(null, {
+          path: result?.secure_url || result?.url,
+          filename: result?.public_id,
+          size: result?.bytes,
+        });
+      }
+    );
+    file.stream.pipe(uploadStream);
+  },
+  _removeFile: (_req, file, cb) => {
+    if (file.filename) {
+      cloudinary.uploader.destroy(file.filename, undefined, (err: any) => cb(err));
+    } else {
+      cb(null);
+    }
+  },
+});
+
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype)) {
+    cb(new Error('Only JPG, PNG, GIF, and WebP images are allowed'));
+    return;
+  }
+  cb(null, true);
+};
+
 export const getProfileUpload = () => {
   const limits = { fileSize: 5 * 1024 * 1024 };
 
   if (isCloudinaryConfigured) {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: { folder: '2nd-home/profiles', allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'] } as any,
-    });
-    return multer({ storage, limits });
+    return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits, fileFilter });
   }
 
   const currentDir = path.dirname(new URL(import.meta.url).pathname);
@@ -36,24 +63,14 @@ export const getProfileUpload = () => {
       cb(null, `${Date.now()}-${safe}`);
     },
   });
-  return multer({ storage, limits, fileFilter: (_req, file, cb) => {
-    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype)) {
-      cb(new Error('Only JPG, PNG, GIF, and WebP images are allowed'));
-      return;
-    }
-    cb(null, true);
-  }});
+  return multer({ storage, limits, fileFilter });
 };
 
 export const getListingUpload = () => {
   const limits = { fileSize: 10 * 1024 * 1024 };
 
   if (isCloudinaryConfigured) {
-    const storage = new CloudinaryStorage({
-      cloudinary,
-      params: { folder: '2nd-home/listings', allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'] } as any,
-    });
-    return multer({ storage, limits });
+    return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits, fileFilter });
   }
 
   const currentDir = path.dirname(new URL(import.meta.url).pathname);
@@ -67,11 +84,5 @@ export const getListingUpload = () => {
       cb(null, `listing-${Date.now()}-${safe}`);
     },
   });
-  return multer({ storage, limits, fileFilter: (_req, file, cb) => {
-    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype)) {
-      cb(new Error('Only JPG, PNG, GIF, and WebP images are allowed'));
-      return;
-    }
-    cb(null, true);
-  }});
+  return multer({ storage, limits, fileFilter });
 };

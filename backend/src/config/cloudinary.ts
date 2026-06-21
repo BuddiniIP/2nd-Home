@@ -37,7 +37,8 @@ const ensureCloudinary = () => {
   }
 
   cloudinary.config(config);
-  console.log(`[Cloudinary] Configured — cloud name: ${config.cloud_name}`);
+  const maskedKey = config.api_key.slice(0, 4) + '****' + config.api_key.slice(-4);
+  console.log(`[Cloudinary] Configured — cloud name: ${config.cloud_name}, key: ${maskedKey}`);
   _initialized = true;
 };
 
@@ -46,7 +47,14 @@ const cloudinaryStorage = (folder: string): StorageEngine => ({
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder, resource_type: 'image' },
       (err, result) => {
-        if (err) { console.error('[Cloudinary] Upload error:', err); cb(err); return; }
+        if (err) {
+          console.error(`[Cloudinary] Upload error (${err.http_code}): ${err.message}`);
+          if (err.http_code === 403) {
+            console.error('[Cloudinary] 403 means invalid API key, secret, or cloud name. Check your .env CLOUDINARY_URL.');
+          }
+          cb(err);
+          return;
+        }
         const url = result?.secure_url || result?.url;
         console.log(`[Cloudinary] Uploaded to ${result?.public_id} — ${url}`);
         cb(null, {

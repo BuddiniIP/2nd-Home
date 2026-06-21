@@ -157,7 +157,7 @@ export const updateCurrentBoarding = async (req: Request, res: Response) => {
     const user = (await User.findByIdAndUpdate(
       userId,
       { currentBoarding: listingId },
-      { new: true }
+      { returnDocument: 'after' }
     ).populate('currentBoarding')) as any;
 
     if (!user) {

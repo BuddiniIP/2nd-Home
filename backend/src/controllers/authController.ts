@@ -125,7 +125,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       res.status(400).json({ message: 'No valid fields to update' });
       return;
     }
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true }).select('-password');
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { returnDocument: 'after', runValidators: true }).select('-password');
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;

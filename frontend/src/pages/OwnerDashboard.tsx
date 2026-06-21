@@ -866,7 +866,7 @@ const OwnerDashboard = () => {
                         <motion.div 
                           variants={itemVariants}
                           key={p.id} 
-                          className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
+                          className="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[2rem] bg-gray-50 hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group"
                         >
                            <div className="flex items-center gap-6 mb-4 md:mb-0">
                               <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-black font-bold">

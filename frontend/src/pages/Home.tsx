@@ -106,7 +106,7 @@ const PopularUniversities = () => {
 
 const HighlightSection = () => {
   return (
-    <section className="py-32 px-6 bg-[#FFFFFF]">
+    <section className="py-32 px-6 bg-white">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
         <motion.div 
           initial={{ opacity: 0, x: -30 }}

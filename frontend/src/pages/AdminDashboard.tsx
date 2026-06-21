@@ -31,6 +31,7 @@ const AdminDashboard = () => {
    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [activeTab, setActiveTab] = useState('analytics');
   const [searchTerm, setSearchTerm] = useState('');
+  const [userSearch, setUserSearch] = useState('');
   const [boardingReports, setBoardingReports] = useState<any[]>([]);
    const [boardings, setBoardings] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -550,7 +551,7 @@ const AdminDashboard = () => {
                                     const secondaryImages = images.slice(1, 4).map(normalizeBoardingImage);
 
                                     return (
-                                       <div key={boarding.id} className="bg-[#FBFBFB] rounded-[2.75rem] border border-gray-100 overflow-hidden shadow-sm">
+                                       <div key={boarding.id} className="bg-gray-50 rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm">
                                           <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-0">
                                              <div className="relative p-4 sm:p-5">
                                                 <div className="grid grid-cols-3 gap-3 rounded-[2.25rem] overflow-hidden h-[280px] sm:h-[320px]">
@@ -658,15 +659,19 @@ const AdminDashboard = () => {
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50">
                       <h3 className="text-2xl font-display font-bold">User Management</h3>
                       <div className="relative group w-72">
-                         <input type="text" placeholder="Search users..." className="w-full bg-[#F8F8F8] rounded-full px-12 py-3 text-xs focus:outline-none focus:border-accent-orange border border-transparent transition-all" />
+                          <input type="text" placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="w-full bg-[#F8F8F8] rounded-full px-12 py-3 text-xs focus:outline-none focus:border-accent-orange border border-transparent transition-all" />
                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                       </div>
                    </div>
-                   <div className="space-y-4">
-                      {users.map((user) => (
-                        <div key={user.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-accent-orange/10 transition-all">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold">{user.name.charAt(0)}</div>
+                    <div className="space-y-4">
+                       {users.filter((u: any) => {
+                          const q = userSearch.toLowerCase().trim();
+                          if (!q) return true;
+                          return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
+                       }).map((user: any) => (
+                         <div key={user.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-accent-orange/10 transition-all">
+                            <div className="flex items-center gap-4">
+                               <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold">{user.name.charAt(0)}</div>
                               <div><h4 className="font-bold text-black">{user.name}</h4><p className="text-xs text-gray-400">{user.email}</p></div>
                            </div>
                            <div className="flex items-center gap-12">
@@ -812,7 +817,7 @@ const AdminDashboard = () => {
                            const reporterName = report.reporter ? `${report.reporter.firstName || ''} ${report.reporter.lastName || ''}`.trim() || report.reporter.email || 'Unknown' : 'Unknown';
                            const boardingName = report.targetListing?.title || report.targetListing?.toString() || 'Unknown boarding';
                            return (
-                            <div key={report._id || report.id} className="p-8 rounded-[2.5rem] bg-[#FBFBFB] border border-gray-50 space-y-6">
+                            <div key={report._id || report.id} className="p-8 rounded-[2.5rem] bg-gray-50 border border-gray-50 space-y-6">
                                <div className="flex justify-between items-start">
                                   <div>
                                     <h4 className="font-bold text-black">{boardingName}</h4>
@@ -957,7 +962,7 @@ const AdminDashboard = () => {
                            </div>
 
                            <div className="space-y-6">
-                              <div className="rounded-[2.5rem] bg-[#FBFBFB] p-6 border border-gray-100 space-y-4">
+                              <div className="rounded-[2.5rem] bg-gray-50 p-6 border border-gray-100 space-y-4">
                                  <div className="flex flex-wrap gap-3">
                                     <span className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.25em] ${selectedBoarding.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                                        {selectedBoarding.isAvailable ? 'Available' : 'Not available'}
@@ -1006,7 +1011,7 @@ const AdminDashboard = () => {
                                  </div>
                               </div>
 
-                              <div className="rounded-[2.5rem] bg-[#FBFBFB] p-6 border border-gray-100 space-y-4">
+                              <div className="rounded-[2.5rem] bg-gray-50 p-6 border border-gray-100 space-y-4">
                                  <p className="text-[10px] uppercase tracking-[0.35em] text-gray-400 font-bold">Amenities</p>
                                  <div className="flex flex-wrap gap-2">
                                     {(selectedBoarding.amenities.length > 0 ? selectedBoarding.amenities : ['No amenities listed']).map((amenity: string) => (
@@ -1107,7 +1112,7 @@ const AdminDashboard = () => {
                                  value={boardingEditor.description}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, description: e.target.value }))}
                                  rows={6}
-                                 className="w-full bg-[#F8F8F8] rounded-[1.75rem] px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all resize-none"
+                                 className="w-full bg-[#F8F8F8] rounded-[2rem] px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all resize-none"
                               />
                            </label>
 

@@ -683,7 +683,7 @@ const StudentDashboard = () => {
                           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Pending Payments</p>
                           <div className="space-y-4">
                             {unpaid.map((ub: any) => (
-                              <div key={ub._id} className="flex items-center justify-between p-6 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl transition-all border border-transparent hover:border-gray-50">
+                              <div key={ub._id} className="flex items-center justify-between p-6 rounded-[2rem] bg-gray-50 hover:bg-white hover:shadow-xl transition-all border border-transparent hover:border-gray-50">
                                 <div className="flex items-center gap-4">
                                   <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
                                     <Clock size={24} />
@@ -730,7 +730,7 @@ const StudentDashboard = () => {
                             <h4 className="text-lg font-display font-bold text-black mb-4 pb-2 border-b border-gray-100">{month}</h4>
                             <div className="space-y-3">
                               {items.map((payment) => (
-                                <motion.div variants={itemVariants} key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-[2rem] bg-[#FBFBFB] hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group">
+                                <motion.div variants={itemVariants} key={payment.id} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-[2rem] bg-gray-50 hover:bg-white hover:shadow-xl hover:shadow-black/5 transition-all border border-transparent hover:border-gray-50 group">
                                   <div className="flex items-center gap-5 mb-3 md:mb-0">
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-green-100 text-green-600">
                                       <CheckCircle2 size={20} />

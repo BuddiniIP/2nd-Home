@@ -259,7 +259,7 @@ const BoardingDetail = () => {
   const handleRetry = () => setRetryToken((current) => current + 1);
 
   return (
-    <div className="pb-24 px-6 bg-[#FBFBFB] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-10">
         <Link
           to="/search"
@@ -397,15 +397,15 @@ const BoardingDetail = () => {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                    <div className="rounded-[2rem] bg-white p-5 border border-gray-100">
                       <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Monthly Price</p>
                       <p className="mt-2 text-3xl font-display font-bold text-black">LKR {boarding.price.toLocaleString()}</p>
                     </div>
-                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                    <div className="rounded-[2rem] bg-white p-5 border border-gray-100">
                       <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Boarded / Capacity</p>
                       <p className="mt-2 text-3xl font-display font-bold text-black">{boarding.currentOccupants || 0} / {boarding.capacity}</p>
                     </div>
-                    <div className="rounded-[2rem] bg-[#FBFBFB] p-5 border border-gray-100">
+                    <div className="rounded-[2rem] bg-white p-5 border border-gray-100">
                       <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400">Posted</p>
                       <p className="mt-2 text-base font-bold text-black">{new Date(boarding.createdAt).toLocaleDateString()}</p>
                     </div>
@@ -442,7 +442,7 @@ const BoardingDetail = () => {
                       amenities.map((amenity) => {
                         const iconKey = amenity.toLowerCase();
                         return (
-                          <div key={amenity} className="flex items-center gap-4 rounded-[1.5rem] border border-gray-100 bg-[#FBFBFB] p-5">
+                          <div key={amenity} className="flex items-center gap-4 rounded-[1.5rem] border border-gray-100 bg-white p-5">
                             <div className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
                               {amenityIcons[iconKey] || <Info size={18} />}
                             </div>

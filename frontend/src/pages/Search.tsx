@@ -149,7 +149,7 @@ const Search = () => {
   ];
 
   return (
-    <div className="pb-24 px-6 bg-[#FBFBFB] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header & Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">

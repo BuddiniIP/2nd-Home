@@ -20,6 +20,7 @@ export const getTransporter = async (): Promise<nodemailer.Transporter> => {
       port: 587,
       secure: false,
       auth: { user: testAccount.user, pass: testAccount.pass },
+      tls: { rejectUnauthorized: false },
     });
     console.log('[Mailer] Using Ethereal test account:', testAccount.user);
   }

@@ -108,7 +108,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="space-y-4">
           <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">

@@ -74,7 +74,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex items-center gap-4">
           <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">

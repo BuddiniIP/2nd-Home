@@ -376,7 +376,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">

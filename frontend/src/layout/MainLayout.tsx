@@ -270,7 +270,7 @@ export const MainLayout = () => {
     <div className="min-h-screen font-sans selection:bg-accent-orange selection:text-white bg-white overflow-x-hidden cursor-none">
       <Cursor />
       <Header />
-      <main>
+      <main className="pt-40">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
             <Outlet />

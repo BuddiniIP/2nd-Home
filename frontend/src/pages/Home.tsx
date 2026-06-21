@@ -177,7 +177,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen pt-32">
+    <div className="min-h-screen">
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-accent-orange z-[60] origin-left"
         style={{ scaleX }}

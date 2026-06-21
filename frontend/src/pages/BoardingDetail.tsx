@@ -259,7 +259,7 @@ const BoardingDetail = () => {
   const handleRetry = () => setRetryToken((current) => current + 1);
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-[#FBFBFB] min-h-screen">
+    <div className="pb-24 px-6 bg-[#FBFBFB] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-10">
         <Link
           to="/search"

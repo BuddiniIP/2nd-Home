@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const About = () => {
   return (
-    <div className="pt-32 pb-24 bg-white">
+    <div className="pb-24 bg-white">
       {/* Hero Section */}
       <section className="px-6 mb-32">
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">

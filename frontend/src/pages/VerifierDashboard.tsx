@@ -124,7 +124,7 @@ const VerifierDashboard = () => {
   };
 
   return (
-    <div className="pt-32 pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
         {/* Sidebar */}
         <motion.div 

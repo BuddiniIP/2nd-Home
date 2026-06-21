@@ -99,7 +99,7 @@ const HowItWorks = () => {
   const currentSteps = activeTab === 'student' ? studentSteps : ownerSteps;
 
   return (
-    <div className="pt-32 pb-24 bg-white">
+    <div className="pb-24 bg-white">
       {/* Header */}
       <section className="px-6 mb-20 text-center">
         <div className="max-w-4xl mx-auto space-y-6">

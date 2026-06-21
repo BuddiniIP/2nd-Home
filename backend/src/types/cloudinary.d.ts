@@ -32,10 +32,14 @@ declare module 'cloudinary' {
     destroy: (publicId: string, optionsOrCallback?: any, callback?: (err: any, result?: any) => void) => Promise<any>;
   }
 
+  export interface CloudinaryApi {
+    ping: (callback?: (err: any, result: any) => void) => Promise<any>;
+  }
+
   export interface CloudinaryV2Instance {
     config: (options?: CloudinaryConfig) => { cloud_name: string; api_key: string; api_secret: string } | void;
     uploader: CloudinaryUploader;
-    api: any;
+    api: CloudinaryApi;
     url: (publicId: string, options?: any) => string;
     image: (publicId: string, options?: any) => string;
   }

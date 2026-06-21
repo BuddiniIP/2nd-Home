@@ -62,6 +62,16 @@ const ensureCloudinary = () => {
   const maskedSecret = apiSecret.slice(0, 2) + '****' + apiSecret.slice(-2);
   console.log(`[Cloudinary] Configured — cloud: ${cloudName}, key: ${maskedKey}, secret: ${maskedSecret}`);
 
+  // Test the connection immediately
+  cloudinary.api.ping()
+    .then((res: any) => console.log(`[Cloudinary] Connection OK — ${res.status || res.message || 'ping successful'}`))
+    .catch((err: any) => {
+      console.error(`[Cloudinary] Connection FAILED (${err.http_code}): ${err.message}`);
+      console.error(`[Cloudinary] The credentials above are REJECTED by Cloudinary's API.`);
+      console.error(`[Cloudinary] Go to https://cloudinary.com/console → Account → API Keys`);
+      console.error(`[Cloudinary] Generate a NEW key, copy the ENTIRE "cloudinary://..." URL to your .env`);
+    });
+
   _initialized = true;
 };
 

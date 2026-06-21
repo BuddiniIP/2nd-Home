@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import SearchBoardings from '../components/SearchBoardings';
 import { 
   LayoutDashboard, 
   Home as HomeIcon, 
@@ -415,11 +416,6 @@ const StudentDashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => {
-                  if (tab.id === 'search') {
-                    navigate('/search');
-                    return;
-                  }
-
                   setActiveTab(tab.id);
                 }}
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-50 hover:text-black'}`}
@@ -490,6 +486,12 @@ const StudentDashboard = () => {
                   </motion.div>
                 </div>
               </motion.div>
+            )}
+
+            {activeTab === 'search' && (
+              <div className="bg-white rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-gray-50">
+                <SearchBoardings />
+              </div>
             )}
 
              {activeTab === 'current' && (

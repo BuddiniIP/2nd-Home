@@ -6,8 +6,6 @@ const Login = () => {
   const navigate = useNavigate();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
 
-  const [role, setRole] = useState<'student' | 'owner' | 'admin'>('student');
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,18 +28,12 @@ const Login = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Warn if the frontend-selected role doesn't match the backend role
-      if (data.user.role !== role) {
-         console.warn(`Logged in as ${data.user.role}, regardless of frontend selection`);
-      }
-
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('token', data.token);
       localStorage.setItem('userRole', data.user.role);
       localStorage.setItem('userId', data.user._id || data.user.id);
       if (data.user.profilePicture) localStorage.setItem('profilePicture', data.user.profilePicture);
 
-      // Navigate strictly by the backend-provided role
       if (data.user.role === 'admin') {
         navigate('/admin-dashboard');
       } else if (data.user.role === 'student') {
@@ -57,56 +49,43 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] px-6 py-20">
-      <div className="flex bg-white rounded-[3.5rem] shadow-sm overflow-hidden max-w-5xl w-full min-h-[600px]">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] px-6 pt-32 pb-24">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex bg-white rounded-[3.5rem] shadow-sm overflow-hidden max-w-4xl w-full min-h-[550px]"
+      >
         {/* Left Side: Image */}
         <div className="hidden lg:block w-1/2 relative">
            <img 
-             src={role === 'student' 
-               ? "/images/bedroom.jpg" 
-               : (role === 'owner' ? "/images/house_orange.jpg" : "/images/town.jpg")
-             } 
-             alt="Login theme" 
-             className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+             src="/images/house_white.jpg"
+             alt="Login" 
+             className="absolute inset-0 w-full h-full object-cover"
            />
            <div className="absolute inset-0 bg-black/30" />
            <div className="absolute top-12 left-12 right-12 text-white">
               <h2 className="font-display text-4xl font-bold mb-4">Welcome Back.</h2>
-              <p className="text-white/70 text-sm leading-relaxed">Sign in as a {role} to continue managing your 2nd Home experience.</p>
+              <p className="text-white/70 text-sm leading-relaxed">Sign in to continue managing your 2nd Home experience.</p>
            </div>
         </div>
 
         {/* Right Side: Form */}
         <div className="flex-1 p-12 md:p-20 flex flex-col justify-center">
-          <div className="space-y-4 mb-10">
+          <div className="space-y-4 mb-12">
             <h1 className="font-display text-4xl font-bold tracking-tight text-black">Sign In</h1>
-            <p className="text-gray-400 text-sm">Choose your role and enter credentials.</p>
-          </div>
-
-          {/* Role Toggle */}
-          <div className="flex bg-gray-50 p-1 rounded-full mb-10 border border-gray-100">
-             <button 
-               onClick={() => setRole('student')}
-               className={`flex-1 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${role === 'student' ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:text-black'}`}
-             >
-                Student
-             </button>
-             <button 
-               onClick={() => setRole('owner')}
-               className={`flex-1 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${role === 'owner' ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:text-black'}`}
-             >
-                Owner
-             </button>
-             <button 
-               onClick={() => setRole('admin')}
-               className={`flex-1 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${role === 'admin' ? 'bg-black text-white shadow-lg' : 'text-gray-400 hover:text-black'}`}
-             >
-                Admin
-             </button>
+            <p className="text-gray-400 text-sm">Enter your credentials to access your account.</p>
           </div>
 
           <form className="space-y-6" onSubmit={handleLogin}>
-            {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-full">{error}</p>}
+            {error && (
+              <motion.p 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs font-bold text-center bg-red-50 py-3 rounded-full"
+              >
+                {error}
+              </motion.p>
+            )}
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email</label>
               <input 
@@ -133,11 +112,22 @@ const Login = () => {
               />
             </div>
             
-            <div className="pt-6">
-                <button type="submit" disabled={submitting} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 disabled:opacity-50">
-                Sign In to 2nd Home
-              </button>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="pt-6"
+            >
+                <motion.button 
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit" 
+                  disabled={submitting} 
+                  className="w-full bg-black text-white py-5 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 disabled:opacity-50"
+                >
+                  {submitting ? 'Signing in...' : 'Sign In'}
+              </motion.button>
+            </motion.div>
           </form>
 
           <div className="mt-12 text-center">
@@ -146,7 +136,7 @@ const Login = () => {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

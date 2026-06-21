@@ -21,7 +21,9 @@ export interface IUser extends Document {
   // Common fields
   profilePicture?: string;
   isActive: boolean;
-  currentBoarding?: mongoose.Types.ObjectId; // edited ss
+  currentBoarding?: mongoose.Types.ObjectId;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
@@ -36,7 +38,9 @@ const userSchema = new Schema<IUser>(
     university: { type: String },
     profilePicture: { type: String },
     isActive: { type: Boolean, default: true },
-    currentBoarding: {type: mongoose.Schema.Types.ObjectId,ref: "Listing",default: null,} // edited ss
+    currentBoarding: {type: mongoose.Schema.Types.ObjectId,ref: "Listing",default: null},
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   {
     timestamps: true,

@@ -166,19 +166,23 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     }
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(404).json({ message: 'No account with that email address' });
+      res.status(404).json({ message: 'No account found with this email. You need to register to the system.' });
       return;
     }
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    (user as any).resetPasswordToken = resetTokenHash;
-    (user as any).resetPasswordExpires = new Date(Date.now() + 3600000);
+    const code = crypto.randomInt(10000000, 99999999).toString();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    user.resetPasswordToken = codeHash;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
-    const body: Record<string, string> = { message: 'If an account exists with that email, a password reset link has been sent' };
+
+    const { sendResetCode } = await import('../config/mailer.js');
+    await sendResetCode(email, code);
+
     if (NODE_ENV !== 'production') {
-      body.resetToken = resetToken;
+      console.log(`[Dev] Reset code for ${email}: ${code}`);
     }
-    res.json(body);
+
+    res.json({ message: 'An 8-digit reset code has been sent to your email.' });
   } catch (error: any) {
     console.error("FORGOT PASSWORD ERROR", error);
     res.status(500).json({ message: 'Server Error' });
@@ -187,29 +191,34 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      res.status(400).json({ message: 'Token and password are required' });
+    const { email, code, password } = req.body;
+    if (!email || !code || !password) {
+      res.status(400).json({ message: 'Email, code, and new password are required' });
       return;
     }
     if (password.length < 6) {
       res.status(400).json({ message: 'Password must be at least 6 characters' });
       return;
     }
-    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    if (code.length !== 8) {
+      res.status(400).json({ message: 'Reset code must be 8 characters' });
+      return;
+    }
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
     const user = await User.findOne({
-      resetPasswordToken: resetTokenHash,
+      email,
+      resetPasswordToken: codeHash,
       resetPasswordExpires: { $gt: new Date() },
     } as any);
     if (!user) {
-      res.status(400).json({ message: 'Invalid or expired token' });
+      res.status(400).json({ message: 'Invalid or expired reset code. Please request a new one.' });
       return;
     }
     user.password = password;
-    (user as any).resetPasswordToken = undefined;
-    (user as any).resetPasswordExpires = undefined;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
-    res.json({ message: 'Password reset successful' });
+    res.json({ message: 'Password reset successful. You can now sign in.' });
   } catch (error: any) {
     console.error("RESET PASSWORD ERROR", error);
     res.status(500).json({ message: 'Server Error' });

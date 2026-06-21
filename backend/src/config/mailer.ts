@@ -12,6 +12,7 @@ export const getTransporter = async (): Promise<nodemailer.Transporter> => {
       port: Number(EMAIL_PORT) || 587,
       secure: Number(EMAIL_PORT) === 465,
       auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+      tls: { rejectUnauthorized: false },
     });
   } else {
     const testAccount = await nodemailer.createTestAccount();

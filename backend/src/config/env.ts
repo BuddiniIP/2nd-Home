@@ -12,6 +12,7 @@ const requiredEnv = (name: string) => {
   return value;
 };
 
+export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const PORT = Number(process.env.PORT || 5000);
 export const MONGODB_URI = requiredEnv('MONGODB_URI');
 export const JWT_SECRET = requiredEnv('JWT_SECRET');

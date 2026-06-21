@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User, { UserRole } from '../models/User.js';
 import { z } from 'zod';
-import { JWT_EXPIRES_IN, JWT_SECRET } from '../config/env.js';
+import { JWT_EXPIRES_IN, JWT_SECRET, NODE_ENV } from '../config/env.js';
 import { deleteCloudinaryImage } from '../config/cloudinary.js';
 
 const generateToken = (id: string, role: string) => {
@@ -66,8 +66,8 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error: any) {
-    console.error("/// REGISTRATION ERROR ///", error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("REGISTRATION ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -105,8 +105,8 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error: any) {
-    console.error("/// LOGIN ERROR ///", error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("LOGIN ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -132,7 +132,8 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     }
     res.json(user);
   } catch (error: any) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("UPDATE PROFILE ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -151,7 +152,8 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
     console.log(`[Cloudinary] Profile picture saved for user ${req.user.id}: ${url}`);
     res.json({ url, path: url });
   } catch (error: any) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("UPLOAD PROFILE PIC ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -172,9 +174,14 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     (user as any).resetPasswordToken = resetTokenHash;
     (user as any).resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
-    res.json({ message: 'Password reset link sent to your email', resetToken });
+    const body: Record<string, string> = { message: 'If an account exists with that email, a password reset link has been sent' };
+    if (NODE_ENV !== 'production') {
+      body.resetToken = resetToken;
+    }
+    res.json(body);
   } catch (error: any) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("FORGOT PASSWORD ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -204,7 +211,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     await user.save();
     res.json({ message: 'Password reset successful' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("RESET PASSWORD ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -223,6 +231,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     
     res.json(user);
   } catch (error: any) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.error("GET ME ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };

@@ -1,17 +1,19 @@
 import { v2 as cloudinary } from 'cloudinary';
 import multer, { StorageEngine } from 'multer';
+import dotenv from 'dotenv';
+
+// Ensure .env is loaded BEFORE we read any env vars (import-order-safe)
+dotenv.config();
 
 let _initialized = false;
 
 const ensureCloudinary = () => {
   if (_initialized) return;
 
-  // Use Node's URL parser which handles URL encoding properly
   const parseUrl = (raw: string) => {
     try {
       const url = new URL(raw);
-      const auth = url.username ? { api_key: url.username, api_secret: url.password, cloud_name: url.hostname } : null;
-      return auth;
+      return url.username ? { api_key: url.username, api_secret: url.password, cloud_name: url.hostname } : null;
     } catch {
       return null;
     }
@@ -21,7 +23,7 @@ const ensureCloudinary = () => {
   let apiKey = '';
   let apiSecret = '';
 
-  const rawUrl = process.env.CLOUDINARY_URL;
+  const rawUrl = (process.env.CLOUDINARY_URL || '').trim();
   if (rawUrl) {
     const parsed = parseUrl(rawUrl);
     if (parsed) {
@@ -30,25 +32,27 @@ const ensureCloudinary = () => {
       apiSecret = parsed.api_secret;
       console.log(`[Cloudinary] Parsed from CLOUDINARY_URL → cloud: ${cloudName}`);
     } else {
-      console.warn('[Cloudinary] CLOUDINARY_URL could not be parsed:', rawUrl.slice(0, 30) + '...');
+      console.warn(`[Cloudinary] CLOUDINARY_URL could not be parsed (starts with: ${rawUrl.slice(0, 25)}...)`);
     }
   }
 
   if (!cloudName) {
-    cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
-    apiKey = process.env.CLOUDINARY_API_KEY || '';
-    apiSecret = process.env.CLOUDINARY_API_SECRET || '';
+    cloudName = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+    apiKey = (process.env.CLOUDINARY_API_KEY || '').trim();
+    apiSecret = (process.env.CLOUDINARY_API_SECRET || '').trim();
     if (cloudName) {
       console.log('[Cloudinary] Using individual CLOUDINARY_CLOUD_NAME vars');
     }
   }
 
   if (!cloudName) {
-    console.error('[Cloudinary] No credentials found in environment.');
-    console.error('[Cloudinary] Checking process.env keys:', Object.keys(process.env).filter(k => k.includes('CLOUD')).join(', ') || '(none found)');
+    const cloudKeys = Object.keys(process.env).filter(k => k.includes('CLOUD'));
+    console.error('[Cloudinary] No credentials found. Env vars with "CLOUD":', cloudKeys.join(', ') || '(none)');
     throw new Error(
-      'Cloudinary is not configured. Set CLOUDINARY_URL (or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET) in your .env file.\n' +
-      'Get free credentials at https://cloudinary.com/register'
+      'Cloudinary is not configured. Add this to backend/.env:\n' +
+      'CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>\n' +
+      'Get it at https://cloudinary.com/console\n' +
+      '(Or use CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET)'
     );
   }
 

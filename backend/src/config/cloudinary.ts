@@ -3,42 +3,61 @@ import multer, { StorageEngine } from 'multer';
 
 let _initialized = false;
 
-const parseCloudinaryUrl = (url: string) => {
-  const match = url.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
-  if (!match) return null;
-  return { api_key: match[1], api_secret: match[2], cloud_name: match[3] };
-};
-
 const ensureCloudinary = () => {
   if (_initialized) return;
 
-  let config: { cloud_name: string; api_key: string; api_secret: string } | null = null;
+  // Use Node's URL parser which handles URL encoding properly
+  const parseUrl = (raw: string) => {
+    try {
+      const url = new URL(raw);
+      const auth = url.username ? { api_key: url.username, api_secret: url.password, cloud_name: url.hostname } : null;
+      return auth;
+    } catch {
+      return null;
+    }
+  };
 
-  const url = process.env.CLOUDINARY_URL;
-  if (url) {
-    config = parseCloudinaryUrl(url);
-  }
+  let cloudName = '';
+  let apiKey = '';
+  let apiSecret = '';
 
-  if (!config) {
-    const name = process.env.CLOUDINARY_CLOUD_NAME;
-    const key = process.env.CLOUDINARY_API_KEY;
-    const secret = process.env.CLOUDINARY_API_SECRET;
-    if (name && key && secret) {
-      config = { cloud_name: name, api_key: key, api_secret: secret };
+  const rawUrl = process.env.CLOUDINARY_URL;
+  if (rawUrl) {
+    const parsed = parseUrl(rawUrl);
+    if (parsed) {
+      cloudName = parsed.cloud_name;
+      apiKey = parsed.api_key;
+      apiSecret = parsed.api_secret;
+      console.log(`[Cloudinary] Parsed from CLOUDINARY_URL → cloud: ${cloudName}`);
+    } else {
+      console.warn('[Cloudinary] CLOUDINARY_URL could not be parsed:', rawUrl.slice(0, 30) + '...');
     }
   }
 
-  if (!config) {
+  if (!cloudName) {
+    cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+    apiKey = process.env.CLOUDINARY_API_KEY || '';
+    apiSecret = process.env.CLOUDINARY_API_SECRET || '';
+    if (cloudName) {
+      console.log('[Cloudinary] Using individual CLOUDINARY_CLOUD_NAME vars');
+    }
+  }
+
+  if (!cloudName) {
+    console.error('[Cloudinary] No credentials found in environment.');
+    console.error('[Cloudinary] Checking process.env keys:', Object.keys(process.env).filter(k => k.includes('CLOUD')).join(', ') || '(none found)');
     throw new Error(
       'Cloudinary is not configured. Set CLOUDINARY_URL (or CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET) in your .env file.\n' +
-      'CLOUDINARY_URL looks like: cloudinary://<api_key>:<api_secret>@<cloud_name>\n' +
       'Get free credentials at https://cloudinary.com/register'
     );
   }
 
-  cloudinary.config(config);
-  const maskedKey = config.api_key.slice(0, 4) + '****' + config.api_key.slice(-4);
-  console.log(`[Cloudinary] Configured — cloud name: ${config.cloud_name}, key: ${maskedKey}`);
+  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+
+  const maskedKey = apiKey.slice(0, 4) + '****' + apiKey.slice(-4);
+  const maskedSecret = apiSecret.slice(0, 2) + '****' + apiSecret.slice(-2);
+  console.log(`[Cloudinary] Configured — cloud: ${cloudName}, key: ${maskedKey}, secret: ${maskedSecret}`);
+
   _initialized = true;
 };
 
@@ -50,7 +69,8 @@ const cloudinaryStorage = (folder: string): StorageEngine => ({
         if (err) {
           console.error(`[Cloudinary] Upload error (${err.http_code}): ${err.message}`);
           if (err.http_code === 403) {
-            console.error('[Cloudinary] 403 means invalid API key, secret, or cloud name. Check your .env CLOUDINARY_URL.');
+            console.error('[Cloudinary] 403 = invalid credentials. Copy the EXACT CLOUDINARY_URL from your Cloudinary Dashboard > Account > API Keys.');
+            console.error('[Cloudinary] The URL looks like: cloudinary://<api_key>:<api_secret>@<cloud_name>');
           }
           cb(err);
           return;

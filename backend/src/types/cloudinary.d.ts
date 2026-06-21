@@ -33,7 +33,7 @@ declare module 'cloudinary' {
   }
 
   export interface CloudinaryV2Instance {
-    config: (options: CloudinaryConfig) => void;
+    config: (options?: CloudinaryConfig) => { cloud_name: string; api_key: string; api_secret: string } | void;
     uploader: CloudinaryUploader;
     api: any;
     url: (publicId: string, options?: any) => string;

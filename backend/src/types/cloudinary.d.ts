@@ -24,12 +24,18 @@ declare module 'cloudinary' {
   }
 
   export interface CloudinaryUploader {
-    upload: (file: string, options?: UploadApiOptions) => Promise<UploadApiResponse>;
+    upload: {
+      (file: string, options?: UploadApiOptions): Promise<UploadApiResponse>;
+      (file: string, options: UploadApiOptions, callback: (err: any, result?: UploadApiResponse) => void): void;
+    };
     upload_stream: (
       options: UploadApiOptions,
       callback: (err: any, result?: UploadApiResponse) => void
     ) => NodeJS.ReadWriteStream;
-    destroy: (publicId: string, optionsOrCallback?: any, callback?: (err: any, result?: any) => void) => Promise<any>;
+    destroy: {
+      (publicId: string, options?: any): Promise<any>;
+      (publicId: string, options: any, callback: (err: any, result?: any) => void): void;
+    };
   }
 
   export interface CloudinaryApi {

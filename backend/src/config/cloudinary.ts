@@ -77,32 +77,35 @@ const ensureCloudinary = () => {
 
 const cloudinaryStorage = (folder: string): StorageEngine => ({
   _handleFile: (req, file, cb) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: 'image' },
-      (err, result) => {
-        if (err) {
-          console.error(`[Cloudinary] Upload error (${err.http_code}): ${err.message}`);
-          if (err.http_code === 403) {
-            console.error('[Cloudinary] 403 = invalid credentials. Copy the EXACT CLOUDINARY_URL from your Cloudinary Dashboard > Account > API Keys.');
-            console.error('[Cloudinary] The URL looks like: cloudinary://<api_key>:<api_secret>@<cloud_name>');
+    const chunks: Buffer[] = [];
+    file.stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+    file.stream.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      const dataUri = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+      cloudinary.uploader.upload(
+        dataUri,
+        { folder, resource_type: 'image' },
+        (err, result) => {
+          if (err) {
+            console.error(`[Cloudinary] Upload error (${err.http_code}): ${err.message}`);
+            cb(err);
+            return;
           }
-          cb(err);
-          return;
+          const url = result?.secure_url || result?.url;
+          console.log(`[Cloudinary] Uploaded to ${result?.public_id} — ${url}`);
+          cb(null, {
+            path: url,
+            filename: result?.public_id,
+            size: result?.bytes,
+          });
         }
-        const url = result?.secure_url || result?.url;
-        console.log(`[Cloudinary] Uploaded to ${result?.public_id} — ${url}`);
-        cb(null, {
-          path: url,
-          filename: result?.public_id,
-          size: result?.bytes,
-        });
-      }
-    );
-    file.stream.pipe(uploadStream);
+      );
+    });
+    file.stream.on('error', cb);
   },
   _removeFile: (_req, file, cb) => {
     if (file.filename) {
-      cloudinary.uploader.destroy(file.filename, undefined, (err: any) => cb(err));
+      cloudinary.uploader.destroy(file.filename, undefined, () => cb(null));
     } else {
       cb(null);
     }

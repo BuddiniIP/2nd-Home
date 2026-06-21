@@ -12,32 +12,20 @@ const Profile = () => {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', university: '', role: '', profilePicture: '' });
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [uploadingPic, setUploadingPic] = useState(false);
   const [message, setMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingFileRef = useRef<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/'); };
 
-  const handlePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePictureSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingPic(true);
-    try {
-      const fd = new FormData();
-      fd.append('profilePicture', file);
-      const res = await fetch(`${apiBase}/api/auth/upload/profile`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const url = data.url || data.path;
-        setForm(prev => ({ ...prev, profilePicture: url }));
-        localStorage.setItem('profilePicture', url);
-        window.dispatchEvent(new Event('profile-pic-updated'));
-      }
-    } catch {}
-    finally { setUploadingPic(false); }
+    pendingFileRef.current = file;
+    const reader = new FileReader();
+    reader.onload = () => setPreviewUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   useEffect(() => {
@@ -65,21 +53,58 @@ const Profile = () => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
+
     try {
+      let pictureUrl = form.profilePicture;
+
+      if (pendingFileRef.current) {
+        const fd = new FormData();
+        fd.append('profilePicture', pendingFileRef.current);
+        const uploadRes = await fetch(`${apiBase}/api/auth/upload/profile`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (uploadRes.ok) {
+          const data = await uploadRes.json();
+          pictureUrl = data.url || data.path;
+          localStorage.setItem('profilePicture', pictureUrl);
+          window.dispatchEvent(new Event('profile-pic-updated'));
+        } else {
+          const errData = await uploadRes.json();
+          setMessage(errData.message || 'Picture upload failed');
+          setSaving(false);
+          return;
+        }
+        pendingFileRef.current = null;
+        setPreviewUrl(null);
+      }
+
       const res = await fetch(`${apiBase}/api/auth/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           firstName: form.firstName,
           lastName: form.lastName,
+          email: form.email,
           phone: form.phone,
           university: form.university,
+          profilePicture: pictureUrl,
         }),
       });
-      if (res.ok) setMessage('Profile updated successfully');
-      else { const d = await res.json(); setMessage(d.message || 'Update failed'); }
-    } catch { setMessage('Update failed'); }
-    finally { setSaving(false); }
+      if (res.ok) {
+        const updated = await res.json();
+        setForm(prev => ({ ...prev, profilePicture: updated.profilePicture || pictureUrl }));
+        setMessage('Profile updated successfully');
+      } else {
+        const d = await res.json();
+        setMessage(d.message || 'Update failed');
+      }
+    } catch {
+      setMessage('Update failed');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -107,14 +132,14 @@ const Profile = () => {
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 space-y-8">
             <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
               <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative overflow-hidden">
-                {form.profilePicture ? (
-                  <img src={form.profilePicture ? (form.profilePicture.startsWith('http') ? form.profilePicture : `${apiBase}${form.profilePicture}`) : ''} className="w-full h-full object-cover" />
+                {(previewUrl || form.profilePicture) ? (
+                  <img src={previewUrl || (form.profilePicture.startsWith('http') ? form.profilePicture : `${apiBase}${form.profilePicture}`)} className="w-full h-full object-cover" />
                 ) : (
                   <User size={32} />
                 )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePictureUpload} className="hidden" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="absolute -bottom-1 -right-1 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center disabled:opacity-50">
-                  {uploadingPic ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePictureSelect} className="hidden" />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute -bottom-1 -right-1 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center hover:bg-accent-orange transition-colors">
+                  <Camera size={12} />
                 </button>
               </div>
             <div>
@@ -134,7 +159,7 @@ const Profile = () => {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Email</label>
-              <input disabled value={form.email} className="w-full bg-gray-100 border border-transparent rounded-full px-6 py-4 text-sm text-gray-400 cursor-not-allowed" />
+              <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Phone</label>
@@ -153,7 +178,7 @@ const Profile = () => {
           )}
 
           <button type="submit" disabled={saving} className="w-full py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-            <Save size={14} /> {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </motion.form>
         )}

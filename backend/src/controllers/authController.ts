@@ -116,7 +116,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
       res.status(401).json({ message: 'Not authorized' });
       return;
     }
-    const allowed = ['firstName', 'lastName', 'phone', 'university', 'profilePicture'];
+    const allowed = ['firstName', 'lastName', 'email', 'phone', 'university', 'profilePicture'];
     const updates: Record<string, any> = {};
     for (const field of allowed) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];

@@ -4,7 +4,7 @@ import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
-import { FRONTEND_URL } from '../config/env.js';
+import { FRONTEND_URL, STRIPE_WEBHOOK_SECRET } from '../config/env.js';
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -358,7 +358,7 @@ export const handleStripeWebhook: RequestHandler = async (req, res, next) => {
       res.status(400).json({ message: 'Missing stripe-signature header' });
       return;
     }
-    const secret = process.env.STRIPE_WEBHOOK_SECRET;
+    const secret = STRIPE_WEBHOOK_SECRET;
     if (!secret) {
       console.warn('STRIPE_WEBHOOK_SECRET not set — skipping webhook verification');
       res.status(200).json({ received: true });

@@ -32,7 +32,8 @@ export const createBooking = async (req: Request, res: Response) => {
 
     res.status(201).json(booking);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    console.error("BOOKING ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -42,7 +43,8 @@ export const getMyBookings = async (req: Request, res: Response) => {
     const bookings = await Booking.find({ student: req.user?.id }).populate("listing");
     res.json(bookings);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    console.error("BOOKING ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -59,7 +61,8 @@ export const getOwnerBookings = async (req: Request, res: Response) => {
 
     res.json(ownerBookings);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    console.error("BOOKING ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -72,6 +75,7 @@ export const getAllBookings = async (req: Request, res: Response) => {
 
     res.json(bookings);
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    console.error("BOOKING ERROR", error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };

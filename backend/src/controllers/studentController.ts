@@ -30,6 +30,7 @@ export const saveListing = async (req: Request, res: Response) => {
       }
     }
 
+    console.error("STUDENT ERROR", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -61,6 +62,7 @@ export const getSavedListings = async (req: Request, res: Response) => {
     }));
     return res.json(result);
   } catch (error: any) {
+    console.error("STUDENT ERROR", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -86,6 +88,7 @@ export const removeSavedListing = async (req: Request, res: Response) => {
 
     return res.json({ message: 'Saved listing removed' });
   } catch (error: any) {
+    console.error("STUDENT ERROR", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -141,6 +144,7 @@ export const getCurrentBoarding = async (req: Request, res: Response) => {
 
     res.json({ current, previous });
   } catch (error: any) {
+    console.error("STUDENT ERROR", error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -166,6 +170,7 @@ export const updateCurrentBoarding = async (req: Request, res: Response) => {
 
     return res.json({ message: 'Current boarding updated successfully', currentBoarding: user.currentBoarding });
   } catch (error: any) {
+    console.error("STUDENT ERROR", error);
     return res.status(500).json({ message: error.message });
   }
 };

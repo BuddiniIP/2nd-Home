@@ -16,6 +16,7 @@ export const createReport = async (req: Request, res: Response) => {
 
     res.status(201).json(report);
   } catch (error: any) {
+    console.error("REPORT ERROR", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -30,6 +31,7 @@ export const getAllReports = async (req: Request, res: Response) => {
 
     res.json(reports);
   } catch (error: any) {
+    console.error("REPORT ERROR", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -53,6 +55,7 @@ export const updateReport = async (req: Request, res: Response) => {
 
     res.json(report);
   } catch (error: any) {
+    console.error("REPORT ERROR", error);
     res.status(500).json({ message: error.message });
   }
 };

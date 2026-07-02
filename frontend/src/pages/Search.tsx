@@ -165,7 +165,7 @@ const Search = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-display text-5xl md:text-6xl text-black tracking-tight"
+              className="font-display text-4xl sm:text-5xl md:text-6xl text-black tracking-tight"
             >
               Find Your 2nd Home
             </motion.h1>
@@ -182,20 +182,20 @@ const Search = () => {
                />
                <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-accent-orange transition-colors" size={20} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0">
                <button 
                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                 className={`flex items-center justify-center gap-3 px-8 py-5 rounded-full text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${isFilterOpen ? 'bg-accent-orange text-white' : 'bg-black text-white hover:bg-accent-orange'}`}
+                 className={`flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-8 py-4 sm:py-5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all shadow-sm ${isFilterOpen ? 'bg-accent-orange text-white' : 'bg-black text-white hover:bg-accent-orange'}`}
                >
-                 <Filter size={18} />
+                 <Filter size={16} />
                  {isFilterOpen ? 'Close' : 'Filters'}
                </button>
                <button 
                  onClick={handleNearMe}
                  disabled={isLocating}
-                 className="flex items-center justify-center gap-3 px-8 py-5 rounded-full text-xs font-bold uppercase tracking-widest bg-white border border-gray-100 text-black hover:border-accent-orange hover:text-accent-orange transition-all shadow-sm group"
+                 className="flex items-center justify-center gap-2 sm:gap-3 px-5 sm:px-8 py-4 sm:py-5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest bg-white border border-gray-100 text-black hover:border-accent-orange hover:text-accent-orange transition-all shadow-sm group"
                >
-                 <Navigation size={18} className={isLocating ? 'animate-pulse' : 'group-hover:rotate-45 transition-transform'} />
+                 <Navigation size={16} className={isLocating ? 'animate-pulse' : 'group-hover:rotate-45 transition-transform'} />
                  {isLocating ? 'Locating...' : 'Near Me'}
                </button>
             </div>
@@ -211,7 +211,7 @@ const Search = () => {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-gray-50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+              <div className="bg-white rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 shadow-sm border border-gray-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 sm:gap-8">
                 {/* University Select */}
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-400 px-2">University</label>
@@ -424,7 +424,7 @@ const Search = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full h-[70vh] rounded-[4rem] overflow-hidden shadow-sm border border-gray-100 bg-gray-50"
+              className="relative w-full h-[50vh] sm:h-[70vh] rounded-[2rem] sm:rounded-[4rem] overflow-hidden shadow-sm border border-gray-100 bg-gray-50"
             >
               {import.meta.env.VITE_GOOGLE_MAPS_KEY ? (
                 <iframe 
@@ -441,20 +441,20 @@ const Search = () => {
                 </div>
               )}
               <div className="absolute inset-0 bg-black/5 pointer-events-none" />
-              <div className="absolute top-8 left-8 bg-white/90 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl max-w-sm space-y-4">
+              <div className="absolute bottom-4 left-4 right-4 sm:top-8 sm:left-8 sm:right-auto bg-white/90 backdrop-blur-md p-4 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl max-w-none sm:max-w-sm space-y-4">
                  <div className="flex items-center gap-3 text-accent-orange">
                     <Navigation size={24} fill="currentColor" />
-                    <h4 className="font-display font-bold text-xl">Near You</h4>
+                    <h4 className="font-display font-bold text-lg sm:text-xl">Near You</h4>
                  </div>
-                 <p className="text-gray-400 text-sm leading-relaxed">
+                 <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
                    Displaying boardings within <span className="text-black font-bold">5km</span> of your current location.
                  </p>
                  <div className="pt-2 space-y-3">
                     {filteredProperties.slice(0, 3).map(p => (
-                       <div key={p.id} className="flex items-center gap-4 p-3 bg-[#F8F8F8] rounded-2xl">
-                          <img src={p.image} className="w-12 h-12 rounded-xl object-cover" />
-                          <div>
-                             <p className="text-xs font-bold">{p.title}</p>
+                       <div key={p.id} className="flex items-center gap-3 p-3 bg-[#F8F8F8] rounded-2xl">
+                          <img src={p.image} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover shrink-0" />
+                          <div className="min-w-0 flex-1">
+                             <p className="text-xs font-bold truncate">{p.title}</p>
                              <p className="text-[10px] text-accent-orange font-bold uppercase tracking-widest">{p.price.toLocaleString()} LKR</p>
                           </div>
                        </div>

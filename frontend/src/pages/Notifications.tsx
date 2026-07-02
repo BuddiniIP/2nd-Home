@@ -126,7 +126,7 @@ const Notifications = () => {
               >
                 <ChevronLeft size={14} /> Go Back
               </button>
-              <h1 className="text-5xl font-display font-bold text-black tracking-tight">Notifications</h1>
+              <h1 className="text-3xl sm:text-5xl font-display font-bold text-black tracking-tight">Notifications</h1>
               <p className="text-gray-400 text-sm">Stay updated with your boarding activity and messages.</p>
            </div>
            <div className="flex gap-4">
@@ -154,7 +154,7 @@ const Notifications = () => {
                   variants={itemVariants}
                   layout
                   exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
-                  className={`p-8 rounded-[2.5rem] border transition-all flex flex-col md:flex-row gap-6 relative group ${n.isRead ? 'bg-white border-gray-50' : 'bg-white border-accent-orange/20 shadow-xl shadow-accent-orange/5'}`}
+                  className={`p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border transition-all flex flex-col sm:flex-row gap-4 sm:gap-6 relative group ${n.isRead ? 'bg-white border-gray-50' : 'bg-white border-accent-orange/20 shadow-xl shadow-accent-orange/5'}`}
                 >
                    {!n.isRead && (
                       <div className="absolute top-8 right-8 w-3 h-3 bg-accent-orange rounded-full" />
@@ -172,7 +172,7 @@ const Notifications = () => {
                       <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">{n.message}</p>
                    </div>
 
-                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => deleteNotification(n._id)}
                         className="w-10 h-10 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"

@@ -13,7 +13,7 @@ const Features = () => {
   ];
 
   return (
-    <div className="bg-black text-white py-20 px-6 relative z-20 rounded-[4rem] -mt-10 mx-6">
+    <div className="bg-black text-white py-12 sm:py-20 px-4 sm:px-6 relative z-20 rounded-[2rem] sm:rounded-[4rem] -mt-10 mx-4 sm:mx-6">
       <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-8">
         {items.map((item, idx) => (
           <motion.div 
@@ -50,7 +50,7 @@ const PopularUniversities = () => {
   const duplicatedUniversities = [...universities, ...universities];
 
   return (
-    <section className="py-32 bg-white overflow-hidden">
+    <section className="py-16 sm:py-32 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 mb-16">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -106,8 +106,8 @@ const PopularUniversities = () => {
 
 const HighlightSection = () => {
   return (
-    <section className="py-32 px-6 bg-white">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+    <section className="py-16 sm:py-32 px-6 bg-white">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -117,7 +117,7 @@ const HighlightSection = () => {
         >
           <div className="space-y-6">
             <p className="text-[11px] uppercase tracking-[0.3em] font-extrabold text-accent-orange">SECURE STUDENT LIVING</p>
-            <h2 className="font-display text-5xl leading-tight tracking-tight text-black">Verified & Trusted<br />Accommodations</h2>
+            <h2 className="font-display text-3xl sm:text-5xl leading-tight tracking-tight text-black">Verified & Trusted<br />Accommodations</h2>
           </div>
           <p className="text-gray-400 max-w-sm leading-relaxed text-sm font-light">
             We physically verify every boarding facility to ensure safety, cleanliness, and comfort for students. Our professional checkers visit each site so you don't have to worry.
@@ -194,24 +194,24 @@ const Home = () => {
       >
         <div className="max-w-7xl mx-auto w-full">
            <div className="mb-20 text-center space-y-6">
-              <h1 className="text-5xl md:text-8xl font-display tracking-tight text-black leading-none">Find Your Perfect Boarding</h1>
-              <p className="text-gray-400 text-lg max-w-2xl mx-auto font-light">
-                Secure, verified, and comfortable student accommodations near leading universities across Sri Lanka.
-              </p>
-              <div className="flex justify-center gap-6 pt-8">
-                 <Link 
-                   to={isLoggedIn ? "/search" : "/login"} 
-                   className="bg-black text-white px-12 py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
-                 >
-                    Search Now
-                 </Link>
-                 <Link 
-                   to={isLoggedIn ? (userRole === 'owner' ? "/owner-dashboard?tab=add-boarding" : "/student-dashboard") : "/login"} 
-                   className="border border-black/10 text-black px-12 py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all"
-                 >
-                    {isLoggedIn && userRole === 'owner' ? "Add Property" : "List Property"}
-                 </Link>
-              </div>
+              <h1 className="text-4xl sm:text-5xl md:text-8xl font-display tracking-tight text-black leading-none">Find Your Perfect Boarding</h1>
+               <p className="text-gray-400 text-sm sm:text-lg max-w-2xl mx-auto font-light px-4">
+                 Secure, verified, and comfortable student accommodations near leading universities across Sri Lanka.
+               </p>
+               <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 pt-8 px-4">
+                  <Link 
+                    to={isLoggedIn ? "/search" : "/login"} 
+                    className="bg-black text-white px-8 sm:px-12 py-4 sm:py-6 rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
+                  >
+                     Search Now
+                  </Link>
+                  <Link 
+                    to={isLoggedIn ? (userRole === 'owner' ? "/owner-dashboard?tab=add-boarding" : "/student-dashboard") : "/login"} 
+                    className="border border-black/10 text-black px-8 sm:px-12 py-4 sm:py-6 rounded-full font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all"
+                  >
+                     {isLoggedIn && userRole === 'owner' ? "Add Property" : "List Property"}
+                  </Link>
+               </div>
            </div>
 
            <Features />

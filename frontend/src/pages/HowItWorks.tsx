@@ -167,7 +167,7 @@ const HowItWorks = () => {
             className="max-w-7xl mx-auto space-y-40"
           >
             {currentSteps.map((step, idx) => (
-              <div key={idx} className={`flex flex-col lg:flex-row items-center gap-16 lg:gap-32 ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
+              <div key={idx} className={`flex flex-col lg:flex-row items-center gap-12 lg:gap-32 ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
                 <div className="flex-1 space-y-8">
                   <div className="flex items-center gap-6">
                     <span className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center font-display text-2xl font-bold shadow-xl shadow-black/10">
@@ -205,7 +205,7 @@ const HowItWorks = () => {
       </section>
 
       {/* Verification Process Detail */}
-      <section className="bg-gray-50 py-32 mt-40 rounded-[4rem] mx-6">
+      <section className="bg-gray-50 py-16 sm:py-32 mt-20 sm:mt-40 rounded-[2rem] sm:rounded-[4rem] mx-4 sm:mx-6">
          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
             <div className="space-y-10">
                <div className="space-y-4">
@@ -231,7 +231,7 @@ const HowItWorks = () => {
                </div>
             </div>
             <div className="hidden md:block">
-               <div className="aspect-square bg-white rounded-[3rem] shadow-sm flex items-center justify-center p-12">
+               <div className="aspect-square bg-white rounded-[2rem] sm:rounded-[3rem] shadow-sm flex items-center justify-center p-8 sm:p-12">
                   <div className="relative">
                      <SearchCheck size={200} strokeWidth={0.5} className="text-accent-orange/10" />
                      <motion.div 
@@ -249,7 +249,7 @@ const HowItWorks = () => {
 
       {/* CTA */}
       <section className="px-6 pt-32">
-        <div className="max-w-7xl mx-auto bg-black rounded-[4rem] p-12 md:p-24 text-center space-y-10 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto bg-black rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-12 md:p-24 text-center space-y-10 relative overflow-hidden">
           <div className="absolute inset-0 opacity-20 pointer-events-none">
              <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent-orange rounded-full blur-[120px]" />
              <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent-orange rounded-full blur-[120px]" />

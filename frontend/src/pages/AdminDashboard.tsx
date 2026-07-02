@@ -669,15 +669,15 @@ const AdminDashboard = () => {
                           if (!q) return true;
                           return (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q);
                        }).map((user: any) => (
-                         <div key={user.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-accent-orange/10 transition-all">
+                         <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-gray-50 rounded-2xl sm:rounded-3xl border border-transparent hover:border-accent-orange/10 transition-all gap-4">
                             <div className="flex items-center gap-4">
-                               <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold">{user.name.charAt(0)}</div>
-                              <div><h4 className="font-bold text-black">{user.name}</h4><p className="text-xs text-gray-400">{user.email}</p></div>
+                               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black text-white rounded-2xl flex items-center justify-center font-bold shrink-0">{user.name.charAt(0)}</div>
+                              <div className="min-w-0"><h4 className="font-bold text-black text-sm sm:text-base truncate">{user.name}</h4><p className="text-xs text-gray-400 truncate">{user.email}</p></div>
                            </div>
-                           <div className="flex items-center gap-12">
+                           <div className="flex items-center gap-4 sm:gap-8 ml-14 sm:ml-0">
                               <div className="text-center"><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Role</p><p className="text-xs font-bold text-black uppercase">{user.role}</p></div>
-                              <div className="text-center"><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Status</p><span className={`text-[9px] font-bold uppercase px-3 py-1 rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{user.status}</span></div>
-                              <button className="p-3 hover:bg-white hover:text-red-500 rounded-xl transition-all text-gray-400"><UserX size={18} /></button>
+                              <div className="text-center"><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Status</p><span className={`text-[9px] font-bold uppercase px-2 sm:px-3 py-1 rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{user.status}</span></div>
+                              <button className="p-2 sm:p-3 hover:bg-white hover:text-red-500 rounded-xl transition-all text-gray-400"><UserX size={18} /></button>
                            </div>
                         </div>
                       ))}

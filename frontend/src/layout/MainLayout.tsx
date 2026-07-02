@@ -74,14 +74,14 @@ const Header = () => {
 
   return (
     <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-7xl z-50">
-      <nav className="bg-white/90 backdrop-blur-md rounded-full px-8 py-3 flex items-center justify-between shadow-sm border border-gray-100">
+      <nav className="bg-white/90 backdrop-blur-md rounded-full px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm border border-gray-100">
         <div className="flex items-center gap-12">
           <Link to="/" className="flex items-center">
             <motion.img 
               whileHover={{ scale: 1.05 }}
               src={logo} 
               alt="2nd Home Logo" 
-              className="h-20 w-auto object-contain" 
+              className="h-12 sm:h-16 md:h-20 w-auto object-contain" 
             />
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
@@ -197,12 +197,12 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-black text-white pt-24 pb-12 px-6">
-      <div className="max-w-7xl mx-auto space-y-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b border-white/5 pb-24">
+    <footer className="bg-black text-white pt-16 sm:pt-24 pb-12 px-6">
+      <div className="max-w-7xl mx-auto space-y-12 sm:space-y-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 border-b border-white/5 pb-16 sm:pb-24">
           <div className="space-y-6">
             <div className="flex flex-col items-start gap-4">
-               <img src={logo} alt="2nd Home" className="h-24 w-auto invert brightness-0 grayscale opacity-80 hover:opacity-100 transition-opacity" />
+               <img src={logo} alt="2nd Home" className="h-16 sm:h-24 w-auto invert brightness-0 grayscale opacity-80 hover:opacity-100 transition-opacity" />
                <span className="font-display text-3xl font-bold">2nd HOME</span>
             </div>
             <p className="text-gray-500 text-sm leading-relaxed max-w-xs">

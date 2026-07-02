@@ -105,7 +105,7 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] px-6 pb-24">
-      <div className="flex bg-white rounded-[3.5rem] shadow-sm overflow-hidden max-w-6xl w-full min-h-[700px]">
+      <div className="flex bg-white rounded-[2rem] sm:rounded-[3.5rem] shadow-sm overflow-hidden max-w-6xl w-full min-h-0 sm:min-h-[700px]">
         {/* Left Side: Image (Dynamic based on role) */}
         <div className="hidden lg:block w-1/3 relative">
            <img 
@@ -130,7 +130,7 @@ const Signup = () => {
         </div>
 
         {/* Right Side: Content */}
-        <div className="flex-1 p-12 md:p-16 relative">
+        <div className="flex-1 p-6 sm:p-12 md:p-16 relative">
           <AnimatePresence mode="wait">
             {step === 'role' ? (
               <motion.div 

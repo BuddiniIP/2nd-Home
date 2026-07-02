@@ -123,7 +123,7 @@ const Login = () => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex bg-white rounded-[3.5rem] shadow-sm overflow-hidden max-w-4xl w-full min-h-[550px]"
+        className="flex bg-white rounded-[2rem] sm:rounded-[3.5rem] shadow-sm overflow-hidden max-w-4xl w-full min-h-0 sm:min-h-[550px]"
       >
         {/* Left Side: Image */}
         <div className="hidden lg:block w-1/2 relative">
@@ -140,9 +140,9 @@ const Login = () => {
         </div>
 
         {/* Right Side: Form */}
-        <div className="flex-1 p-12 md:p-20 flex flex-col justify-center">
+        <div className="flex-1 p-8 sm:p-12 md:p-20 flex flex-col justify-center">
           {/* Tab Switcher */}
-          <div className="flex gap-0 mb-10 bg-[#F8F8F8] rounded-full p-1 w-fit">
+          <div className="flex gap-0 mb-10 bg-[#F8F8F8] rounded-full p-1 w-full sm:w-fit">
             <button
               onClick={() => { setTab('signin'); setError(''); setSuccessMsg(''); }}
               className={`px-6 py-2 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all ${tab === 'signin' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}

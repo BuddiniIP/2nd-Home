@@ -162,7 +162,7 @@ const ScrollExpandMedia = ({
 
   const mediaWidth = 300 + scrollProgress * (isMobileState ? 650 : 1250);
   const mediaHeight = 400 + scrollProgress * (isMobileState ? 200 : 400);
-  const textTranslateX = scrollProgress * (isMobileState ? 180 : 150);
+  const textTranslateX = scrollProgress * (isMobileState ? 60 : 150);
 
   const firstWord = title ? title.split(' ')[0] : '';
   const restOfTitle = title ? title.split(' ').slice(1).join(' ') : '';

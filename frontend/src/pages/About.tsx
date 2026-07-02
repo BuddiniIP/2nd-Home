@@ -5,8 +5,8 @@ const About = () => {
   return (
     <div className="pb-24 bg-[#F8F8F8]">
       {/* Hero Section */}
-      <section className="px-6 mb-32">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
+      <section className="px-6 mb-16 sm:mb-32">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -16,7 +16,7 @@ const About = () => {
           >
             <div className="space-y-6">
               <p className="text-accent-orange text-[10px] font-bold uppercase tracking-[0.3em]">Our Story</p>
-              <h1 className="font-display text-5xl md:text-6xl lg:text-7xl leading-tight tracking-tight text-black">Redefining Student<br />Living in Sri Lanka</h1>
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight tracking-tight text-black">Redefining Student<br />Living in Sri Lanka</h1>
             </div>
             <div className="space-y-6 text-gray-400 leading-relaxed text-lg max-w-xl font-light">
                <p>
@@ -42,13 +42,13 @@ const About = () => {
       </section>
 
       {/* Philosophy Section */}
-      <section className="bg-black text-white py-32 px-6 rounded-[5rem] mx-6">
+      <section className="bg-black text-white py-16 sm:py-32 px-6 rounded-[2rem] sm:rounded-[5rem] mx-4 sm:mx-6">
          <div className="max-w-7xl mx-auto space-y-24">
             <div className="text-center space-y-6">
                <h2 className="text-4xl md:text-6xl font-display tracking-tight">Our Philosophy</h2>
                <p className="text-gray-500 max-w-2xl mx-auto">Built on trust, transparency, and the pursuit of student well-being.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-20">
                {[
                  { title: "Verified", desc: "Every property is physically checked for safety and quality." },
                  { title: "Transparent", desc: "Honest pricing and real photos without hidden catches." },
@@ -71,7 +71,7 @@ const About = () => {
       </section>
 
       {/* Grid Section */}
-      <section className="py-40 px-6">
+      <section className="py-20 sm:py-40 px-6">
          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}

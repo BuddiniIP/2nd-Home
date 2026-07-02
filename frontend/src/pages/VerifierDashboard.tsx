@@ -346,7 +346,7 @@ const VerifierDashboard = () => {
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 px-2">
                            <ImageIcon size={12} className="text-[#8B5CF6]" /> Property Images
                         </label>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           {boardingImages.map((img, idx) => (
                             <div key={idx} className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative group border border-gray-100">
                                <div className="absolute inset-0 flex items-center justify-center text-gray-200">

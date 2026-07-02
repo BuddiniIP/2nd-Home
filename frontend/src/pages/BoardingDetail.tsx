@@ -317,7 +317,7 @@ const BoardingDetail = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative rounded-[3rem] overflow-hidden shadow-2xl bg-black min-h-[520px]"
+                className="relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl bg-black min-h-[300px] sm:min-h-[520px]"
               >
                 <img
                   src={activeImage}

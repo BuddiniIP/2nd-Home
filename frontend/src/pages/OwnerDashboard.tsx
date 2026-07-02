@@ -539,7 +539,7 @@ const OwnerDashboard = () => {
 
   return (
     <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 sm:gap-12">
         {/* Sidebar */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -599,7 +599,7 @@ const OwnerDashboard = () => {
                 className="space-y-8"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col justify-between sm:aspect-square">
                      <div className="w-12 h-12 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500">
                         <TrendingUp size={24} />
                      </div>
@@ -610,7 +610,7 @@ const OwnerDashboard = () => {
                      </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="bg-black rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between aspect-square text-white">
+                  <motion.div variants={itemVariants} className="bg-black rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm flex flex-col justify-between sm:aspect-square text-white">
                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
                         <Users size={24} />
                      </div>
@@ -621,7 +621,7 @@ const OwnerDashboard = () => {
                      </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col justify-between sm:aspect-square">
                      <div className="w-12 h-12 bg-accent-orange/10 rounded-2xl flex items-center justify-center text-accent-orange">
                         <Bell size={24} />
                      </div>
@@ -923,7 +923,7 @@ const OwnerDashboard = () => {
                 animate="visible"
                 exit="exit"
               >
-                <div className="bg-white rounded-[3.5rem] p-12 shadow-sm border border-gray-50">
+                <div className="bg-white rounded-[2.5rem] sm:rounded-[3.5rem] p-6 sm:p-12 shadow-sm border border-gray-50">
                    <div className="flex items-center gap-6 mb-12">
                       <div className="w-16 h-16 bg-accent-orange rounded-3xl flex items-center justify-center text-white shadow-lg shadow-accent-orange/20">
                          <PlusCircle size={32} />
@@ -1103,19 +1103,20 @@ const OwnerDashboard = () => {
                           </div>
                           <div className="space-y-4">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Bills Included?</label>
-                             <div className="grid grid-cols-2 gap-4">
-                                {[
-                                  { value: 'yes', label: 'Yes (Electricity & Water)' },
-                                  { value: 'no', label: 'No (Separate Bills)' },
-                                ].map((billOption) => (
-                                  <button
-                                    key={billOption.value}
-                                    type="button"
-                                    onClick={() => setBillsIncluded(billOption.value as 'yes' | 'no')}
-                                    className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${billsIncluded === billOption.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
-                                  >
-                                    {billOption.label}
-                                  </button>
+                              <div className="grid grid-cols-2 gap-4">
+                                 {[
+                                   { value: 'yes', label: 'Yes', desc: 'Electricity & Water' },
+                                   { value: 'no', label: 'No', desc: 'Separate Bills' },
+                                 ].map((billOption) => (
+                                   <button
+                                     key={billOption.value}
+                                     type="button"
+                                     onClick={() => setBillsIncluded(billOption.value as 'yes' | 'no')}
+                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${billsIncluded === billOption.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
+                                   >
+                                     <div>{billOption.label}</div>
+                                     <div className="text-[7px] opacity-60 normal-case">{billOption.desc}</div>
+                                   </button>
                                 ))}
                              </div>
                           </div>
@@ -1217,7 +1218,7 @@ const OwnerDashboard = () => {
               className="bg-white rounded-[3.5rem] w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
             >
               {verifySuccess ? (
-                <div className="p-12 text-center space-y-8">
+                <div className="p-6 sm:p-12 text-center space-y-8">
                   <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-500">
                     <ShieldCheck size={48} />
                   </div>

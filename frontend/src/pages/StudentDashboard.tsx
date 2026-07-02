@@ -440,7 +440,7 @@ const StudentDashboard = () => {
                 className="space-y-6"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col justify-between sm:aspect-square">
                      <div className="w-12 h-12 bg-accent-orange/10 rounded-2xl flex items-center justify-center text-accent-orange">
                         <CreditCard size={24} />
                      </div>
@@ -450,7 +450,7 @@ const StudentDashboard = () => {
                      </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="bg-black rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between aspect-square text-white">
+                  <motion.div variants={itemVariants} className="bg-black rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm flex flex-col justify-between sm:aspect-square text-white">
                      <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white">
                         <Clock size={24} />
                      </div>
@@ -461,7 +461,7 @@ const StudentDashboard = () => {
                      </div>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col justify-between aspect-square">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col justify-between sm:aspect-square">
                      <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500">
                         <MapPin size={24} />
                      </div>
@@ -536,26 +536,26 @@ const StudentDashboard = () => {
                                 {stay.location}
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-6 py-6 border-y border-gray-50">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 py-6 border-y border-gray-50">
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Owner</p>
-                                <p className="font-bold text-black">{stay.owner}</p>
+                                <p className="font-bold text-black text-sm sm:text-base truncate">{stay.owner}</p>
                               </div>
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Monthly Rent</p>
-                                <p className="font-bold text-black">LKR {stay.monthlyRent?.toLocaleString() || 0}</p>
+                                <p className="font-bold text-black text-sm sm:text-base">LKR {stay.monthlyRent?.toLocaleString() || 0}</p>
                               </div>
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Check-in</p>
-                                <p className="font-bold text-black">{stay.startDate}</p>
+                                <p className="font-bold text-black text-sm sm:text-base">{stay.startDate}</p>
                               </div>
                               <div className="space-y-2">
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Contact</p>
-                                <p className="font-bold text-black">{stay.phone}</p>
+                                <p className="font-bold text-black text-sm sm:text-base truncate">{stay.phone}</p>
                               </div>
                               <div className="space-y-2">
                                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Boarded / Capacity</p>
-                                 <p className="font-bold text-black">{stay.currentOccupants || 0} / {stay.capacity || 0}</p>
+                                 <p className="font-bold text-black text-sm sm:text-base">{stay.currentOccupants || 0} / {stay.capacity || 0}</p>
                                </div>
                             </div>
                             <div className="flex gap-4">

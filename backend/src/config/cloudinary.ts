@@ -1,0 +1,145 @@
+import { v2 as cloudinary } from 'cloudinary';
+import multer, { StorageEngine } from 'multer';
+import dotenv from 'dotenv';
+
+// Ensure .env is loaded BEFORE we read any env vars (import-order-safe)
+dotenv.config();
+
+let _initialized = false;
+
+const ensureCloudinary = () => {
+  if (_initialized) return;
+
+  const parseUrl = (raw: string) => {
+    try {
+      const url = new URL(raw);
+      return url.username ? { api_key: url.username, api_secret: url.password, cloud_name: url.hostname } : null;
+    } catch {
+      return null;
+    }
+  };
+
+  let cloudName = '';
+  let apiKey = '';
+  let apiSecret = '';
+
+  const rawUrl = (process.env.CLOUDINARY_URL || '').trim();
+  if (rawUrl) {
+    const parsed = parseUrl(rawUrl);
+    if (parsed) {
+      cloudName = parsed.cloud_name;
+      apiKey = parsed.api_key;
+      apiSecret = parsed.api_secret;
+      console.log(`[Cloudinary] Parsed from CLOUDINARY_URL → cloud: ${cloudName}`);
+    } else {
+      console.warn(`[Cloudinary] CLOUDINARY_URL could not be parsed (starts with: ${rawUrl.slice(0, 25)}...)`);
+    }
+  }
+
+  if (!cloudName) {
+    cloudName = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+    apiKey = (process.env.CLOUDINARY_API_KEY || '').trim();
+    apiSecret = (process.env.CLOUDINARY_API_SECRET || '').trim();
+    if (cloudName) {
+      console.log('[Cloudinary] Using individual CLOUDINARY_CLOUD_NAME vars');
+    }
+  }
+
+  if (!cloudName) {
+    const cloudKeys = Object.keys(process.env).filter(k => k.includes('CLOUD'));
+    console.error('[Cloudinary] No credentials found. Env vars with "CLOUD":', cloudKeys.join(', ') || '(none)');
+    throw new Error(
+      'Cloudinary is not configured. Add this to backend/.env:\n' +
+      'CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>\n' +
+      'Get it at https://cloudinary.com/console\n' +
+      '(Or use CLOUDINARY_CLOUD_NAME + CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET)'
+    );
+  }
+
+  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
+
+  const maskedKey = apiKey.slice(0, 4) + '****' + apiKey.slice(-4);
+  const maskedSecret = apiSecret.slice(0, 2) + '****' + apiSecret.slice(-2);
+  console.log(`[Cloudinary] Configured — cloud: ${cloudName}, key: ${maskedKey}, secret: ${maskedSecret}`);
+
+  // Test the connection immediately
+  cloudinary.api.ping()
+    .then((res: any) => console.log(`[Cloudinary] Connection OK — ${res.status || res.message || 'ping successful'}`))
+    .catch((err: any) => {
+      console.error(`[Cloudinary] Connection FAILED (${err.http_code}): ${err.message}`);
+      console.error(`[Cloudinary] The credentials above are REJECTED by Cloudinary's API.`);
+      console.error(`[Cloudinary] Go to https://cloudinary.com/console → Account → API Keys`);
+      console.error(`[Cloudinary] Generate a NEW key, copy the ENTIRE "cloudinary://..." URL to your .env`);
+    });
+
+  _initialized = true;
+};
+
+const cloudinaryStorage = (folder: string): StorageEngine => ({
+  _handleFile: (req, file, cb) => {
+    const chunks: Buffer[] = [];
+    file.stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+    file.stream.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      const dataUri = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+      cloudinary.uploader.upload(
+        dataUri,
+        { folder, resource_type: 'image' },
+        (err, result) => {
+          if (err) {
+            console.error(`[Cloudinary] Upload error (${err.http_code}): ${err.message}`);
+            cb(err);
+            return;
+          }
+          const url = result?.secure_url || result?.url;
+          console.log(`[Cloudinary] Uploaded to ${result?.public_id} — ${url}`);
+          cb(null, {
+            path: url,
+            filename: result?.public_id,
+            size: result?.bytes,
+          });
+        }
+      );
+    });
+    file.stream.on('error', cb);
+  },
+  _removeFile: (_req, file, cb) => {
+    if (file.filename) {
+      cloudinary.uploader.destroy(file.filename, undefined, () => cb(null));
+    } else {
+      cb(null);
+    }
+  },
+});
+
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype)) {
+    cb(new Error('Only JPG, PNG, GIF, and WebP images are allowed'));
+    return;
+  }
+  cb(null, true);
+};
+
+export const deleteCloudinaryImage = async (url: string | undefined) => {
+  if (!url || !url.includes('res.cloudinary.com')) return;
+  const match = url.match(/\/upload\/v\d+\/(.+)\.\w+$/);
+  if (match) {
+    const publicId = match[1];
+    try {
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`[Cloudinary] Deleted old image: ${publicId}`);
+    } catch {
+      // ignore if already gone
+    }
+  }
+};
+
+export const getProfileUpload = () => {
+  ensureCloudinary();
+  return multer({ storage: cloudinaryStorage('2nd-home/profiles'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter });
+};
+
+export const getListingUpload = () => {
+  ensureCloudinary();
+  return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
+};

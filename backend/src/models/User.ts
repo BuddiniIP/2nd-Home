@@ -1,0 +1,69 @@
+import mongoose, { Document, Schema } from 'mongoose';
+import bcrypt from 'bcrypt';
+
+
+export enum UserRole {
+  STUDENT = 'student',
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  VERIFIER = 'verifier',
+}
+
+export interface IUser extends Document {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string; // Optional if you decide to add Google auth later
+  role: UserRole;
+  phone?: string;
+  // Specific to student
+  university?: string;
+  // Common fields
+  profilePicture?: string;
+  isActive: boolean;
+  currentBoarding?: mongoose.Types.ObjectId;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  matchPassword(enteredPassword: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>(
+  {
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, minlength: 6 },
+    role: { type: String, enum: Object.values(UserRole), required: true, default: UserRole.STUDENT },
+    phone: { type: String },
+    university: { type: String },
+    profilePicture: { type: String },
+    isActive: { type: Boolean, default: true },
+    currentBoarding: {type: mongoose.Schema.Types.ObjectId,ref: "Listing",default: null},
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Encrypt password before saving
+userSchema.pre('save', async function (this: any) {
+  if (!this.isModified('password')) {
+    return;
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Compare password
+userSchema.methods.matchPassword = async function (enteredPassword: string) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const User = mongoose.model<IUser>('User', userSchema);
+
+//User.syncIndexes().catch(console.error);
+
+export default User;
+

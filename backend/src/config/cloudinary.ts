@@ -143,3 +143,8 @@ export const getListingUpload = () => {
   ensureCloudinary();
   return multer({ storage: cloudinaryStorage('2nd-home/listings'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
 };
+
+export const getInspectionUpload = () => {
+  ensureCloudinary();
+  return multer({ storage: cloudinaryStorage('2nd-home/inspections'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
+};

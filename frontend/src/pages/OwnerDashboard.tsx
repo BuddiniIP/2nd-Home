@@ -233,7 +233,6 @@ const OwnerDashboard = () => {
   const [showVerifyModal, setShowVerifyModal] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
-  const [verifyCancelId, setVerifyCancelId] = useState<string | null>(null);
   const [availForm, setAvailForm] = useState({ dateAvailable: '', timeSlot: '', notes: '' });
   const [showAvailForm, setShowAvailForm] = useState<string | null>(null);
   const [isSettingAvail, setIsSettingAvail] = useState(false);
@@ -259,8 +258,6 @@ const OwnerDashboard = () => {
       alert('Failed to confirm payment');
     }
   };
-
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleSendReminder = (name: string) => {
     alert(`Reminder sent to ${name}: "Please pay the rent of the month".`);
@@ -499,7 +496,7 @@ const OwnerDashboard = () => {
             title: data.title,
             description: data.description,
             location: data.location?.address || boardingAddress.trim(),
-            image: data.images?.[0] ? (data.images[0].startsWith('http') ? data.images[0] : `${apiBase}${data.images[0]}`) : '/images/house_orange.jpg',
+            image: data.images?.[0] ? (data.images[0].startsWith('http') ? data.images[0] : `${apiBase}${data.images[0]}`) : '/images/house_orange.png',
             images: data.images || [],
             price: Number(data.price || priceValue),
             capacity: Number(data.capacity || capacityValue),

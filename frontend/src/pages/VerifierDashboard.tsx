@@ -30,8 +30,10 @@ const VerifierDashboard = () => {
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; action: () => void; isRedFlag?: boolean } | null>(null);
 
   // Form State
-  const [selfie, setSelfie] = useState<string | null>(null);
-  const [boardingImages, setBoardingImages] = useState<string[]>([]);
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
+  const [boardingImageFiles, setBoardingImageFiles] = useState<File[]>([]);
+  const [boardingImagePreviews, setBoardingImagePreviews] = useState<string[]>([]);
   const [checklist, setChecklist] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState('');
   const [verdict, setVerdict] = useState<'verified' | 'rejected'>('verified');
@@ -84,8 +86,27 @@ const VerifierDashboard = () => {
     setChecklist(newChecklist);
   };
 
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch(`${apiBase}/api/verifications/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.url || null;
+      }
+    } catch { /* ignore */ }
+    return null;
+  };
+
   const handleInspectionSubmit = async () => {
-    if (!selfie) {
+    if (!selfieFile) {
       alert("Please upload a selfie at the boarding location first.");
       return;
     }
@@ -94,6 +115,14 @@ const VerifierDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
+
+      const selfieUrl = await uploadFile(selfieFile);
+      const imageUrls: string[] = [];
+      for (const f of boardingImageFiles) {
+        const url = await uploadFile(f);
+        if (url) imageUrls.push(url);
+      }
+
       const res = await fetch(`${apiBase}/api/verifications/${inspectionModal._id}/inspect`, {
         method: 'PATCH',
         headers: {
@@ -104,8 +133,8 @@ const VerifierDashboard = () => {
           verdict,
           checklist: Array.from(checklist),
           notes,
-          selfie,
-          images: boardingImages,
+          selfie: selfieUrl,
+          images: imageUrls,
         }),
       });
       if (res.ok) {
@@ -455,13 +484,15 @@ const VerifierDashboard = () => {
                       <h3 className="text-3xl font-display font-bold">Inspection Submitted!</h3>
                       <p className="text-gray-400 max-w-md mx-auto">The detailed report has been sent to the Admin for final verification.</p>
                       <button 
-                        onClick={() => {
-                          setInspectionModal(null);
-                          setIsSubmitted(false);
-                          setSelfie(null);
-                          setBoardingImages([]);
-                          setChecklist(new Set());
-                        }}
+                          onClick={() => {
+                            setInspectionModal(null);
+                            setIsSubmitted(false);
+                            setSelfieFile(null);
+                            setSelfiePreview(null);
+                            setBoardingImageFiles([]);
+                            setBoardingImagePreviews([]);
+                            setChecklist(new Set());
+                          }}
                         className="bg-black text-white px-10 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"
                       >
                          Return to Tasks
@@ -480,57 +511,65 @@ const VerifierDashboard = () => {
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 px-2">
                            <User size={12} className="text-[#8B5CF6]" /> Selfie at Boarding
                         </label>
-                        {selfie ? (
-                          <div className="relative aspect-video bg-gray-50 rounded-[2rem] overflow-hidden group border border-gray-100 shadow-inner">
-                             <div className="absolute inset-0 flex items-center justify-center text-gray-200">
-                                <Camera size={48} />
-                             </div>
-                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button onClick={() => setSelfie(null)} className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
-                                   <Trash2 size={20} />
-                                </button>
-                             </div>
-                             <div className="absolute bottom-4 left-6 text-[10px] font-bold text-white bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">
-                                selfie_verified.jpg
-                             </div>
-                          </div>
-                        ) : (
-                          <label className="block aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:border-[#8B5CF6] hover:bg-violet-50 transition-all">
-                             <input type="file" className="hidden" onChange={(e) => setSelfie(e.target.files?.[0]?.name || null)} />
-                             <div className="h-full flex flex-col items-center justify-center space-y-3">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 shadow-sm">
-                                   <Camera size={24} />
-                                </div>
-                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Take/Upload Selfie</span>
-                             </div>
-                          </label>
-                        )}
+                         {selfiePreview ? (
+                           <div className="relative aspect-video bg-gray-50 rounded-[2rem] overflow-hidden group border border-gray-100 shadow-inner">
+                              <img src={selfiePreview} alt="Selfie" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                 <button onClick={() => { setSelfieFile(null); setSelfiePreview(null); }} className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                                    <Trash2 size={20} />
+                                 </button>
+                              </div>
+                              <div className="absolute bottom-4 left-6 text-[10px] font-bold text-white bg-black/50 px-4 py-2 rounded-full backdrop-blur-md">
+                                 {selfieFile?.name || 'selfie.jpg'}
+                              </div>
+                           </div>
+                         ) : (
+                           <label className="block aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] cursor-pointer hover:border-[#8B5CF6] hover:bg-violet-50 transition-all">
+                              <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setSelfieFile(file);
+                                  setSelfiePreview(URL.createObjectURL(file));
+                                }
+                              }} />
+                              <div className="h-full flex flex-col items-center justify-center space-y-3">
+                                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 shadow-sm">
+                                    <Camera size={24} />
+                                 </div>
+                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Take/Upload Selfie</span>
+                              </div>
+                           </label>
+                         )}
                       </div>
 
                       <div className="space-y-4">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 px-2">
-                           <ImageIcon size={12} className="text-[#8B5CF6]" /> Property Images
-                        </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {boardingImages.map((img, idx) => (
-                            <div key={idx} className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative group border border-gray-100">
-                               <div className="absolute inset-0 flex items-center justify-center text-gray-200">
-                                  <ImageIcon size={20} />
-                               </div>
-                               <button onClick={() => setBoardingImages(boardingImages.filter((_, i) => i !== idx))} className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                                  <X size={12} />
-                               </button>
-                            </div>
-                          ))}
-                          <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-[#8B5CF6] hover:bg-violet-50 transition-all flex flex-col items-center justify-center">
-                             <input type="file" className="hidden" multiple onChange={(e) => {
-                               const files = Array.from(e.target.files || []) as File[];
-                               setBoardingImages([...boardingImages, ...files.map(f => f.name)]);
-                             }} />
-                             <Plus size={20} className="text-gray-400" />
-                          </label>
-                        </div>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest text-right">{boardingImages.length} Images Attached</p>
+                           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 px-2">
+                              <ImageIcon size={12} className="text-[#8B5CF6]" /> Property Images
+                           </label>
+                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {boardingImagePreviews.map((preview, idx) => (
+                                <div key={idx} className="aspect-square bg-gray-50 rounded-2xl overflow-hidden relative group border border-gray-100">
+                                   <img src={preview} alt={`Property ${idx + 1}`} className="w-full h-full object-cover" />
+                                   <button onClick={() => {
+                                     setBoardingImageFiles(prev => prev.filter((_, i) => i !== idx));
+                                     setBoardingImagePreviews(prev => prev.filter((_, i) => i !== idx));
+                                   }} className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                                      <X size={12} />
+                                   </button>
+                                </div>
+                              ))}
+                              <label className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-[#8B5CF6] hover:bg-violet-50 transition-all flex flex-col items-center justify-center">
+                                 <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
+                                   const files = Array.from(e.target.files || []);
+                                   for (const f of files) {
+                                     setBoardingImageFiles(prev => [...prev, f]);
+                                     setBoardingImagePreviews(prev => [...prev, URL.createObjectURL(f)]);
+                                   }
+                                 }} />
+                                 <Plus size={20} className="text-gray-400" />
+                              </label>
+                           </div>
+                           <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest text-right">{boardingImagePreviews.length} Images Attached</p>
                       </div>
                     </div>
 

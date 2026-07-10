@@ -56,7 +56,7 @@ const AdminDashboard = () => {
    const [boardingActionError, setBoardingActionError] = useState('');
    const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
    const [showNotifications, setShowNotifications] = useState(false);
-   const [assignListingId, setAssignListingId] = useState('');
+ 
    const [assignVisitDate, setAssignVisitDate] = useState('');
 
   const UNIVERSITIES = [
@@ -195,7 +195,7 @@ const AdminDashboard = () => {
   };
 
   const normalizeBoardingImage = (imagePath: string) => {
-      if (!imagePath) return '/images/house_orange.jpg';
+      if (!imagePath) return '/images/house_orange.png';
       return imagePath.startsWith('http') ? imagePath : `${apiBase}${imagePath}`;
    };
 
@@ -480,7 +480,7 @@ const AdminDashboard = () => {
 
   const handleBoardingAction = async (id: number, action: 'warn' | 'remove') => {
     try {
-      let url = `${apiBase}/api/reports/admin/reports/${id}`;
+      let url = `${apiBase}/api/reports/admin/${id}`;
       let body: any = {};
       
       if (action === 'warn') {
@@ -1598,7 +1598,6 @@ const AdminDashboard = () => {
                         if (res.ok) {
                           alert('Verifier assigned successfully! They have 15 minutes to respond.');
                           setAssignmentModal(null);
-                          setAssignListingId('');
                           setAssignVisitDate('');
                           fetchVerifications();
                         } else { const d = await res.json(); alert(d.message || 'Assignment failed'); }
@@ -1641,7 +1640,7 @@ const AdminDashboard = () => {
                      <div className="overflow-y-auto p-8 md:p-10 space-y-8">
                         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.9fr] gap-6">
                            <div className="grid grid-cols-3 gap-4 min-h-[420px]">
-                              {(selectedBoarding.images.length > 0 ? selectedBoarding.images : ['/images/house_orange.jpg']).slice(0, 4).map((image: string, index: number) => (
+                              {(selectedBoarding.images.length > 0 ? selectedBoarding.images : ['/images/house_orange.png']).slice(0, 4).map((image: string, index: number) => (
                                  <div
                                     key={image + index}
                                     className={`${index === 0 ? 'col-span-2 row-span-2' : 'col-span-1'} rounded-[2rem] overflow-hidden bg-gray-100 relative`}

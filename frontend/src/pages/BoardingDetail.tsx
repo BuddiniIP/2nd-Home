@@ -242,7 +242,7 @@ const BoardingDetail = () => {
     const images = boarding?.images || [];
     return images.length
       ? images.map((image) => (image.startsWith('http') ? image : `${apiBase}${image}`))
-      : ['/images/house_orange.jpg'];
+      : ['/images/house_orange.png'];
   }, [apiBase, boarding]);
 
   const amenities = boarding?.amenities || [];

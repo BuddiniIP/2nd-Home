@@ -100,7 +100,7 @@ const Contact = () => {
 
 const ExpandableImage = ({ src, alt, delay }: { src: string; alt: string; delay: number }) => {
   const [expanded, setExpanded] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleClick = () => {
     setExpanded(true);

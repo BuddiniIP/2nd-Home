@@ -8,3 +8,4 @@ coverage/
 !.env.example
 backend/listDbs.cjs
 backend/dropIndex.cjs
+.vs/

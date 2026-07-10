@@ -33,6 +33,15 @@ const mapListing = (doc: any) => ({
   updatedAt: doc.updatedAt,
 });
 
+export const getBoardingCount: RequestHandler = async (_req, res, next) => {
+  try {
+    const total = await Listing.countDocuments({ isAvailable: true });
+    res.json({ total });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const listBoardings: RequestHandler = async (req, res, next) => {
   try {
     const q = queryListingSchema.parse(req.query);

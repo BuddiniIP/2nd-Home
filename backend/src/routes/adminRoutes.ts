@@ -10,6 +10,7 @@ import {
   getAdminUsers,
   updatePaymentStatus,
   createUser,
+  deleteUser,
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.get('/payments', getAdminPayments);
 router.get('/messages', getAdminMessages);
 router.get('/reports', getAdminReports);
 router.post('/users', createUser);
+router.delete('/users/:id', deleteUser);
 router.patch('/payments/:id/status', updatePaymentStatus);
 
 export default router;

@@ -9,6 +9,7 @@ import {
   recountOccupants,
   listingImageUpload,
   uploadListingImages,
+  getBoardingCount,
 } from '../controllers/listingController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { UserRole } from '../models/User.js';
@@ -16,6 +17,7 @@ import { UserRole } from '../models/User.js';
 const router = express.Router();
 
 router.get('/', listBoardings);
+router.get('/count', getBoardingCount);
 router.get('/my', protect, authorize(UserRole.OWNER), getMyBoardings);
 router.get('/:id', getBoardingById);
 

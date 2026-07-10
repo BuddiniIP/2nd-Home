@@ -21,7 +21,13 @@ import {
   Search as SearchIcon,
   ShieldCheck,
   ShieldAlert,
-  X
+  X,
+  ClipboardList,
+  AlertCircle,
+  MessageSquare,
+  Phone,
+  Eye,
+  Check
 } from 'lucide-react';
 
 const OwnerDashboard = () => {
@@ -137,6 +143,7 @@ const OwnerDashboard = () => {
     { id: 'my-students', label: 'My Students', icon: <Users size={18} /> },
     { id: 'add-boarding', label: 'Add Boarding', icon: <PlusCircle size={18} /> },
     { id: 'payments', label: 'Payments', icon: <CreditCard size={18} /> },
+    { id: 'verifications', label: 'Verifications', icon: <ShieldCheck size={18} /> },
     { id: 'profile', label: 'Edit Profile', icon: <UserIcon size={18} /> },
   ];
 
@@ -147,6 +154,12 @@ const OwnerDashboard = () => {
    const [ownerStats, setOwnerStats] = useState<any>({ totalRevenue: 'LKR 0', totalStudents: 0, activeStays: 0, pendingConfirmations: 0 });
    const [ownerRefreshKey, setOwnerRefreshKey] = useState(0);
    const [recountingBoardingId, setRecountingBoardingId] = useState<string | null>(null);
+   const [ownerVerifRefresh, setOwnerVerifRefresh] = useState(0);
+   const [tick, setTick] = useState(0);
+   useEffect(() => {
+     const i = setInterval(() => setTick(t => t + 1), 30000);
+     return () => clearInterval(i);
+   }, []);
     const [selectedBoardingId, setSelectedBoardingId] = useState<string | null>(null);
    const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
    const [boardingTitle, setBoardingTitle] = useState('');
@@ -216,10 +229,15 @@ const OwnerDashboard = () => {
       setBoardingImages([]);
    };
 
-  const [verificationRequests, setVerificationRequests] = useState<Set<number>>(new Set());
+  const [ownerVerifications, setOwnerVerifications] = useState<any[]>([]);
   const [showVerifyModal, setShowVerifyModal] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [verifyCancelId, setVerifyCancelId] = useState<string | null>(null);
+  const [availForm, setAvailForm] = useState({ dateAvailable: '', timeSlot: '', notes: '' });
+  const [showAvailForm, setShowAvailForm] = useState<string | null>(null);
+  const [isSettingAvail, setIsSettingAvail] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; action: () => void } | null>(null);
 
   const handleConfirmPayment = async (bookingId: string) => {
     try {
@@ -256,6 +274,21 @@ const OwnerDashboard = () => {
   );
 
    useEffect(() => {
+      const fetchOwnerVerifications = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          const res = await fetch(`${apiBase}/api/verifications/owner/my`, { headers: { Authorization: `Bearer ${token}` } });
+          if (res.ok) {
+            const data = await res.json();
+            setOwnerVerifications(Array.isArray(data) ? data : []);
+          }
+        } catch { /* ignore */ }
+      };
+      fetchOwnerVerifications();
+   }, [ownerVerifRefresh, activeTab]);
+
+   useEffect(() => {
       const fetchOwnerBoardings = async () => {
          try {
             const token = localStorage.getItem('token');
@@ -272,7 +305,7 @@ const OwnerDashboard = () => {
                title: boarding.title,
                description: boarding.description,
                location: boarding.location?.address || boarding.address || 'Unknown location',
-                image: boarding.images?.[0] ? (boarding.images[0].startsWith('http') ? boarding.images[0] : `${apiBase}${boarding.images[0]}`) : '/images/house_orange.jpg',
+                image: boarding.images?.[0] ? (boarding.images[0].startsWith('http') ? boarding.images[0] : `${apiBase}${boarding.images[0]}`) : '/images/house_orange.png',
                images: boarding.images || [],
                price: Number(boarding.price || 0),
                capacity: Number(boarding.capacity || 0),
@@ -538,8 +571,8 @@ const OwnerDashboard = () => {
    };
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 sm:gap-12">
+    <div className="pb-16 sm:pb-24 px-4 sm:px-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 sm:gap-8 sm:gap-12">
         {/* Sidebar */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -560,10 +593,10 @@ const OwnerDashboard = () => {
              </div>
           </div>
           
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
-             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
-                <img src="/images/house_orange.jpg" alt="Profile" className="w-full h-full object-cover" />
-             </div>
+<div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
+               <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
+                 <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "/images/house_orange.png"} alt="Profile" className="w-full h-full object-cover" />
+              </div>
              <div className="text-center">
                 <h3 className="font-display font-bold text-xl">
                   {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Loading..."}
@@ -644,8 +677,8 @@ const OwnerDashboard = () => {
                 exit="exit"
                 className="space-y-6"
               >
-                 <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 overflow-hidden">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+                 <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 overflow-hidden">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 sm:mb-10">
                        <h3 className="text-2xl font-display font-bold">My Students</h3>
                        <div className="relative w-full md:w-72 group">
                           <input 
@@ -653,7 +686,7 @@ const OwnerDashboard = () => {
                             placeholder="Search students..." 
                             value={studentSearch}
                             onChange={(e) => setStudentSearch(e.target.value)}
-                            className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange transition-all rounded-full px-12 py-3 text-xs outline-none"
+                            className="w-full bg-gray-50 border border-transparent focus:border-accent-orange transition-all rounded-full px-12 py-3 text-xs outline-none"
                           />
                           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-accent-orange transition-colors" size={16} />
                        </div>
@@ -741,7 +774,7 @@ const OwnerDashboard = () => {
                         </div>
 
                         {myBoardings.length === 0 ? (
-                           <div className="bg-white rounded-[3rem] p-10 border border-gray-50 shadow-sm text-center space-y-4">
+                           <div className="bg-white rounded-[3rem] p-6 sm:p-10 border border-gray-50 shadow-sm text-center space-y-4">
                               <h4 className="font-display text-2xl font-bold">No boardings yet</h4>
                               <p className="text-gray-400 text-sm max-w-md mx-auto">
                                  Create your first boarding listing in the Add Boarding tab. After you submit, it will appear here and also in the public student search.
@@ -808,13 +841,34 @@ const OwnerDashboard = () => {
                                            >
                                               Manage Property
                                            </button>
-                                           <button
-                                              type="button"
-                                              onClick={() => setShowVerifyModal(boarding)}
-                                              className="px-4 py-4 rounded-full border border-green-200 text-green-600 text-[10px] font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all"
-                                           >
-                                              Verify
-                                           </button>
+                                             {(() => {
+                                               const v = ownerVerifications.find((v: any) => v.listing?._id === boarding.id || v.listing?.toString() === boarding.id);
+                                               if (v) {
+                                                 const status = v.status;
+                                                 const TEN_MIN = 10 * 60 * 1000;
+                                                 const isRecentCancel = status === 'cancelled' && v.cancelledAt && (Date.now() - new Date(v.cancelledAt).getTime()) < TEN_MIN;
+                                                 if (status === 'requested') return <span className="px-3 py-3 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold uppercase tracking-widest">Requested</span>;
+                                                 if (isRecentCancel) return <span className="px-2.5 py-2 rounded-full bg-gray-100 text-gray-500 text-[8px] font-bold uppercase tracking-widest">Cancelled ({Math.ceil(10 - (Date.now() - new Date(v.cancelledAt).getTime()) / 60000)}m)</span>;
+                                                 if (status === 'cancelled' || status === 'expired-cancellation') {
+                                                   return (
+                                                     <button type="button" onClick={() => setShowVerifyModal(boarding)} className="px-4 py-4 rounded-full border border-green-200 text-green-600 text-[10px] font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">
+                                                       Verify
+                                                     </button>
+                                                   );
+                                                 }
+                                                 if (status === 'awaiting-availability' || status === 'ready-for-assignment') return <span className="px-3 py-3 rounded-full bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-widest">Pending</span>;
+                                                 if (status === 'assigned' || status === 'accepted') return <span className="px-3 py-3 rounded-full bg-purple-100 text-purple-600 text-[9px] font-bold uppercase tracking-widest">Assigned</span>;
+                                                 if (status === 'in_progress') return <span className="px-3 py-3 rounded-full bg-indigo-100 text-indigo-600 text-[9px] font-bold uppercase tracking-widest">In Progress</span>;
+                                                 if (status === 'verified') return <span className="px-3 py-3 rounded-full bg-green-100 text-green-600 text-[9px] font-bold uppercase tracking-widest">Verified</span>;
+                                                 if (status === 'rejected') return <span className="px-3 py-3 rounded-full bg-red-100 text-red-600 text-[9px] font-bold uppercase tracking-widest">Rejected</span>;
+                                                 return null;
+                                               }
+                                               return (
+                                                 <button type="button" onClick={() => setShowVerifyModal(boarding)} className="px-4 py-4 rounded-full border border-green-200 text-green-600 text-[10px] font-bold uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all">
+                                                   Verify
+                                                 </button>
+                                               );
+                                             })()}
                                            <button
                                               type="button"
                                               onClick={() => handleRecount(boarding.id)}
@@ -848,8 +902,8 @@ const OwnerDashboard = () => {
                 exit="exit"
                 className="space-y-6"
               >
-                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
-                   <div className="flex justify-between items-center mb-10">
+                <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-gray-50">
+                   <div className="flex justify-between items-center mb-6 sm:mb-10">
                       <h3 className="text-2xl font-display font-bold">Recent Payments</h3>
                       <div className="flex gap-4">
                          <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full text-green-600 text-[10px] font-bold uppercase tracking-widest">
@@ -901,7 +955,7 @@ const OwnerDashboard = () => {
                    </div>
                 </div>
 
-                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 flex flex-col md:flex-row items-center justify-between gap-8 border-l-8 border-l-accent-orange">
+                <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 border-l-8 border-l-accent-orange">
                    <div className="space-y-4">
                       <h4 className="text-xl font-bold font-display uppercase tracking-widest">Payment Reminder System</h4>
                       <p className="text-gray-400 text-sm max-w-md">
@@ -955,7 +1009,7 @@ const OwnerDashboard = () => {
                                placeholder="e.g. Green View Premium Hostel"
                                value={boardingTitle}
                                onChange={(e) => setBoardingTitle(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -963,7 +1017,7 @@ const OwnerDashboard = () => {
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Images</label>
                              <label
                                htmlFor="boarding-images"
-                               className="w-full bg-[#F8F8F8] border-2 border-dashed border-gray-200 rounded-[2rem] px-6 py-3 text-sm flex items-center justify-between cursor-pointer hover:border-accent-orange transition-colors"
+                               className="w-full bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2rem] px-6 py-3 text-sm flex items-center justify-between cursor-pointer hover:border-accent-orange transition-colors"
                              >
                                 <span className="text-gray-400">
                                   {boardingImages.length ? `${boardingImages.length} photo(s) selected` : 'Upload property photos...'}
@@ -982,7 +1036,7 @@ const OwnerDashboard = () => {
                                placeholder="No. 12, Main Street, Colombo"
                                value={boardingAddress}
                                onChange={(e) => setBoardingAddress(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -993,7 +1047,7 @@ const OwnerDashboard = () => {
                                placeholder="Describe the rooms, facilities, and surroundings"
                                value={boardingDescription}
                                onChange={(e) => setBoardingDescription(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-[2rem] px-6 py-4 text-sm outline-none resize-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-[2rem] px-6 py-4 text-sm outline-none resize-none"
                                required
                              />
                           </div>
@@ -1005,7 +1059,7 @@ const OwnerDashboard = () => {
                               <select
                                 value={boardingUniversity}
                                 onChange={(e) => setBoardingUniversity(e.target.value)}
-                                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
                                 required
                               >
                                 <option value="">Select university</option>
@@ -1019,7 +1073,7 @@ const OwnerDashboard = () => {
                               <select
                                 value={boardingFaculty}
                                 onChange={(e) => setBoardingFaculty(e.target.value)}
-                                className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
                                 required
                               >
                                 <option value="">Select faculty</option>
@@ -1039,7 +1093,7 @@ const OwnerDashboard = () => {
                                placeholder="18000"
                                value={boardingPrice}
                                onChange={(e) => setBoardingPrice(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -1051,7 +1105,7 @@ const OwnerDashboard = () => {
                                placeholder="6.9271"
                                value={boardingLatitude}
                                onChange={(e) => setBoardingLatitude(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -1063,7 +1117,7 @@ const OwnerDashboard = () => {
                                placeholder="79.8612"
                                value={boardingLongitude}
                                onChange={(e) => setBoardingLongitude(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -1075,7 +1129,7 @@ const OwnerDashboard = () => {
                                 placeholder="Max students"
                                 value={boardingCapacity}
                                onChange={(e) => setBoardingCapacity(e.target.value)}
-                               className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
+                               className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none"
                                required
                              />
                           </div>
@@ -1094,7 +1148,7 @@ const OwnerDashboard = () => {
                                      key={gender.value}
                                      type="button"
                                      onClick={() => setSelectedGenderPreference(gender.value)}
-                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${selectedGenderPreference === gender.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
+                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${selectedGenderPreference === gender.value ? 'bg-black text-white' : 'bg-gray-50 text-gray-500 hover:bg-accent-orange hover:text-white'}`}
                                    >
                                       {gender.label}
                                    </button>
@@ -1112,7 +1166,7 @@ const OwnerDashboard = () => {
                                      key={billOption.value}
                                      type="button"
                                      onClick={() => setBillsIncluded(billOption.value as 'yes' | 'no')}
-                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${billsIncluded === billOption.value ? 'bg-black text-white' : 'bg-[#F8F8F8] text-gray-500 hover:bg-accent-orange hover:text-white'}`}
+                                     className={`py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${billsIncluded === billOption.value ? 'bg-black text-white' : 'bg-gray-50 text-gray-500 hover:bg-accent-orange hover:text-white'}`}
                                    >
                                      <div>{billOption.label}</div>
                                      <div className="text-[7px] opacity-60 normal-case">{billOption.desc}</div>
@@ -1157,6 +1211,121 @@ const OwnerDashboard = () => {
               </motion.div>
             )}
 
+            {activeTab === 'verifications' && (
+              <motion.div key="verifications" variants={containerVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div><h3 className="text-2xl font-display font-bold">Verifications</h3><p className="text-sm text-gray-400">Track all your verification requests.</p></div>
+                  <span className="bg-green-100 text-green-600 text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest">{ownerVerifications.length} Requests</span>
+                </div>
+                {(() => {
+                  const active = ownerVerifications.filter((v: any) => v.status !== 'cancelled' && v.status !== 'expired-cancellation');
+                  const cancelled = ownerVerifications.filter((v: any) => v.status === 'cancelled' || v.status === 'expired-cancellation');
+                  if (ownerVerifications.length === 0) return (
+                    <div className="bg-white rounded-[3rem] p-6 sm:p-10 border border-gray-50 shadow-sm text-center space-y-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300"><ShieldCheck size={32} /></div>
+                      <h4 className="font-display text-xl sm:text-2xl font-bold">No verification requests yet</h4>
+                      <p className="text-gray-400 text-sm max-w-md mx-auto">Go to My Boardings and click the "Verify" button on any property.</p>
+                    </div>
+                  );
+                  const renderCard = (v: any) => {
+                    const listing = v.listing || {};
+                    const lTitle = listing.title || 'Unknown Boarding';
+                    const lImage = listing.images?.[0] ? (listing.images[0].startsWith('http') ? listing.images[0] : `${apiBase}${listing.images[0]}`) : '/images/house_orange.png';
+                    const verifier = v.verifier || null;
+                    const isCancellable = v.status === 'requested' && v.ownerCancellableUntil && new Date(v.ownerCancellableUntil).getTime() > Date.now();
+                    const expiresInMs = v.ownerCancellableUntil ? new Date(v.ownerCancellableUntil).getTime() - Date.now() : 0;
+                    const expiresMins = Math.max(0, Math.floor(expiresInMs / 60000));
+                    const showAvailFormNow = (v.status === 'requested' || v.status === 'awaiting-availability') && expiresInMs <= 0 && !v.ownerAvailabilitySubmitted;
+                    return (
+                      <div key={v._id || v.id} className="bg-white rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-sm border border-gray-50 space-y-4 sm:space-y-6">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                          <div className="w-full sm:w-32 h-20 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden bg-gray-50 shrink-0">
+                            <img src={lImage} alt={lTitle} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 space-y-3 min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0"><h4 className="text-lg sm:text-xl font-bold truncate">{lTitle}</h4><p className="text-xs text-gray-400 truncate">{listing.address || ''}</p></div>
+                              <span className={`shrink-0 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest whitespace-nowrap ${v.status === 'verified' ? 'bg-green-100 text-green-600' : v.status === 'rejected' ? 'bg-red-100 text-red-600' : v.status === 'accepted' ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-700'}`}>{v.status}</span>
+                            </div>
+                            {isCancellable && (
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                <div className="flex items-center gap-2 text-amber-600 text-[10px] sm:text-[11px] font-bold"><Clock size={14} className="shrink-0" /> <span>Cancellation window: {expiresMins}m remaining</span></div>
+                                <button onClick={() => setConfirmDialog({ message: 'Cancel this verification request?', action: async () => { try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/cancel-request`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); alert(d.message || 'Cancel failed'); } } catch { alert('Cancel failed'); } } })} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-700 border border-red-200 px-4 py-2 rounded-full shrink-0">Cancel</button>
+                              </div>
+                            )}
+                            {showAvailFormNow && (
+                              <div className="bg-blue-50 border border-blue-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3">
+                                <p className="text-[9px] sm:text-[10px] font-bold text-blue-700 uppercase tracking-widest">Set Your Availability</p>
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                  <input type="date" value={availForm.dateAvailable} onChange={e => setAvailForm({ ...availForm, dateAvailable: e.target.value })} className="w-full bg-white border border-blue-200 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs outline-none focus:border-blue-500" />
+                                  <input type="text" placeholder="Time (e.g. 10AM-12PM)" value={availForm.timeSlot} onChange={e => setAvailForm({ ...availForm, timeSlot: e.target.value })} className="w-full bg-white border border-blue-200 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs outline-none focus:border-blue-500" />
+                                </div>
+                                <button onClick={async () => { if (!availForm.dateAvailable) { alert('Please select a date'); return; } setIsSettingAvail(true); try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/set-availability`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ dateAvailable: availForm.dateAvailable, timeSlot: availForm.timeSlot, notes: '' }) }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); alert(d.message || 'Failed'); } } catch { alert('Failed'); } finally { setIsSettingAvail(false); } }} disabled={isSettingAvail} className="w-full sm:w-auto bg-blue-600 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all text-center">{isSettingAvail ? 'Submitting...' : 'Submit'}</button>
+                              </div>
+                            )}
+                            {v.ownerAvailabilitySubmitted && v.status === 'ready-for-assignment' && (
+                              <div className="flex items-center gap-2 text-blue-600 text-[10px] sm:text-[11px] font-bold bg-blue-50 px-3 sm:px-4 py-2 rounded-full"><Check size={14} className="shrink-0" /> <span>Availability submitted — waiting for admin</span></div>
+                            )}
+                            {verifier && (v.status === 'accepted' || v.status === 'in_progress' || v.status === 'verified' || v.status === 'rejected') && (
+                              <div className="bg-purple-50 border border-purple-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                                <div className="w-10 sm:w-12 h-10 sm:h-12 bg-purple-200 rounded-full flex items-center justify-center text-purple-700 font-bold text-base sm:text-lg shrink-0">
+                                  {verifier.profilePicture ? <img src={verifier.profilePicture.startsWith('http') ? verifier.profilePicture : `${apiBase}${verifier.profilePicture}`} alt="" className="w-full h-full rounded-full object-cover" /> : (verifier.firstName?.charAt(0) || 'V')}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-sm">Assigned Verifier</p>
+                                  <p className="text-xs text-gray-500">{verifier.firstName || ''} {verifier.lastName || ''}</p>
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 mt-1 text-[10px] text-gray-400">
+                                    <span className="flex items-center gap-1 truncate"><MessageSquare size={10} /> {verifier.email || ''}</span>
+                                    <span className="flex items-center gap-1"><Phone size={10} /> {verifier.phone || 'N/A'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {v.status === 'verified' && (
+                              <div className="flex items-center gap-2 text-green-600 text-xs font-bold bg-green-50 px-3 sm:px-4 py-2 rounded-full"><ShieldCheck size={14} className="shrink-0" /> Property Verified</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  };
+                  return (
+                    <div className="space-y-8">
+                      {active.length > 0 && (
+                        <div>
+                          {cancelled.length > 0 && <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-1">Active Requests</h4>}
+                          <div className="grid grid-cols-1 gap-4 sm:gap-6">{active.map(renderCard)}</div>
+                        </div>
+                      )}
+                      {cancelled.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-3 mb-4 px-1">
+                            <div className="h-px flex-1 bg-gray-100" />
+                            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest shrink-0">Cancelled / Expired</h4>
+                            <div className="h-px flex-1 bg-gray-100" />
+                          </div>
+                          <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                            {cancelled.map((v: any) => {
+                              const listing = v.listing || {};
+                              return (
+                                <div key={v._id || v.id} className="bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-6 border border-gray-100 flex items-center gap-4 sm:gap-6 opacity-70">
+                                  <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gray-200 rounded-xl sm:rounded-2xl flex items-center justify-center text-gray-400 shrink-0"><X size={18} /></div>
+                                  <div className="min-w-0">
+                                    <h4 className="text-sm sm:text-base font-bold text-gray-600 truncate">{listing.title || 'Unknown Boarding'}</h4>
+                                    <p className="text-[10px] sm:text-[11px] text-gray-400">Cancelled — {new Date(v.cancelledAt || v.createdAt).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </motion.div>
+            )}
+
             {activeTab === 'profile' && (
               <motion.div
                 key="profile"
@@ -1165,10 +1334,10 @@ const OwnerDashboard = () => {
                 animate="visible"
                 exit="exit"
               >
-                <div className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 max-w-3xl">
-                   <h3 className="text-2xl font-display font-bold mb-10">Owner Settings</h3>
-                   <form className="space-y-8">
-                      <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
+                <div className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 max-w-3xl">
+                   <h3 className="text-2xl font-display font-bold mb-6 sm:mb-10">Owner Settings</h3>
+                   <form className="space-y-6 sm:space-y-8">
+                      <div className="flex flex-col items-center sm:flex-row gap-4 sm:gap-8 pb-6 sm:pb-10 border-b border-gray-50 mb-6 sm:mb-10">
                           <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
                                 <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
@@ -1187,11 +1356,11 @@ const OwnerDashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
-                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email</label>
-                          <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                       <div className="pt-6">
@@ -1207,34 +1376,19 @@ const OwnerDashboard = () => {
         </div>
       </div>
 
-      {/* Verification Modal */}
+      {/* Verification Request Modal */}
       <AnimatePresence>
         {showVerifyModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] w-full max-w-md overflow-hidden flex flex-col shadow-2xl"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="bg-white rounded-[3.5rem] w-full max-w-md overflow-hidden flex flex-col shadow-2xl">
               {verifySuccess ? (
                 <div className="p-6 sm:p-12 text-center space-y-8">
-                  <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-500">
-                    <ShieldCheck size={48} />
-                  </div>
+                  <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-500"><ShieldCheck size={48} /></div>
                   <div className="space-y-2">
                     <h3 className="text-3xl font-display font-bold">Request Sent!</h3>
-                    <p className="text-gray-400 text-sm">Your verification request for "{showVerifyModal.title}" has been sent to the admin. A verifier will visit soon.</p>
+                    <p className="text-gray-400 text-sm">Your verification request for "{showVerifyModal.title}" has been submitted. You can cancel within 2 hours. After that, you'll need to set your availability for the verifier visit. Check the Verifications tab for updates.</p>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setShowVerifyModal(null);
-                      setVerifySuccess(false);
-                    }}
-                    className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
-                  >
-                    Back to Dashboard
-                  </button>
+                  <button onClick={() => { setShowVerifyModal(null); setVerifySuccess(false); setOwnerVerifRefresh(k => k + 1); }} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all">Back to Dashboard</button>
                 </div>
               ) : (
                 <>
@@ -1243,61 +1397,62 @@ const OwnerDashboard = () => {
                       <p className="text-[10px] font-bold text-accent-orange uppercase tracking-[0.4em]">Official Verification</p>
                       <h3 className="text-2xl font-display font-bold">Verify Property</h3>
                     </div>
-                    <button onClick={() => setShowVerifyModal(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
-                      <X size={20} />
-                    </button>
+                    <button onClick={() => setShowVerifyModal(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"><X size={20} /></button>
                   </div>
                   <div className="p-10 space-y-8">
                     <div className="bg-gray-50 rounded-[2rem] p-6 border border-gray-100 space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-accent-orange">
-                          <ShieldAlert size={24} />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selected Property</p>
-                          <p className="text-sm font-bold">{showVerifyModal.title}</p>
-                        </div>
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-accent-orange"><ShieldAlert size={24} /></div>
+                        <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selected Property</p><p className="text-sm font-bold">{showVerifyModal.title}</p></div>
                       </div>
-                      <p className="text-[11px] text-gray-500 leading-relaxed italic">
-                        "this is my boarding, i want to verify it"
-                      </p>
                     </div>
-
                     <div className="space-y-4">
                       <div className="flex items-start gap-4 p-4 rounded-2xl bg-orange-50 text-accent-orange">
                          <Clock size={20} className="shrink-0 mt-1" />
-                         <p className="text-[11px] font-medium leading-relaxed">
-                           A verifier will visit your property at a random time to verify all details including capacity, facilities, and safety.
-                         </p>
+                         <p className="text-[11px] font-medium leading-relaxed">You have a <strong>2-hour cancellation window</strong> to cancel this request. After that, you must set your availability for the verifier visit. The admin will assign a verifier, and you'll receive their contact details.</p>
                       </div>
                     </div>
-
-                    <button 
-                      onClick={async () => {
-                        setIsVerifying(true);
-                        try {
-                          const res = await fetch(`${apiBase}/api/verifications/request`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...authHeaders },
-                            body: JSON.stringify({ listingId: showVerifyModal.id }),
-                          });
-                          if (res.ok) setVerifySuccess(true);
-                          else alert('Verification request failed');
-                        } catch { alert('Verification request failed'); }
-                        finally { setIsVerifying(false); }
-                      }}
-                      disabled={isVerifying}
-                      className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-4"
-                    >
-                      {isVerifying ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      ) : (
-                        'Send Verification Request'
-                      )}
+                    <button onClick={async () => {
+                      setIsVerifying(true);
+                      try {
+                        const res = await fetch(`${apiBase}/api/verifications/request`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', ...authHeaders },
+                          body: JSON.stringify({ listingId: showVerifyModal.id }),
+                        });
+                        if (res.ok) setVerifySuccess(true);
+                        else { const d = await res.json(); alert(d.message || 'Verification request failed'); }
+                      } catch { alert('Verification request failed'); }
+                      finally { setIsVerifying(false); }
+                    }} disabled={isVerifying} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-4">
+                      {isVerifying ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Send Verification Request'}
                     </button>
                   </div>
                 </>
               )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDialog && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} transition={{ type: "spring", duration: 0.4 }} className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl">
+              <div className="p-8 sm:p-10 text-center space-y-6">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                  <AlertCircle size={32} className="text-red-500" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-display font-bold">Are you sure?</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{confirmDialog?.message}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmDialog(null)} className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 transition-all">Cancel</button>
+                  <button onClick={() => { confirmDialog?.action(); setConfirmDialog(null); }} className="flex-1 py-4 bg-red-500 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-red-500/20">Delete</button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

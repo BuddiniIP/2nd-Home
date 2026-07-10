@@ -87,7 +87,7 @@ const About = () => {
 
 const GridImage = ({ src, alt, delay, aspect }: { src: string; alt: string; delay: number; aspect: string }) => {
   const [expanded, setExpanded] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleClick = () => {
     setExpanded(true);

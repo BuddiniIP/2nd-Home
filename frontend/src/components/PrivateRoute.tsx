@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import InactivityGuard from './InactivityGuard';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return <InactivityGuard>{children}</InactivityGuard>;
 };
 
 export default PrivateRoute;

@@ -508,6 +508,19 @@ export const cancelAcceptedAssignment: RequestHandler = async (req, res, next) =
   }
 };
 
+export const uploadInspectionImage: RequestHandler = async (req, res, next) => {
+  try {
+    const file = (req as any).file;
+    if (!file) {
+      res.status(400).json({ message: 'No file uploaded' });
+      return;
+    }
+    res.json({ url: file.path });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const submitInspection: RequestHandler = async (req, res, next) => {
   try {
     const { id } = req.params;

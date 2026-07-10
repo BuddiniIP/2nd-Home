@@ -23,14 +23,14 @@ router.post(
  * Admin routes
  */
 router.get(
-  "/admin/reports",
+  "/admin",
   protect,
   authorize(UserRole.ADMIN),
   getAllReports
 );
 
 router.patch(
-  "/admin/reports/:id",
+  "/admin/:id",
   protect,
   authorize(UserRole.ADMIN),
   updateReport

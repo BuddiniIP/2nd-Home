@@ -13,10 +13,7 @@ import {
   Clock, 
   Bell, 
   Camera,
-  CheckCircle2, 
-  AlertCircle,
-  ExternalLink,
-  ChevronRight
+  CheckCircle2,
 } from 'lucide-react';
 
 const StudentDashboard = () => {

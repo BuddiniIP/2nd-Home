@@ -146,10 +146,6 @@ export const getAdminBoardings: RequestHandler = async (_req, res, next) => {
   }
 };
 
-/*export const getAdminPayments: RequestHandler = async (_req, res) => {
-  res.json([]);
-};*/
-
 export const getAdminPayments: RequestHandler = async (_req, res, next) => {
   try {
     const payments = await Booking.find()
@@ -202,10 +198,6 @@ export const getAdminMessages: RequestHandler = async (_req, res, next) => {
     next(err);
   }
 };
-
-/*export const getAdminReports: RequestHandler = async (_req, res) => {
-  res.json([]);
-};*/
 
 export const getAdminReports: RequestHandler = async (_req, res, next) => {
   try {

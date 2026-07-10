@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home as HomeIcon, ShieldCheck, MapPin, Star, User } from 'lucide-react';
+import { Home as HomeIcon, ShieldCheck, MapPin, User } from 'lucide-react';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ScrollExpandMedia from '../components/ui/scroll-expansion-hero';

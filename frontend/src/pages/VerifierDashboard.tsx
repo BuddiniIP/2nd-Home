@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   CheckCircle2, 
@@ -18,12 +19,15 @@ import {
 } from 'lucide-react';
 
 const VerifierDashboard = () => {
+  const navigate = useNavigate();
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [activeTab, setActiveTab] = useState('pending');
   const [inspectionModal, setInspectionModal] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [userName, setUserName] = useState('Verifier');
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; action: () => void; isRedFlag?: boolean } | null>(null);
 
   // Form State
   const [selfie, setSelfie] = useState<string | null>(null);
@@ -59,13 +63,14 @@ const VerifierDashboard = () => {
         ]);
         if (userRes.ok) {
           const userData = await userRes.json();
+          setUserProfile(userData);
           setUserName(`${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Verifier');
         }
         if (verRes.ok) {
           const assignments = await verRes.json();
           const all = Array.isArray(assignments) ? assignments : [];
-          setPendingVerifications(all.filter((a: any) => a.status === 'pending' || a.status === 'in_progress'));
-          setVerificationHistory(all.filter((a: any) => a.status === 'verified' || a.status === 'rejected'));
+          setPendingVerifications(all.filter((a: any) => a.status === 'assigned' || a.status === 'accepted' || a.status === 'in_progress'));
+          setVerificationHistory(all.filter((a: any) => a.status === 'verified' || a.status === 'rejected' || a.redFlag));
         }
       } catch { /* ignore */ }
     };
@@ -118,27 +123,56 @@ const VerifierDashboard = () => {
     }
   };
 
+  const handleVerifierProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+    try {
+      const res = await fetch(`${apiBase}/api/auth/upload/profile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const url = data.url || data.profilePicture;
+        setUserProfile((prev: any) => prev ? { ...prev, profilePicture: url } : prev);
+        localStorage.setItem('profilePicture', url);
+        window.dispatchEvent(new Event('profile-pic-updated'));
+      }
+    } catch { /* ignore */ }
+  };
+
   const containerVariants: any = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
   };
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+    <div className="pb-16 sm:pb-24 px-4 sm:px-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 sm:gap-12">
         {/* Sidebar */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="w-full lg:w-72 space-y-4"
         >
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
-             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#8B5CF6] shadow-lg flex items-center justify-center bg-violet-50 text-[#8B5CF6]">
-                <User size={48} />
-             </div>
+          <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
+             <div className="relative group">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#8B5CF6] shadow-lg flex items-center justify-center bg-violet-50 text-[#8B5CF6]">
+                   {userProfile?.profilePicture ? (
+                     <img src={userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`} alt={userName} className="w-full h-full object-cover" />
+                   ) : (
+                     <User size={48} />
+                   )}
+                </div>
+              </div>
              <div className="text-center">
-                 <h3 className="font-display font-bold text-xl">{userName}</h3>
-                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Official Verifier</p>
+                <h3 className="font-display font-bold text-xl">{userName}</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Official Verifier</p>
              </div>
           </div>
 
@@ -156,6 +190,13 @@ const VerifierDashboard = () => {
             >
               <CheckCircle2 size={18} />
               History
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl text-sm font-bold transition-all ${activeTab === 'profile' ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-50'}`}
+            >
+              <User size={18} />
+              Edit Profile
             </button>
           </div>
         </motion.div>
@@ -183,8 +224,15 @@ const VerifierDashboard = () => {
                     const owner = listing.owner || {};
                     const ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Owner';
                     const deadline = task.visitDate ? new Date(task.visitDate).toLocaleDateString() : 'Not scheduled';
+                    const isAssign = task.status === 'assigned';
+                    const isAccepted = task.status === 'accepted' || task.status === 'in_progress';
+                    const responseDeadline = task.verifierResponseDeadline ? new Date(task.verifierResponseDeadline).getTime() : 0;
+                    const timeLeftMs = responseDeadline - Date.now();
+                    const timeLeftMins = Math.max(0, Math.floor(timeLeftMs / 60000));
+                    const timeLeftSecs = Math.max(0, Math.floor((timeLeftMs % 60000) / 1000));
+                    const expired = isAssign && timeLeftMs <= 0;
                     return (
-                    <div key={task._id || task.id} className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 space-y-6 hover:shadow-xl hover:shadow-black/5 transition-all">
+                    <div key={task._id || task.id} className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 space-y-6 hover:shadow-xl hover:shadow-black/5 transition-all">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
                           <h4 className="text-xl font-bold">{listing.title || 'Untitled Boarding'}</h4>
@@ -193,9 +241,11 @@ const VerifierDashboard = () => {
                             {listing.address || 'Address not set'}
                           </div>
                         </div>
-                        <span className="text-[9px] font-bold bg-gray-50 px-3 py-1 rounded-full uppercase tracking-widest">{task.status}</span>
+                        <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${isAccepted ? 'bg-purple-100 text-purple-600' : isAssign ? 'bg-amber-100 text-amber-700' : 'bg-gray-50'}`}>
+                          {isAccepted ? 'Accepted' : isAssign ? 'Response Needed' : task.status}
+                        </span>
                       </div>
-                      
+
                       <div className="flex items-center justify-between py-4 border-y border-gray-50">
                         <div className="space-y-1">
                           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Owner</p>
@@ -207,12 +257,74 @@ const VerifierDashboard = () => {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={() => setInspectionModal(task)}
-                        className="w-full py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#8B5CF6] transition-all"
-                      >
-                        Start Inspection
-                      </button>
+                      {isAssign && !expired && (
+                        <div>
+                          <div className="bg-amber-50 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                            <Clock size={16} className="text-amber-600 shrink-0" />
+                            <div className="flex-1">
+                              <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Response Required</p>
+                              <p className="text-xs text-amber-600">You have <strong>{timeLeftMins}m {timeLeftSecs}s</strong> to accept or reject this assignment.</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <button onClick={async () => {
+                              try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${apiBase}/api/verifications/${task._id}/respond`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ accept: true }),
+                                });
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  setPendingVerifications(prev => prev.map(t => t._id === task._id ? { ...t, status: 'accepted', verifierAccepted: true } : t));
+                                  alert('You have accepted the assignment! You can now start the inspection.');
+                                } else { const d = await res.json(); alert(d.message || 'Failed'); }
+                              } catch { alert('Failed to accept'); }
+                            }} className="flex-1 py-3 bg-green-600 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-green-700 transition-all">Accept</button>
+                            <button onClick={() => setConfirmDialog({ message: 'Reject this verification assignment?', action: async () => {
+                              try {
+                                const token = localStorage.getItem('token');
+                                const res = await fetch(`${apiBase}/api/verifications/${task._id}/respond`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                  body: JSON.stringify({ accept: false }),
+                                });
+                                if (res.ok) {
+                                  setPendingVerifications(prev => prev.filter(t => t._id !== task._id));
+                                  alert('Assignment rejected.');
+                                } else { const d = await res.json(); alert(d.message || 'Failed'); }
+                              } catch { alert('Failed to reject'); }
+                            }})} className="flex-1 py-3 bg-red-50 text-red-600 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Reject</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {isAssign && expired && (
+                        <div className="bg-gray-50 rounded-2xl p-4 text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Response window expired</p>
+                          <p className="text-xs text-gray-400 mt-1">This assignment has been released.</p>
+                        </div>
+                      )}
+
+                      {isAccepted && (
+                        <div className="space-y-3">
+                          <button onClick={() => setInspectionModal(task)} className="w-full py-4 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#8B5CF6] transition-all">Start Inspection</button>
+                          <button onClick={() => setConfirmDialog({ message: 'Cancel this accepted assignment? This will mark a red flag on your record.', isRedFlag: true, action: async () => {
+                            try {
+                              const token = localStorage.getItem('token');
+                              const res = await fetch(`${apiBase}/api/verifications/${task._id}/cancel-accepted`, {
+                                method: 'POST',
+                                headers: { Authorization: `Bearer ${token}` },
+                              });
+                              if (res.ok) {
+                                setPendingVerifications(prev => prev.filter(t => t._id !== task._id));
+                                alert('Assignment cancelled. A red flag has been recorded.');
+                              } else { const d = await res.json(); alert(d.message || 'Failed'); }
+                            } catch { alert('Failed to cancel'); }
+                          }})} className="w-full py-3 bg-red-50 text-red-500 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all border border-red-200">Cancel Assignment (Red Flag)</button>
+                        </div>
+                      )}
                     </div>
                     );
                   })}
@@ -227,7 +339,7 @@ const VerifierDashboard = () => {
                 initial="hidden"
                 animate="visible"
                 exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50"
+                className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-gray-50"
               >
                 <h3 className="text-2xl font-display font-bold mb-8">Verification History</h3>
                 <div className="space-y-4">
@@ -237,23 +349,76 @@ const VerifierDashboard = () => {
                     const ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Owner';
                     const dateStr = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '';
                     const isVerified = item.status === 'verified';
+                    const isRedFlag = item.redFlag || item.verifierCancelledAfterAccept;
                     return (
                     <div key={item._id || item.id} className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-transparent hover:border-gray-200 transition-all">
                       <div className="flex items-center gap-6">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${isVerified ? 'bg-green-500' : 'bg-red-500'}`}>
-                          {isVerified ? <ShieldCheck size={24} /> : <X size={24} />}
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${isRedFlag ? 'bg-red-600' : isVerified ? 'bg-green-500' : 'bg-red-500'}`}>
+                          {isRedFlag ? <AlertCircle size={24} /> : isVerified ? <ShieldCheck size={24} /> : <X size={24} />}
                         </div>
                         <div>
                           <h4 className="font-bold text-black">{listing.title || 'Untitled Boarding'}</h4>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{ownerName} • {dateStr}</p>
+                          {isRedFlag && <span className="text-[9px] text-red-500 font-bold uppercase tracking-widest mt-1 inline-block">⚠ Red Flag — Cancelled after acceptance</span>}
                         </div>
                       </div>
-                      <span className={`px-6 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${isVerified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                        {item.status}
+                      <span className={`px-6 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest ${isRedFlag ? 'bg-red-100 text-red-600' : isVerified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                        {isRedFlag ? 'Cancelled (Red Flag)' : item.status}
                       </span>
                     </div>
                     );
                   })}
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'profile' && (
+              <motion.div
+                key="profile"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit={{ opacity: 0, y: -20 }}
+              >
+                <div className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 max-w-3xl">
+                   <h3 className="text-2xl font-display font-bold mb-6 sm:mb-10">Edit Profile</h3>
+                   <form className="space-y-6 sm:space-y-8">
+                      <div className="flex flex-col items-center sm:flex-row gap-4 sm:gap-8 pb-6 sm:pb-10 border-b border-gray-50 mb-6 sm:mb-10">
+                         <div className="relative group">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                               <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                            </div>
+                           <button
+                             type="button"
+                             className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-[#8B5CF6] transition-colors shadow-lg"
+                             onClick={() => document.getElementById('verifier-profile-edit-upload')?.click()}
+                           >
+                              <Camera size={16} />
+                           </button>
+                           <input type="file" id="verifier-profile-edit-upload" className="hidden" accept="image/*" onChange={handleVerifierProfileUpload} />
+                         </div>
+                         <div className="space-y-2 text-center sm:text-left">
+                            <h4 className="font-bold text-black">Profile Photo</h4>
+                            <p className="text-xs text-gray-400 max-w-[200px]">Update your verifier profile picture for official identification.</p>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
+                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email</label>
+                          <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        </div>
+                      </div>
+                      <div className="pt-6">
+                        <button type="button" onClick={() => navigate('/profile')} className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#8B5CF6] transition-all shadow-lg shadow-black/10">
+                          Update Profile Settings
+                        </button>
+                      </div>
+                   </form>
                 </div>
               </motion.div>
             )}
@@ -281,7 +446,7 @@ const VerifierDashboard = () => {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-12">
+              <div className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8 sm:space-y-12">
                 {isSubmitted ? (
                    <div className="py-20 text-center space-y-6">
                       <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto text-green-500">
@@ -425,7 +590,7 @@ const VerifierDashboard = () => {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder="Add detailed feedback about the boarding state..."
-                        className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-[2rem] px-8 py-6 text-sm outline-none min-h-[120px] resize-none"
+                        className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-[2rem] px-8 py-6 text-sm outline-none min-h-[120px] resize-none"
                        />
                     </div>
 
@@ -437,6 +602,28 @@ const VerifierDashboard = () => {
                     </button>
                   </>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {confirmDialog && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/30 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.85, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, y: 20 }} transition={{ type: "spring", duration: 0.4 }} className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl">
+              <div className="p-8 sm:p-10 text-center space-y-6">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${confirmDialog?.isRedFlag ? 'bg-red-600/10' : 'bg-red-50'}`}>
+                  <AlertCircle size={32} className={confirmDialog?.isRedFlag ? 'text-red-600' : 'text-red-500'} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-display font-bold">Are you sure?</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{confirmDialog?.message}</p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmDialog(null)} className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 transition-all">Keep</button>
+                  <button onClick={() => { confirmDialog?.action(); setConfirmDialog(null); }} className={`flex-1 py-4 text-white rounded-full text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg ${confirmDialog?.isRedFlag ? 'bg-red-600 hover:bg-red-700 shadow-red-600/20' : 'bg-red-500 hover:bg-red-600 shadow-red-500/20'}`}>{confirmDialog?.isRedFlag ? 'Cancel & Flag' : 'Confirm'}</button>
+                </div>
               </div>
             </motion.div>
           </div>

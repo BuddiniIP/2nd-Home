@@ -224,6 +224,25 @@ export const getAdminReports: RequestHandler = async (_req, res, next) => {
   }
 };
 
+export const deleteUser: RequestHandler = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+    if (user.role === UserRole.ADMIN) {
+      res.status(403).json({ message: 'Cannot delete admin users' });
+      return;
+    }
+    await User.findByIdAndDelete(id);
+    res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const createUser: RequestHandler = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password, role, phone, university } = req.body;

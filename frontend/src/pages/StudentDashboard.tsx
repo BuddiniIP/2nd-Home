@@ -375,8 +375,8 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+    <div className="pb-16 sm:pb-24 px-4 sm:px-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 sm:gap-12">
         {/* Sidebar */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -397,10 +397,10 @@ const StudentDashboard = () => {
              </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
-             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
-                <img src="/images/house_white.jpg" alt="Profile" className="w-full h-full object-cover" />
-             </div>
+           <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-sm border border-gray-50 flex flex-col items-center space-y-4">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-accent-orange shadow-lg">
+                 <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "/images/house_white.png"} alt="Profile" className="w-full h-full object-cover" />
+              </div>
              <div className="text-center">
                 <h3 className="font-display font-bold text-xl">
                   {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : "Loading..."}
@@ -520,7 +520,7 @@ const StudentDashboard = () => {
                     <h3 className="text-2xl font-display font-bold mb-6 text-black">Current Stays</h3>
                     <div className="space-y-6">
                       {currentBoarding.current.map((stay: any) => (
-                        <motion.div key={stay.bookingId} variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-12 overflow-hidden">
+                        <motion.div key={stay.bookingId} variants={itemVariants} className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 flex flex-col lg:flex-row gap-6 sm:gap-12 overflow-hidden">
                           <div className="w-full lg:w-1/2 aspect-square rounded-[2.5rem] overflow-hidden shadow-lg">
                             <img src={stay.image} alt={stay.title} className="w-full h-full object-cover" />
                           </div>
@@ -606,7 +606,7 @@ const StudentDashboard = () => {
                 )}
 
                 {currentBoarding.current.length === 0 && currentBoarding.previous.length === 0 && (
-                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 text-center py-16 sm:py-[100px]">
                     <div className="w-24 h-24 bg-gray-50 rounded-full flex flex-col items-center justify-center mx-auto mb-6 text-gray-300">
                       <HomeIcon size={32} />
                     </div>
@@ -664,9 +664,9 @@ const StudentDashboard = () => {
                   ))}
                 </div>
 
-               <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50">
-                  <div className="flex justify-between items-center mb-10">
-                     <h3 className="text-2xl font-display font-bold">Payment History</h3>
+<div className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-gray-50">
+                   <div className="flex justify-between items-center mb-6 sm:mb-10">
+                      <h3 className="text-2xl font-display font-bold">Payment History</h3>
                   </div>
 
                   {(() => {
@@ -773,14 +773,14 @@ const StudentDashboard = () => {
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
               >
                 {savedLoading ? (
-                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 text-center py-16 sm:py-[100px]">
                     <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
                       <Heart size={32} />
                     </div>
                     <h3 className="font-display font-bold text-2xl mb-4 text-black">Loading saved boardings...</h3>
                   </motion.div>
                 ) : savedListings.length === 0 ? (
-                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 text-center py-[100px]">
+                  <motion.div variants={itemVariants} className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 text-center py-16 sm:py-[100px]">
                     <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
                       <Heart size={32} />
                     </div>
@@ -796,7 +796,7 @@ const StudentDashboard = () => {
                       <motion.div variants={itemVariants} key={s._id} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-50">
                         <div className="flex gap-4 items-center">
                           <div className="w-28 h-20 rounded-[1rem] overflow-hidden bg-gray-100 relative">
-                            <img src={listing.images?.[0] || '/images/house_white.jpg'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
+                            <img src={listing.images?.[0] || '/images/house_white.png'} alt={listing.title || 'Listing'} className="w-full h-full object-cover" />
                             {status === 'paid' && (
                               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                 <span className="bg-green-500 text-white text-[8px] font-bold uppercase tracking-widest px-2 py-1 rounded-full">Booked</span>
@@ -845,11 +845,11 @@ const StudentDashboard = () => {
                 animate="visible"
                 exit="exit"
               >
-                <div className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 max-w-3xl">
-                   <h3 className="text-2xl font-display font-bold mb-10">Edit Your Profile</h3>
-                   <form className="space-y-8">
+                <div className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 max-w-3xl">
+                   <h3 className="text-2xl font-display font-bold mb-6 sm:mb-10">Edit Your Profile</h3>
+                   <form className="space-y-6 sm:space-y-8">
                       {/* Profile Picture Upload */}
-                      <div className="flex flex-col items-center sm:flex-row gap-8 pb-10 border-b border-gray-50 mb-10">
+                      <div className="flex flex-col items-center sm:flex-row gap-4 sm:gap-8 pb-6 sm:pb-10 border-b border-gray-50 mb-6 sm:mb-10">
                          <div className="relative group">
                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
                                 <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
@@ -872,16 +872,16 @@ const StudentDashboard = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Full Name</label>
-                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="text" value={userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University</label>
-                          <input type="text" value={userProfile?.university || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="text" value={userProfile?.university || ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Account Email</label>
-                        <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        <input type="email" value={userProfile?.email || ""} readOnly className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="pt-6">
                         <button type="button" onClick={() => navigate('/profile')} className="bg-black text-white px-12 py-5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shadow-lg shadow-black/10">

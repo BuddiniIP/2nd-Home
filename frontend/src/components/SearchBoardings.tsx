@@ -40,7 +40,7 @@ const SearchBoardings = () => {
     try {
       const res = await fetch(`${apiBase}/api/boardings`);
       const data = await res.json();
-      setBoardings(Array.isArray(data) ? data : data?.boardings || []);
+      setBoardings(Array.isArray(data) ? data : data?.data || []);
     } catch { /* ignore */ }
     finally { setLoading(false); }
   };
@@ -49,9 +49,9 @@ const SearchBoardings = () => {
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       const title = (b.title || b.name || '').toLowerCase();
-      const city = (b.city || b.address || b.location || '').toLowerCase();
+      const addr = (b.location?.address || b.address || '').toLowerCase();
       const desc = (b.description || '').toLowerCase();
-      if (!title.includes(q) && !city.includes(q) && !desc.includes(q)) return false;
+      if (!title.includes(q) && !addr.includes(q) && !desc.includes(q)) return false;
     }
     if (filters.university) {
       const amenities = b.amenities || b.features || [];
@@ -109,23 +109,23 @@ const SearchBoardings = () => {
           >
             <div className="bg-white rounded-[2rem] p-6 border border-gray-50 shadow-sm space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <select value={filters.university} onChange={e => setFilters(f => ({ ...f, university: e.target.value }))} className="bg-[#F8F8F8] rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
+                <select value={filters.university} onChange={e => setFilters(f => ({ ...f, university: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
                   <option value="">All Universities</option>
                   {universities.map(u => <option key={u} value={u}>{u.split(' ').pop()}</option>)}
                 </select>
-                <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className="bg-[#F8F8F8] rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
+                <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
                   <option value="">Any Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="mixed">Mixed</option>
                 </select>
-                <select value={filters.roomType} onChange={e => setFilters(f => ({ ...f, roomType: e.target.value }))} className="bg-[#F8F8F8] rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
+                <select value={filters.roomType} onChange={e => setFilters(f => ({ ...f, roomType: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
                   <option value="">Any Room</option>
                   <option value="single">Single</option>
                   <option value="double">Double</option>
                 </select>
-                <input type="number" placeholder="Min Price" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} className="bg-[#F8F8F8] rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
-                <input type="number" placeholder="Max Price" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} className="bg-[#F8F8F8] rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
+                <input type="number" placeholder="Min Price" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
+                <input type="number" placeholder="Max Price" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
               </div>
               {activeFilterCount > 0 && (
                 <button onClick={clearFilters} className="text-[10px] font-bold uppercase tracking-widest text-accent-orange hover:text-black transition-colors flex items-center gap-1">
@@ -163,8 +163,8 @@ const SearchBoardings = () => {
           {filtered.map((b: any, i: number) => {
             const id = b._id || b.id;
             const title = b.title || b.name || 'Boarding';
-            const location = b.address || b.city || b.location || '';
-            const img = b.images?.[0] || b.image || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80';
+            const location = b.location?.address || b.address || '';
+            const img = b.images?.[0] || b.image || '/images/house_white.png';
             return (
               <Link key={id || i} to={`/boarding/${id}`}>
                 <motion.div variants={itemVariants} className="bg-white rounded-[2rem] overflow-hidden border border-gray-50 shadow-sm hover:shadow-md transition-all group">

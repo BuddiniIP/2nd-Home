@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import { 
   Shield, 
   AlertTriangle, 
@@ -24,7 +25,12 @@ import {
    Plus,
    Eye,
    Edit3,
-   Image as ImageIcon
+   Image as ImageIcon,
+   Phone,
+   ShieldCheck,
+   ShieldAlert,
+   Check,
+   User
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -48,6 +54,10 @@ const AdminDashboard = () => {
    const [existingImagePaths, setExistingImagePaths] = useState<string[]>([]);
    const [isSavingBoarding, setIsSavingBoarding] = useState(false);
    const [boardingActionError, setBoardingActionError] = useState('');
+   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+   const [showNotifications, setShowNotifications] = useState(false);
+   const [assignListingId, setAssignListingId] = useState('');
+   const [assignVisitDate, setAssignVisitDate] = useState('');
 
   const UNIVERSITIES = [
     'University of Colombo',
@@ -58,6 +68,8 @@ const AdminDashboard = () => {
   ];
 
   const [reports, setReports] = useState<any[]>([]);
+  const [verifications, setVerifications] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
   useEffect(() => {
     fetchBoardingReports();
@@ -66,6 +78,7 @@ const AdminDashboard = () => {
       fetchUsers();
     fetchPayments();
     fetchMessages();
+    fetchVerifications();
   }, []);
 
    const getAdminHeaders = () => {
@@ -73,7 +86,115 @@ const AdminDashboard = () => {
       return token ? { Authorization: `Bearer ${token}` } : {};
    };
 
-   const normalizeBoardingImage = (imagePath: string) => {
+   const downloadExcelReport = () => {
+    const wb = XLSX.utils.book_new();
+
+    const addSheet = (name: string, data: any[][], colWidths?: number[]) => {
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      if (colWidths) ws['!cols'] = colWidths.map(w => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+
+    const paid = payments.filter((p: any) => p.paymentStatus === 'paid' || p.status === 'confirmed');
+    const totalPaid = paid.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+    addSheet('User Analytics', [
+      ['2nd Home — User Analytics Report', '', '', ''],
+      ['', '', '', ''],
+      ['Metric', 'Count', 'Percentage', ''],
+      ['Total Users', stats?.summary?.totalUsers || 0, '100%', ''],
+      ['Students', stats?.summary?.studentCount || 0, stats?.summary?.totalUsers ? `${((stats.summary.studentCount / stats.summary.totalUsers) * 100).toFixed(1)}%` : '0%', ''],
+      ['Owners', stats?.summary?.ownerCount || 0, stats?.summary?.totalUsers ? `${((stats.summary.ownerCount / stats.summary.totalUsers) * 100).toFixed(1)}%` : '0%', ''],
+      ['Admins', stats?.summary?.adminCount || 0, stats?.summary?.totalUsers ? `${((stats.summary.adminCount / stats.summary.totalUsers) * 100).toFixed(1)}%` : '0%', ''],
+      ['Verifiers', users.filter((u: any) => u.role === 'verifier').length, stats?.summary?.totalUsers ? `${((users.filter((u: any) => u.role === 'verifier').length / stats.summary.totalUsers) * 100).toFixed(1)}%` : '0%', ''],
+    ], [30, 15, 15, 10]);
+
+    addSheet('Boarding Listings', [
+      ['2nd Home — Boarding Listings Report', '', ''],
+      ['', '', ''],
+      ['Metric', 'Value', 'Details'],
+      ['Total Listings', boardings.length, 'All registered boarding houses'],
+      ['Active', stats?.summary?.activeBoardings || 0, 'Currently available for booking'],
+      ['Full', boardings.filter((b: any) => !b.isAvailable).length, 'Currently not available'],
+      ['Total Images', boardings.reduce((sum: number, b: any) => sum + (b.imageCount || 0), 0), 'Across all listings'],
+      ['', '', ''],
+      ['Availability Ratio', `${boardings.length ? ((boardings.filter((b: any) => b.isAvailable).length / boardings.length) * 100).toFixed(1) : 0}%`, `${boardings.filter((b: any) => b.isAvailable).length} available out of ${boardings.length} total`],
+    ], [30, 20, 35]);
+
+    addSheet('Booking Reports', [
+      ['2nd Home — Booking Reports', '', ''],
+      ['', '', ''],
+      ['Status', 'Count', 'Percentage'],
+      ['Total', payments.length, '100%'],
+      ['Confirmed', payments.filter((p: any) => p.status === 'confirmed').length, payments.length ? `${((payments.filter((p: any) => p.status === 'confirmed').length / payments.length) * 100).toFixed(1)}%` : '0%'],
+      ['Pending', payments.filter((p: any) => p.status === 'pending').length, payments.length ? `${((payments.filter((p: any) => p.status === 'pending').length / payments.length) * 100).toFixed(1)}%` : '0%'],
+      ['Cancelled', payments.filter((p: any) => p.status === 'cancelled').length, payments.length ? `${((payments.filter((p: any) => p.status === 'cancelled').length / payments.length) * 100).toFixed(1)}%` : '0%'],
+    ], [30, 15, 15]);
+
+    addSheet('Payment Reports', [
+      ['2nd Home — Payment Reports', '', '', ''],
+      ['', '', '', ''],
+      ['Payment Status', 'Count', 'Total Amount (LKR)', ''],
+      ['Paid', payments.filter((p: any) => p.paymentStatus === 'paid').length, payments.filter((p: any) => p.paymentStatus === 'paid').reduce((s: number, p: any) => s + Number(p.amount || 0), 0).toLocaleString(), ''],
+      ['Unpaid', payments.filter((p: any) => p.paymentStatus === 'unpaid').length, payments.filter((p: any) => p.paymentStatus === 'unpaid').reduce((s: number, p: any) => s + Number(p.amount || 0), 0).toLocaleString(), ''],
+      ['Failed', payments.filter((p: any) => p.paymentStatus === 'failed').length, payments.filter((p: any) => p.paymentStatus === 'failed').reduce((s: number, p: any) => s + Number(p.amount || 0), 0).toLocaleString(), ''],
+      ['Processing', payments.filter((p: any) => p.paymentStatus === 'processing').length, payments.filter((p: any) => p.paymentStatus === 'processing').reduce((s: number, p: any) => s + Number(p.amount || 0), 0).toLocaleString(), ''],
+      ['', '', '', ''],
+      ['Total Collected', '', `LKR ${totalPaid.toLocaleString()}`, ''],
+      ['Collection Rate', `${payments.length ? ((payments.filter((p: any) => p.paymentStatus === 'paid').length / payments.length) * 100).toFixed(1) : 0}%`, '', ''],
+    ], [30, 15, 25, 10]);
+
+    addSheet('Verification Reports', [
+      ['2nd Home — Verification Reports', '', ''],
+      ['', '', ''],
+      ['Status', 'Count', 'Percentage'],
+      ['Total Requests', verifications.length, '100%'],
+      ['Approved', verifications.filter((v: any) => v.status === 'verified').length, verifications.length ? `${((verifications.filter((v: any) => v.status === 'verified').length / verifications.length) * 100).toFixed(1)}%` : '0%'],
+      ['Pending', verifications.filter((v: any) => v.status === 'pending').length, verifications.length ? `${((verifications.filter((v: any) => v.status === 'pending').length / verifications.length) * 100).toFixed(1)}%` : '0%'],
+      ['In Progress', verifications.filter((v: any) => v.status === 'in_progress').length, verifications.length ? `${((verifications.filter((v: any) => v.status === 'in_progress').length / verifications.length) * 100).toFixed(1)}%` : '0%'],
+      ['Rejected', verifications.filter((v: any) => v.status === 'rejected').length, verifications.length ? `${((verifications.filter((v: any) => v.status === 'rejected').length / verifications.length) * 100).toFixed(1)}%` : '0%'],
+    ], [30, 15, 15]);
+
+    addSheet('Revenue Reports', [
+      ['2nd Home — Revenue Reports', '', ''],
+      ['', '', ''],
+      ['Metric', 'Value (LKR)', ''],
+      ['Total Revenue', (stats?.summary?.totalRevenue || 0).toLocaleString(), ''],
+      ['This Month', (stats?.summary?.monthlyRevenue || 0).toLocaleString(), ''],
+      ['', '', ''],
+      ['Month', 'Revenue (LKR)', 'Users'],
+      ...(stats?.growthData || []).map((d: any) => [d.month || '', (d.revenue || 0).toLocaleString(), d.users || 0]),
+    ], [25, 20, 15]);
+
+    XLSX.writeFile(wb, '2nd_Home_Admin_Reports.xlsx');
+  };
+
+  const handleDeleteUser = (user: any) => {
+    setDeleteConfirm(user);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteConfirm) return;
+    try {
+      const response = await fetch(`${apiBase}/api/admin/users/${deleteConfirm.id}`, {
+        method: 'DELETE',
+        headers: getAdminHeaders(),
+      });
+      if (response.ok) {
+        setUsers(prev => prev.filter((u: any) => u.id !== deleteConfirm.id));
+        setDeleteConfirm(null);
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to delete user');
+        setDeleteConfirm(null);
+      }
+    } catch {
+      alert('Failed to delete user');
+      setDeleteConfirm(null);
+    }
+  };
+
+  const normalizeBoardingImage = (imagePath: string) => {
       if (!imagePath) return '/images/house_orange.jpg';
       return imagePath.startsWith('http') ? imagePath : `${apiBase}${imagePath}`;
    };
@@ -196,6 +317,21 @@ const AdminDashboard = () => {
       console.error("Error fetching messages:", error);
     }
   };
+
+  const fetchVerifications = async () => {
+     try {
+       const [allRes, pendingRes] = await Promise.all([
+         fetch(`${apiBase}/api/verifications/all`, { headers: getAdminHeaders() }),
+         fetch(`${apiBase}/api/verifications/pending-requests`, { headers: getAdminHeaders() }),
+       ]);
+       const allData = await allRes.json();
+       setVerifications(Array.isArray(allData) ? allData : []);
+       const pendingData = await pendingRes.json();
+       setPendingRequests(Array.isArray(pendingData) ? pendingData : []);
+     } catch (error) {
+       console.error("Error fetching verifications:", error);
+     }
+   };
 
   const fetchBoardingReports = async () => {
     try {
@@ -377,8 +513,8 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <div className="pb-16 sm:pb-24 px-4 sm:px-6 bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
            <div className="space-y-4">
@@ -391,17 +527,57 @@ const AdminDashboard = () => {
            </div>
            
            <div className="flex flex-col xl:flex-row items-center gap-6">
-               <div className="relative">
-                 <button className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-accent-orange transition-all">
-                    <Bell size={24} />
-                 </button>
-                  {(boardingReports.length > 0 || messages.some((m: any) => !m.isRead)) && (
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
+                <div className="relative">
+                  <button onClick={() => setShowNotifications(!showNotifications)} className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 text-gray-400 hover:text-accent-orange transition-all relative">
+                     <Bell size={24} />
+                     {(boardingReports.length > 0 || messages.some((m: any) => !m.isRead)) && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
+                     )}
+                  </button>
+                  {showNotifications && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                       className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-[90vw] sm:w-96 bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden z-50"
+                    >
+                      <div className="p-5 border-b border-gray-50 flex justify-between items-center">
+                         <h4 className="font-bold text-sm">Notifications</h4>
+                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{boardingReports.length + messages.filter((m: any) => !m.isRead).length} New</span>
+                      </div>
+                      <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                         {boardingReports.length > 0 && (
+                           <div className="p-4 hover:bg-red-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('boarding-reports'); setShowNotifications(false); }}>
+                              <div className="flex items-start gap-3">
+                                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-500 shrink-0 mt-0.5"><AlertTriangle size={14} /></div>
+                                 <div><p className="text-xs font-bold text-black">{boardingReports.length} reported boarding{boardingReports.length > 1 ? 's' : ''}</p><p className="text-[10px] text-gray-400 mt-0.5">Requires your attention</p></div>
+                              </div>
+                           </div>
+                         )}
+                         {messages.filter((m: any) => !m.isRead).map((msg: any) => {
+                            const senderName = msg.sender ? `${msg.sender.firstName || ''} ${msg.sender.lastName || ''}`.trim() || msg.email || 'Anonymous' : msg.email || 'Anonymous';
+                            return (
+                            <div key={msg._id || msg.id} className="p-4 hover:bg-blue-50 transition-colors cursor-pointer" onClick={() => { setActiveTab('messages'); setShowNotifications(false); }}>
+                               <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 shrink-0 mt-0.5"><MessageSquare size={14} /></div>
+                                  <div><p className="text-xs font-bold text-black truncate">{msg.subject}</p><p className="text-[10px] text-gray-400 mt-0.5 truncate">{senderName}</p></div>
+                               </div>
+                            </div>
+                            );
+                         })}
+                         {boardingReports.length === 0 && messages.filter((m: any) => !m.isRead).length === 0 && (
+                           <div className="p-8 text-center text-gray-400 text-sm">No new notifications</div>
+                         )}
+                      </div>
+                      <div className="p-3 border-t border-gray-50 text-center">
+                         <button onClick={() => { setActiveTab('messages'); setShowNotifications(false); }} className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-black transition-colors">View All</button>
+                      </div>
+                    </motion.div>
                   )}
-               </div>
+                </div>
                
                         <div className="flex bg-white p-2 rounded-full shadow-sm border border-gray-100 overflow-x-auto max-w-full">
-                           {['analytics', 'boardings', 'users', 'verifiers', 'boarding-reports', 'payments', 'messages'].map((tab) => (
+                           {['analytics', 'boardings', 'users', 'verifiers', 'boarding-reports', 'payments', 'messages', 'reports'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -430,7 +606,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Content Area */}
-        <div className="bg-white rounded-[3.5rem] p-10 shadow-sm border border-gray-50 min-h-[500px]">
+        <div className="bg-white rounded-[3.5rem] p-6 sm:p-10 shadow-sm border border-gray-50 min-h-[500px]">
            <AnimatePresence mode="wait">
               {activeTab === 'analytics' && stats && (
                 <motion.div
@@ -438,7 +614,7 @@ const AdminDashboard = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-12"
+                  className="space-y-6 sm:space-y-12"
                 >
                    <div className="flex justify-between items-end">
                       <div className="space-y-2">
@@ -523,7 +699,7 @@ const AdminDashboard = () => {
                                        value={searchTerm}
                                        onChange={(e) => setSearchTerm(e.target.value)}
                                        placeholder="Search boardings, owners, or locations..."
-                                       className="w-full bg-[#F8F8F8] rounded-full px-12 py-4 text-sm focus:outline-none border border-transparent focus:border-accent-orange transition-all"
+                                       className="w-full bg-gray-50 rounded-full px-12 py-4 text-sm focus:outline-none border border-transparent focus:border-accent-orange transition-all"
                                     />
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                                  </div>
@@ -546,7 +722,7 @@ const AdminDashboard = () => {
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                  {filteredBoardings.map((boarding) => {
-                                    const images = boarding.images.length > 0 ? boarding.images : ['/images/house_orange.jpg'];
+                                    const images = boarding.images.length > 0 ? boarding.images : ['/images/house_orange.png'];
                                     const primaryImage = normalizeBoardingImage(images[0]);
                                     const secondaryImages = images.slice(1, 4).map(normalizeBoardingImage);
 
@@ -645,7 +821,7 @@ const AdminDashboard = () => {
                             </div>
 
                             {filteredBoardings.length === 0 && (
-                               <div className="bg-gray-50 rounded-[2.5rem] p-10 text-center border border-dashed border-gray-200">
+                               <div className="bg-gray-50 rounded-[2.5rem] p-6 sm:p-10 text-center border border-dashed border-gray-200">
                                   <ImageIcon size={32} className="mx-auto text-gray-300" />
                                   <h4 className="mt-4 text-xl font-display font-bold text-black">No boardings found</h4>
                                   <p className="mt-2 text-gray-500">Try a different search term or refresh the page.</p>
@@ -659,7 +835,7 @@ const AdminDashboard = () => {
                    <div className="flex justify-between items-center pb-8 border-b border-gray-50">
                       <h3 className="text-2xl font-display font-bold">User Management</h3>
                       <div className="relative group w-72">
-                          <input type="text" placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="w-full bg-[#F8F8F8] rounded-full px-12 py-3 text-xs focus:outline-none focus:border-accent-orange border border-transparent transition-all" />
+                          <input type="text" placeholder="Search users..." value={userSearch} onChange={e => setUserSearch(e.target.value)} className="w-full bg-gray-50 rounded-full px-12 py-3 text-xs focus:outline-none focus:border-accent-orange border border-transparent transition-all" />
                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                       </div>
                    </div>
@@ -677,7 +853,7 @@ const AdminDashboard = () => {
                            <div className="flex items-center gap-4 sm:gap-8 ml-14 sm:ml-0">
                               <div className="text-center"><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Role</p><p className="text-xs font-bold text-black uppercase">{user.role}</p></div>
                               <div className="text-center"><p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Status</p><span className={`text-[9px] font-bold uppercase px-2 sm:px-3 py-1 rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{user.status}</span></div>
-                              <button className="p-2 sm:p-3 hover:bg-white hover:text-red-500 rounded-xl transition-all text-gray-400"><UserX size={18} /></button>
+                               <button onClick={() => handleDeleteUser(user)} className="p-2 sm:p-3 hover:bg-white hover:text-red-500 rounded-xl transition-all text-gray-400"><Trash2 size={18} /></button>
                            </div>
                         </div>
                       ))}
@@ -752,52 +928,192 @@ const AdminDashboard = () => {
 
               {activeTab === 'verifiers' && (
                 <motion.div key="verifiers" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
-                   <div className="flex justify-between items-center pb-8 border-b border-gray-50">
-                      <h3 className="text-2xl font-display font-bold">Verifier Management</h3>
-                      <div className="flex items-center gap-4">
-                         <div className="flex items-center gap-2 text-gray-400">
-                            <UserCheck size={16} />
-                            <select 
-                              value={filterUni}
-                              onChange={(e) => setFilterUni(e.target.value)}
-                              className="bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none border-none cursor-pointer"
-                            >
-                               <option value="All">All Universities</option>
-                               {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-                            </select>
-                         </div>
-                      </div>
-                   </div>
-                   
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {verifiers.filter(v => filterUni === 'All' || v.university === filterUni).map((verifier) => (
-                        <div key={verifier.id} className="p-8 bg-gray-50 rounded-[2.5rem] border border-transparent hover:border-accent-orange/10 transition-all flex flex-col justify-between">
-                           <div className="space-y-6">
-                              <div className="flex justify-between items-start">
-                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-bold text-[#8B5CF6] shadow-sm">{verifier.name.charAt(0)}</div>
-                                    <div>
-                                       <h4 className="font-bold text-black">{verifier.name}</h4>
-                                       <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{verifier.university}</p>
-                                    </div>
-                                 </div>
-                                 <span className="text-[9px] font-bold bg-green-100 text-green-600 px-3 py-1 rounded-full uppercase tracking-widest">{verifier.status}</span>
-                              </div>
-                              <div className="space-y-2">
-                                 <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><MapPin size={10} /> {verifier.university}</p>
-                                 <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><Mail size={10} /> {verifier.email}</p>
-                                 <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2"><Clock size={10} /> {verifier.tasks} Active Tasks</p>
-                              </div>
-                           </div>
-                           <button 
-                             onClick={() => setAssignmentModal(verifier)}
-                             className="w-full mt-8 py-4 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all"
-                           >
-                              Assign Verification
-                           </button>
-                        </div>
+                   {/* Tabs within verifiers section */}
+                   <div className="flex gap-2 p-1 bg-gray-50 rounded-full w-fit overflow-x-auto">
+                      {['Pending Requests', 'Assignments', 'Completed', 'Verifiers'].map(sub => (
+                        <button key={sub} onClick={() => setFilterUni(sub)} className={`px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${filterUni === sub ? 'bg-black text-white' : 'text-gray-400 hover:text-black'}`}>{sub}</button>
                       ))}
                    </div>
+
+                   {filterUni === 'Pending Requests' && (
+                     <div className="space-y-4">
+                       <h3 className="text-2xl font-display font-bold">Pending Verification Requests</h3>
+                       <p className="text-sm text-gray-400">Boarding owners have submitted their availability. Assign a verifier from the list below.</p>
+                       {pendingRequests.length === 0 ? (
+                         <div className="bg-gray-50 rounded-[2.5rem] p-10 text-center border border-dashed border-gray-200">
+                           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto text-gray-400"><Clock size={28} /></div>
+                           <h4 className="mt-4 text-xl font-bold text-black">No pending requests</h4>
+                           <p className="text-gray-400 text-sm mt-2">All requests have been assigned or completed.</p>
+                         </div>
+                       ) : (
+                         <div className="grid grid-cols-1 gap-4">
+                           {pendingRequests.map((req: any) => {
+                             const listing = req.listing || {};
+                             const owner = listing.owner || {};
+                             return (
+                               <div key={req._id} className="bg-white border border-gray-100 rounded-[2.5rem] p-6 hover:shadow-lg transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                                 <div className="flex items-start gap-4">
+                                   <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center text-white font-bold text-lg shrink-0">{listing.title?.charAt(0) || 'B'}</div>
+                                   <div>
+                                     <h4 className="font-bold text-black">{listing.title || 'Untitled'}</h4>
+                                     <p className="text-xs text-gray-400">{listing.address || ''}</p>
+                                     <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-400">
+                                       <span className="flex items-center gap-1"><User size={10} /> {owner.firstName || ''} {owner.lastName || ''}</span>
+                                       {req.ownerAvailability?.dateAvailable && <span className="flex items-center gap-1"><Clock size={10} /> {new Date(req.ownerAvailability.dateAvailable).toLocaleDateString()} {req.ownerAvailability.timeSlot || ''}</span>}
+                                     </div>
+                                   </div>
+                                 </div>
+                                 <div className="flex gap-2 shrink-0">
+                                   <select
+                                     onChange={e => {
+                                       if (e.target.value) {
+                                         const v = verifiers.find((v: any) => v.id === e.target.value);
+                                         if (v) setAssignmentModal({ ...v, requestId: req._id, listingId: listing._id });
+                                       }
+                                       e.target.value = '';
+                                     }}
+                                     className="bg-gray-50 border border-gray-200 rounded-full px-5 py-3 text-[10px] font-bold outline-none appearance-none cursor-pointer hover:border-accent-orange transition-all"
+                                   >
+                                     <option value="">Assign Verifier...</option>
+                                     {verifiers.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                                   </select>
+                                 </div>
+                               </div>
+                             );
+                           })}
+                         </div>
+                       )}
+                     </div>
+                   )}
+
+                   {filterUni === 'Assignments' && (
+                     <div className="space-y-4">
+                       <h3 className="text-2xl font-display font-bold">Active Assignments</h3>
+                       <p className="text-sm text-gray-400">Verifiers currently assigned to inspections.</p>
+                       <div className="grid grid-cols-1 gap-4">
+                         {verifications.filter((v: any) => v.status === 'assigned' || v.status === 'accepted' || v.status === 'in_progress').map((v: any) => {
+                           const listing = v.listing || {};
+                           const verifier = v.verifier || {};
+                           const vName = `${verifier.firstName || ''} ${verifier.lastName || ''}`.trim() || 'Unknown';
+                           return (
+                             <div key={v._id} className="bg-white border border-gray-100 rounded-[2.5rem] p-6 hover:shadow-lg transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                               <div className="flex items-start gap-4">
+                                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold shrink-0 ${v.status === 'accepted' ? 'bg-purple-500' : 'bg-amber-500'}`}>{vName.charAt(0)}</div>
+                                 <div>
+                                   <h4 className="font-bold text-black">{listing.title || 'Untitled'}</h4>
+                                   <p className="text-xs text-gray-400">Verifier: {vName}</p>
+                                   <div className="flex gap-3 mt-1 text-[10px] text-gray-400">
+                                     <span className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${v.status === 'accepted' ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-700'}`}>{v.status}</span>
+                                     {v.visitDate && <span className="flex items-center gap-1"><Clock size={10} /> {new Date(v.visitDate).toLocaleDateString()}</span>}
+                                   </div>
+                                 </div>
+                               </div>
+                               <div className="flex gap-2 shrink-0">
+                                 <button onClick={async () => {
+                                   if (!confirm(`Unassign ${vName} from this task?`)) return;
+                                   try {
+                                     const res = await fetch(`${apiBase}/api/verifications/admin/unassign/${v._id}`, { method: 'POST', headers: getAdminHeaders() });
+                                     if (res.ok) { fetchVerifications(); alert('Verifier unassigned'); }
+                                     else { const d = await res.json(); alert(d.message || 'Failed'); }
+                                   } catch { alert('Failed'); }
+                                 }} className="px-4 py-2.5 bg-red-50 text-red-600 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Unassign</button>
+                               </div>
+                             </div>
+                           );
+                         })}
+                         {verifications.filter((v: any) => v.status === 'assigned' || v.status === 'accepted' || v.status === 'in_progress').length === 0 && (
+                           <div className="bg-gray-50 rounded-[2.5rem] p-10 text-center border border-dashed border-gray-200">
+                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto text-gray-400"><UserCheck size={28} /></div>
+                             <h4 className="mt-4 text-xl font-bold text-black">No active assignments</h4>
+                             <p className="text-gray-400 text-sm mt-2">Assign verifiers from pending requests above.</p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   )}
+
+                   {filterUni === 'Completed' && (
+                     <div className="space-y-4">
+                       <h3 className="text-2xl font-display font-bold">Completed Verifications</h3>
+                       <p className="text-sm text-gray-400">Review completed inspection reports.</p>
+                       <div className="grid grid-cols-1 gap-4">
+                         {verifications.filter((v: any) => v.status === 'verified' || v.status === 'rejected').map((v: any) => {
+                           const listing = v.listing || {};
+                           const verifier = v.verifier || {};
+                           const vName = `${verifier.firstName || ''} ${verifier.lastName || ''}`.trim() || 'Unknown';
+                           const isVerified = v.status === 'verified';
+                           return (
+                             <div key={v._id} className="bg-white border border-gray-100 rounded-[2.5rem] p-6 hover:shadow-lg transition-all">
+                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                 <div className="flex items-start gap-4">
+                                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold shrink-0 ${isVerified ? 'bg-green-500' : 'bg-red-500'}`}>{isVerified ? <ShieldCheck size={24} /> : <X size={24} />}</div>
+                                   <div>
+                                     <h4 className="font-bold text-black">{listing.title || 'Untitled'}</h4>
+                                     <p className="text-xs text-gray-400">Verified by: {vName}</p>
+                                     <div className="flex flex-wrap gap-3 mt-1 text-[10px] text-gray-400">
+                                       <span className={`px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${isVerified ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{v.status}</span>
+                                       {v.verdict && <span>Verdict: {v.verdict}</span>}
+                                       {v.checklist?.length > 0 && <span>{v.checklist.length} checklist items</span>}
+                                       {v.updatedAt && <span className="flex items-center gap-1"><Clock size={10} /> {new Date(v.updatedAt).toLocaleDateString()}</span>}
+                                     </div>
+                                   </div>
+                                 </div>
+                                 <button onClick={() => {
+                                   setAssignmentModal({ ...v, viewReport: true });
+                                 }} className="px-5 py-2.5 bg-black text-white rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-accent-orange transition-all shrink-0">View Report</button>
+                               </div>
+                               {v.notes && <div className="mt-4 p-4 bg-gray-50 rounded-2xl text-xs text-gray-500 italic">"{v.notes}"</div>}
+                               {v.images?.length > 0 && (
+                                 <div className="mt-4 flex gap-2 overflow-x-auto">
+                                   {v.images.map((img: string, i: number) => (
+                                     <div key={i} className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                                       <img src={img.startsWith('http') ? img : `${apiBase}${img}`} alt="" className="w-full h-full object-cover" />
+                                     </div>
+                                   ))}
+                                 </div>
+                               )}
+                             </div>
+                           );
+                         })}
+                         {verifications.filter((v: any) => v.status === 'verified' || v.status === 'rejected').length === 0 && (
+                           <div className="bg-gray-50 rounded-[2.5rem] p-10 text-center border border-dashed border-gray-200">
+                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto text-gray-400"><ClipboardList size={28} /></div>
+                             <h4 className="mt-4 text-xl font-bold text-black">No completed verifications</h4>
+                             <p className="text-gray-400 text-sm mt-2">Completed reports will appear here.</p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   )}
+
+                   {filterUni === 'Verifiers' && (
+                     <>
+                       <div className="flex justify-between items-center pb-4 border-b border-gray-50">
+                         <div><h3 className="text-2xl font-display font-bold">Verifier Profiles</h3><p className="text-sm text-gray-400">All registered verifiers on the platform.</p></div>
+                       </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         {verifiers.map((verifier) => (
+                           <div key={verifier.id} className="p-8 bg-gray-50 rounded-[2.5rem] border border-transparent hover:border-accent-orange/10 transition-all">
+                             <div className="flex items-start gap-4 mb-4">
+                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-bold text-[#8B5CF6] shadow-sm">{verifier.name.charAt(0)}</div>
+                               <div className="flex-1">
+                                 <h4 className="font-bold text-black">{verifier.name}</h4>
+                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{verifier.university || 'N/A'}</p>
+                               </div>
+                               <span className="text-[9px] font-bold bg-green-100 text-green-600 px-3 py-1 rounded-full uppercase tracking-widest">{verifier.status}</span>
+                             </div>
+                             <div className="space-y-1.5 text-[10px] text-gray-400">
+                               <p className="flex items-center gap-2"><Mail size={10} /> {verifier.email}</p>
+                               <p className="flex items-center gap-2"><MapPin size={10} /> {verifier.university || 'N/A'}</p>
+                             </div>
+                             <div className="mt-4 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                               Tasks: {verifications.filter((v: any) => (v.verifier?._id === verifier.id || v.verifier?.toString() === verifier.id) && (v.status === 'verified' || v.status === 'rejected')).length} completed
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     </>
+                   )}
                 </motion.div>
               )}
 
@@ -845,71 +1161,454 @@ const AdminDashboard = () => {
                     </div>
                 </motion.div>
               )}
+
+              {activeTab === 'reports' && (
+                <motion.div key="reports" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                   <div className="flex justify-between items-center mb-6">
+                      <div>
+                         <h3 className="text-2xl font-display font-bold">Platform Reports</h3>
+                         <p className="text-gray-400 text-sm">Comprehensive analytics across all platform modules.</p>
+                      </div>
+                      <button onClick={downloadExcelReport} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-8 py-4 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                         Download Excel Report
+                      </button>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                      {/* 1. User Analytics */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-5 flex items-center gap-4">
+                            <UsersIcon size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">User Analytics</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 text-center border border-violet-100">
+                                  <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest">Total</p>
+                                  <p className="text-3xl font-display font-bold text-violet-700">{stats?.summary?.totalUsers || 0}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 text-center border border-blue-100">
+                                  <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Students</p>
+                                  <p className="text-3xl font-display font-bold text-blue-700">{stats?.summary?.studentCount || 0}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 text-center border border-amber-100">
+                                  <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Owners</p>
+                                  <p className="text-3xl font-display font-bold text-amber-700">{stats?.summary?.ownerCount || 0}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 text-center border border-emerald-100">
+                                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Verifiers</p>
+                                  <p className="text-3xl font-display font-bold text-emerald-700">{users.filter((u: any) => u.role === 'verifier').length}</p>
+                               </div>
+                            </div>
+                             <div className="space-y-1.5 pt-2 border-t border-gray-50">
+                                <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                   <span>Role Distribution</span>
+                                   <span className="text-violet-600">{((stats?.summary?.studentCount || 0) / (stats?.summary?.totalUsers || 1) * 100).toFixed(0)}% Students</span>
+                                </div>
+                                <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100">
+                                   {[
+                                      { key: 'Students', count: stats?.summary?.studentCount || 0, color: 'bg-violet-500' },
+                                      { key: 'Owners', count: stats?.summary?.ownerCount || 0, color: 'bg-amber-500' },
+                                      { key: 'Verifiers', count: users.filter((u: any) => u.role === 'verifier').length, color: 'bg-emerald-500' },
+                                   ].map((seg) => {
+                                      const total = stats?.summary?.totalUsers || 1;
+                                      const pct = (seg.count / total) * 100;
+                                      if (pct === 0) return null;
+                                      return <div key={seg.key} className={`${seg.color} h-full transition-all duration-700`} style={{ width: `${pct}%` }} title={`${seg.key}: ${seg.count}`} />;
+                                   })}
+                                </div>
+                                <div className="flex justify-between text-[9px] text-gray-400 font-bold uppercase tracking-widest pt-0.5">
+                                   {[
+                                      { label: 'Students', count: stats?.summary?.studentCount || 0, color: 'bg-violet-500' },
+                                      { label: 'Owners', count: stats?.summary?.ownerCount || 0, color: 'bg-amber-500' },
+                                      { label: 'Verifiers', count: users.filter((u: any) => u.role === 'verifier').length, color: 'bg-emerald-500' },
+                                   ].map((seg) => (
+                                      <span key={seg.label} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${seg.color}`}></span>{seg.label}</span>
+                                   ))}
+                                </div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* 2. Boarding Listings */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center gap-4">
+                            <BarChart3 size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">Boarding Listings</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 text-center border border-blue-100">
+                                  <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Total</p>
+                                  <p className="text-3xl font-display font-bold text-blue-700">{boardings.length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 text-center border border-emerald-100">
+                                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Active</p>
+                                  <p className="text-3xl font-display font-bold text-emerald-700">{stats?.summary?.activeBoardings || 0}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 text-center border border-amber-100">
+                                  <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Full</p>
+                                  <p className="text-3xl font-display font-bold text-amber-700">{boardings.filter((b: any) => !b.isAvailable).length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 text-center border border-rose-100">
+                                  <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">Images</p>
+                                  <p className="text-3xl font-display font-bold text-rose-700">{boardings.reduce((sum: number, b: any) => sum + (b.imageCount || 0), 0)}</p>
+                               </div>
+                            </div>
+                            {/* Mini progress bar */}
+                            <div className="space-y-1.5 pt-2 border-t border-gray-50">
+                               <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                  <span>Availability</span>
+                                  <span className="text-emerald-600">{boardings.filter((b: any) => b.isAvailable).length}/{boardings.length} Available</span>
+                               </div>
+                               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-700" style={{ width: `${boardings.length ? (boardings.filter((b: any) => b.isAvailable).length / boardings.length) * 100 : 0}%` }} />
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* 3. Booking Reports */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-5 flex items-center gap-4">
+                            <ClipboardList size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">Booking Reports</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 text-center border border-emerald-100">
+                                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Total</p>
+                                  <p className="text-3xl font-display font-bold text-emerald-700">{payments.length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 text-center border border-blue-100">
+                                  <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Confirmed</p>
+                                  <p className="text-3xl font-display font-bold text-blue-700">{payments.filter((p: any) => p.status === 'confirmed').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 text-center border border-amber-100">
+                                  <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Pending</p>
+                                  <p className="text-3xl font-display font-bold text-amber-700">{payments.filter((p: any) => p.status === 'pending').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 text-center border border-rose-100">
+                                  <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">Cancelled</p>
+                                  <p className="text-3xl font-display font-bold text-rose-700">{payments.filter((p: any) => p.status === 'cancelled').length}</p>
+                               </div>
+                            </div>
+                             {/* Status bar */}
+                             <div className="flex h-2.5 rounded-full overflow-hidden bg-gray-100 pt-2 border-t border-gray-50">
+                                {['confirmed', 'pending', 'cancelled'].map((s) => {
+                                   const count = payments.filter((p: any) => p.status === s).length;
+                                   const pct = payments.length ? (count / payments.length) * 100 : 0;
+                                   const color = s === 'confirmed' ? 'bg-blue-500' : s === 'pending' ? 'bg-amber-400' : 'bg-rose-400';
+                                   return <div key={s} className={`${color} h-full transition-all duration-700`} style={{ width: count === 0 ? '0.5%' : `${pct}%`, opacity: count === 0 ? 0.3 : 1 }} title={`${s}: ${count}`} />;
+                                })}
+                             </div>
+                            <div className="flex justify-between text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span>Confirmed</span>
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span>Pending</span>
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-400"></span>Cancelled</span>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* 4. Payment Reports */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-5 flex items-center gap-4">
+                            <CreditCard size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">Payment Reports</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 text-center border border-amber-100">
+                                  <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Paid</p>
+                                  <p className="text-3xl font-display font-bold text-amber-700">{payments.filter((p: any) => p.paymentStatus === 'paid').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 text-center border border-emerald-100">
+                                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Revenue</p>
+                                  <p className="text-2xl font-display font-bold text-emerald-700">LKR {(payments.filter((p: any) => p.paymentStatus === 'paid' || p.status === 'confirmed').reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0)).toLocaleString()}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 text-center border border-rose-100">
+                                  <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">Unpaid</p>
+                                  <p className="text-3xl font-display font-bold text-rose-700">{payments.filter((p: any) => p.paymentStatus === 'unpaid').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-2xl p-4 text-center border border-gray-200">
+                                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Failed</p>
+                                  <p className="text-3xl font-display font-bold text-gray-500">{payments.filter((p: any) => p.paymentStatus === 'failed').length}</p>
+                               </div>
+                            </div>
+                            <div className="space-y-1.5 pt-2 border-t border-gray-50">
+                               <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                  <span>Collection Rate</span>
+                                  <span className="text-emerald-600">{payments.length ? ((payments.filter((p: any) => p.paymentStatus === 'paid').length / payments.length) * 100).toFixed(0) : 0}%</span>
+                               </div>
+                               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-700" style={{ width: `${payments.length ? (payments.filter((p: any) => p.paymentStatus === 'paid').length / payments.length) * 100 : 0}%` }} />
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* 5. Verification Reports */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-5 flex items-center gap-4">
+                            <Shield size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">Verification Reports</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 text-center border border-rose-100">
+                                  <p className="text-[9px] font-bold text-rose-400 uppercase tracking-widest">Total</p>
+                                  <p className="text-3xl font-display font-bold text-rose-700">{verifications.length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 text-center border border-emerald-100">
+                                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Approved</p>
+                                  <p className="text-3xl font-display font-bold text-emerald-700">{verifications.filter((v: any) => v.status === 'verified').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4 text-center border border-amber-100">
+                                  <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Pending</p>
+                                  <p className="text-3xl font-display font-bold text-amber-700">{verifications.filter((v: any) => v.status === 'pending' || v.status === 'in_progress').length}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-4 text-center border border-red-100">
+                                  <p className="text-[9px] font-bold text-red-400 uppercase tracking-widest">Rejected</p>
+                                  <p className="text-3xl font-display font-bold text-red-600">{verifications.filter((v: any) => v.status === 'rejected').length}</p>
+                               </div>
+                            </div>
+                             {/* Stacked bar */}
+                             <div className="flex h-3 rounded-full overflow-hidden bg-gray-100 pt-2 border-t border-gray-50">
+                                {['verified', 'pending', 'in_progress', 'rejected'].map((s) => {
+                                   const count = verifications.filter((v: any) => v.status === s).length;
+                                   const pct = verifications.length ? (count / verifications.length) * 100 : 0;
+                                   const color = s === 'verified' ? 'bg-emerald-500' : s === 'pending' ? 'bg-amber-400' : s === 'in_progress' ? 'bg-blue-400' : 'bg-rose-500';
+                                   return <div key={s} className={`${color} h-full transition-all duration-700`} style={{ width: count === 0 ? '0.5%' : `${pct}%`, opacity: count === 0 ? 0.3 : 1 }} title={`${s}: ${count}`} />;
+                                })}
+                             </div>
+                            <div className="flex flex-wrap gap-3 text-[9px] text-gray-400 font-bold uppercase tracking-widest pt-1">
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span>Approved</span>
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400"></span>Pending</span>
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400"></span>In Progress</span>
+                               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500"></span>Rejected</span>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* 6. Revenue Reports */}
+                      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-50 overflow-hidden group hover:shadow-xl transition-all duration-500">
+                         <div className="bg-gradient-to-r from-cyan-500 to-teal-600 px-6 py-5 flex items-center gap-4">
+                            <TrendingUp size={22} className="text-white/90" />
+                            <h3 className="text-white font-bold text-sm tracking-wide">Revenue Reports</h3>
+                         </div>
+                         <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                               <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-2xl p-4 text-center border border-cyan-100 col-span-2">
+                                  <p className="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">Total Revenue</p>
+                                  <p className="text-3xl font-display font-bold text-cyan-700">LKR {(stats?.summary?.totalRevenue || 0).toLocaleString()}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-4 text-center border border-teal-100">
+                                  <p className="text-[9px] font-bold text-teal-400 uppercase tracking-widest">This Month</p>
+                                  <p className="text-xl font-display font-bold text-teal-700">LKR {(stats?.summary?.monthlyRevenue || 0).toLocaleString()}</p>
+                               </div>
+                               <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 text-center border border-violet-100">
+                                  <p className="text-[9px] font-bold text-violet-400 uppercase tracking-widest">Growth</p>
+                                  <p className="text-xl font-display font-bold text-violet-700">
+                                     {stats?.growthData?.length >= 2 ? `+${((stats.growthData[stats.growthData.length - 1]?.revenue || 0) / (stats.growthData[stats.growthData.length - 2]?.revenue || 1) * 100 - 100).toFixed(0)}%` : 'N/A'}
+                                  </p>
+                               </div>
+                            </div>
+                            {/* Mini bar chart */}
+                            {stats?.growthData && stats.growthData.length > 0 && (
+                               <div className="space-y-1.5 pt-2 border-t border-gray-50">
+                                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2">Monthly Trend (LKR)</p>
+                                  <div className="flex items-end gap-1.5 h-16">
+                                     {stats.growthData.map((d: any, i: number) => {
+                                        const maxRev = Math.max(...stats.growthData.map((g: any) => g.revenue), 1);
+                                        const h = (d.revenue / maxRev) * 100;
+                                        return (
+                                           <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                              <div className="w-full bg-gradient-to-t from-cyan-400 to-teal-400 rounded-t-md transition-all duration-700" style={{ height: `${Math.max(h, 4)}%` }} title={`${d.month}: LKR ${d.revenue}`} />
+                                              <span className="text-[7px] font-bold text-gray-400 uppercase">{d.month?.slice(0, 3)}</span>
+                                           </div>
+                                        );
+                                     })}
+                                  </div>
+                               </div>
+                            )}
+                         </div>
+                      </div>
+
+                   </div>
+                </motion.div>
+              )}
            </AnimatePresence>
          </div>
-      </div>
+       </div>
 
-      {/* Assignment Modal */}
+      {/* Delete Confirmation Toast */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md" onClick={() => setDeleteConfirm(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 30 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-red-500 to-rose-600 px-8 py-8 text-center">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={32} className="text-white" />
+                </div>
+                <h3 className="text-white text-2xl font-display font-bold">Delete User?</h3>
+                <p className="text-white/70 text-sm mt-2">This action cannot be undone.</p>
+              </div>
+              <div className="px-8 py-6 text-center">
+                <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-red-600 font-bold text-xl uppercase">{deleteConfirm.name?.charAt(0) || '?'}</span>
+                </div>
+                <p className="font-bold text-black text-lg mb-1">{deleteConfirm.name}</p>
+                <p className="text-gray-400 text-sm mb-6">{deleteConfirm.email}</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-4 bg-gray-50 hover:bg-gray-100 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-500 transition-all">
+                    Cancel
+                  </button>
+                  <button onClick={confirmDeleteUser} className="flex-1 py-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-red-500/20 transition-all">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Assignment / View Report Modal */}
       <AnimatePresence>
         {assignmentModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-md">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3.5rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl"
-            >
-               <div className="bg-black text-white p-10 flex justify-between items-center">
-                  <div className="space-y-1">
-                     <p className="text-[10px] font-bold text-accent-orange uppercase tracking-[0.4em]">Task Assignment</p>
-                     <h3 className="text-2xl font-display font-bold">Assign to {assignmentModal.name}</h3>
-                  </div>
-                  <button onClick={() => setAssignmentModal(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
-                     <X size={20} />
-                  </button>
-               </div>
-               <div className="p-10 space-y-8">
-                   <div className="space-y-4">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Select Property</label>
-                      <select id="boarding-select" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none appearance-none cursor-pointer">
-                          <option value="">Select a boarding...</option>
-                          {boardings.map((b: any) => <option key={b.id} value={b.id}>{b.title} ({b.location})</option>)}
-                       </select>
-                   </div>
-                   <div className="space-y-4">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Visit Date</label>
-                      <input id="visit-date" type="date" className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-8 py-4 text-sm outline-none" />
-                   </div>
-                    <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100">
-                       <p className="text-[10px] font-bold text-accent-orange uppercase tracking-widest mb-2">Message to Verifier</p>
-                       <p className="text-[11px] text-accent-orange italic">
-                         A verifier will visit the property to inspect all details.
-                       </p>
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="bg-white rounded-[3.5rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+              {assignmentModal.viewReport ? (
+                <>
+                  <div className="bg-black text-white p-8 flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-accent-orange uppercase tracking-[0.4em]">Inspection Report</p>
+                      <h3 className="text-2xl font-display font-bold">{assignmentModal.listing?.title || 'Verification Report'}</h3>
                     </div>
-                    <button 
-                      onClick={async () => {
-                         const boardingSelect = document.querySelector<HTMLSelectElement>('#boarding-select');
-                         const dateInput = document.querySelector<HTMLInputElement>('#visit-date');
-                         const listingId = boardingSelect?.value;
-                         const verifierId = assignmentModal?._id;
-                         const visitDate = dateInput?.value;
-                         if (!listingId) { alert('Please select a property'); return; }
-                         if (!verifierId) { alert('Verifier not found'); return; }
-                         try {
-                            const res = await fetch(`${apiBase}/api/verifications/assign`, {
-                               method: 'POST',
-                               headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
-                               body: JSON.stringify({ verifierId, listingId, visitDate }),
-                            });
-                            if (res.ok) { alert('Verifier assigned successfully!'); setAssignmentModal(null); }
-                            else { const d = await res.json(); alert(d.message || 'Assignment failed'); }
-                         } catch { alert('Assignment failed'); }
-                      }}
-                      className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all"
-                    >
+                    <button onClick={() => setAssignmentModal(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"><X size={20} /></button>
+                  </div>
+                  <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${assignmentModal.status === 'verified' ? 'bg-green-500' : 'bg-red-500'}`}>
+                        {assignmentModal.status === 'verified' ? <ShieldCheck size={24} /> : <X size={24} />}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</p>
+                        <p className="text-lg font-bold capitalize">{assignmentModal.status}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 rounded-2xl p-4"><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verdict</p><p className="text-sm font-bold capitalize mt-1">{assignmentModal.verdict || 'N/A'}</p></div>
+                      <div className="bg-gray-50 rounded-2xl p-4"><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Visit Date</p><p className="text-sm font-bold mt-1">{assignmentModal.visitDate ? new Date(assignmentModal.visitDate).toLocaleDateString() : 'N/A'}</p></div>
+                    </div>
+                    {assignmentModal.verifier && (
+                      <div className="bg-purple-50 rounded-2xl p-4">
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">Verifier</p>
+                        <p className="text-sm font-bold">{assignmentModal.verifier.firstName || ''} {assignmentModal.verifier.lastName || ''}</p>
+                        <p className="text-[11px] text-gray-500">{assignmentModal.verifier.email || ''}</p>
+                      </div>
+                    )}
+                    {assignmentModal.checklist?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Checklist ({assignmentModal.checklist.length} items)</p>
+                        <div className="space-y-2">
+                          {(assignmentModal.checklist as string[]).map((item: string, i: number) => (
+                            <div key={i} className="flex items-center gap-3 p-3 bg-green-50 rounded-xl text-xs text-green-700"><Check size={14} className="shrink-0" />{item}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {assignmentModal.notes && (
+                      <div className="bg-gray-50 rounded-2xl p-4"><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Notes</p><p className="text-xs text-gray-600 mt-1 italic">{assignmentModal.notes}</p></div>
+                    )}
+                    {assignmentModal.images?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Images ({assignmentModal.images.length})</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          {assignmentModal.images.map((img: string, i: number) => (
+                            <div key={i} className="aspect-square rounded-2xl bg-gray-100 overflow-hidden"><img src={img.startsWith('http') ? img : `${apiBase}${img}`} alt="" className="w-full h-full object-cover" /></div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {assignmentModal.selfie && (
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Verifier Selfie</p>
+                        <div className="w-32 h-32 rounded-2xl bg-gray-100 overflow-hidden"><img src={assignmentModal.selfie.startsWith('http') ? assignmentModal.selfie : `${apiBase}${assignmentModal.selfie}`} alt="" className="w-full h-full object-cover" /></div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-black text-white p-8 flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-accent-orange uppercase tracking-[0.4em]">Task Assignment</p>
+                      <h3 className="text-2xl font-display font-bold">Assign to {assignmentModal.name}</h3>
+                    </div>
+                    <button onClick={() => setAssignmentModal(null)} className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"><X size={20} /></button>
+                  </div>
+                  <div className="p-6 sm:p-10 space-y-6 sm:space-y-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Selected Property</label>
+                      <div className="bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                          {(() => { const r = pendingRequests.find((p: any) => p._id === assignmentModal.requestId); return r?.listing?.title?.charAt(0) || 'B'; })()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">{(() => { const r = pendingRequests.find((p: any) => p._id === assignmentModal.requestId); return r?.listing?.title || 'Selected boarding'; })()}</p>
+                          <p className="text-[10px] text-gray-400">{(() => { const r = pendingRequests.find((p: any) => p._id === assignmentModal.requestId); return r?.listing?.address || ''; })()}</p>
+                        </div>
+                      </div>
+                      <input type="hidden" value={assignmentModal.listingId || ''} />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-4">Preferred Visit Date</label>
+                      <div className="relative">
+                        <input type="date" value={assignVisitDate} onChange={e => setAssignVisitDate(e.target.value)} className="w-full bg-gray-50 border border-gray-200 focus:border-accent-orange focus:bg-white focus:ring-2 focus:ring-accent-orange/10 transition-all rounded-full px-8 py-4 text-sm outline-none" />
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-5 sm:p-6 rounded-[2rem] border border-orange-100">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-accent-orange rounded-full flex items-center justify-center text-white"><MessageSquare size={14} /></div>
+                        <p className="text-[10px] font-bold text-accent-orange uppercase tracking-widest">Message to Verifier</p>
+                      </div>
+                      <p className="text-[11px] text-orange-700/70 leading-relaxed">The verifier will visit to inspect all details. They have 15 minutes to accept or reject this assignment.</p>
+                    </div>
+                    <button onClick={async () => {
+                      const listingId = assignmentModal.listingId;
+                      const verifierId = assignmentModal.id;
+                      const visitDate = assignVisitDate;
+                      if (!listingId) { alert('Property not found'); return; }
+                      if (!verifierId) { alert('Verifier not found'); return; }
+                      try {
+                        const res = await fetch(`${apiBase}/api/verifications/assign`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', ...getAdminHeaders() },
+                          body: JSON.stringify({ verifierId, listingId, visitDate: visitDate || undefined }),
+                        });
+                        if (res.ok) {
+                          alert('Verifier assigned successfully! They have 15 minutes to respond.');
+                          setAssignmentModal(null);
+                          setAssignListingId('');
+                          setAssignVisitDate('');
+                          fetchVerifications();
+                        } else { const d = await res.json(); alert(d.message || 'Assignment failed'); }
+                      } catch { alert('Assignment failed'); }
+                    }} className="w-full py-5 rounded-full font-bold text-xs uppercase tracking-[0.2em] transition-all shadow-xl bg-black text-white hover:bg-accent-orange shadow-black/10">
                       Confirm Assignment
                     </button>
-               </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}
@@ -1093,7 +1792,7 @@ const AdminDashboard = () => {
                               <input
                                  value={boardingEditor.title}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, title: e.target.value }))}
-                                 className="w-full bg-[#F8F8F8] rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
+                                 className="w-full bg-gray-50 rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
                               />
                            </label>
 
@@ -1102,7 +1801,7 @@ const AdminDashboard = () => {
                               <input
                                  value={boardingEditor.address}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, address: e.target.value }))}
-                                 className="w-full bg-[#F8F8F8] rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
+                                 className="w-full bg-gray-50 rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
                               />
                            </label>
 
@@ -1112,7 +1811,7 @@ const AdminDashboard = () => {
                                  value={boardingEditor.description}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, description: e.target.value }))}
                                  rows={6}
-                                 className="w-full bg-[#F8F8F8] rounded-[2rem] px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all resize-none"
+                                 className="w-full bg-gray-50 rounded-[2rem] px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all resize-none"
                               />
                            </label>
 
@@ -1122,7 +1821,7 @@ const AdminDashboard = () => {
                                  type="number"
                                  value={boardingEditor.price}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, price: e.target.value }))}
-                                 className="w-full bg-[#F8F8F8] rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
+                                 className="w-full bg-gray-50 rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
                               />
                            </label>
 
@@ -1133,7 +1832,7 @@ const AdminDashboard = () => {
                                  min="1"
                                  value={boardingEditor.capacity}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, capacity: e.target.value }))}
-                                 className="w-full bg-[#F8F8F8] rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
+                                 className="w-full bg-gray-50 rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
                               />
                            </label>
 
@@ -1143,13 +1842,13 @@ const AdminDashboard = () => {
                                  value={boardingEditor.amenitiesText}
                                  onChange={(e) => setBoardingEditor((current: any) => ({ ...current, amenitiesText: e.target.value }))}
                                  placeholder="WiFi, Parking, Security"
-                                 className="w-full bg-[#F8F8F8] rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
+                                 className="w-full bg-gray-50 rounded-2xl px-5 py-4 text-sm outline-none border border-transparent focus:border-accent-orange transition-all"
                               />
                            </label>
 
                            <label className="space-y-2 md:col-span-1">
                               <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 px-1">Availability</span>
-                              <div className="flex items-center gap-3 bg-[#F8F8F8] rounded-2xl px-5 py-4 border border-transparent focus-within:border-accent-orange transition-all">
+                              <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-5 py-4 border border-transparent focus-within:border-accent-orange transition-all">
                                  <input
                                     type="checkbox"
                                     checked={boardingEditor.isAvailable}

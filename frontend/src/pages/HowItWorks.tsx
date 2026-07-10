@@ -11,42 +11,42 @@ const HowItWorks = () => {
       title: "Create Your Student Profile",
       description: "Sign up with your university email and create a detailed profile. Include your university, course details, and accommodation preferences to get personalized recommendations.",
       icon: <UserCircle size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1523240715639-960c609559c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-student-1.png",
       tags: ["University Verification", "Profile Setup", "Preference Selection"]
     },
     {
       title: "Search & Filter Boardings",
       description: "Use our advanced search filters to find boardings near your university. Filter by location, price range, amenities, room type, and distance from campus.",
       icon: <Search size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-student-2.png",
       tags: ["Location Search", "Price Filters", "Amenity Selection"]
     },
     {
       title: "Browse Verified Listings",
       description: "View detailed information about each boarding facility including photos, amenities, house rules, and reviews from other students. All listings are physically verified by our team.",
       icon: <CheckCircle size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-student-3.png",
       tags: ["Verified Photos", "Student Reviews", "Safety Checklist"]
     },
     {
       title: "Schedule a Visit",
       description: "Contact boarding owners through our secure messaging system to schedule a visit. View available time slots and book appointments that fit your schedule.",
       icon: <Calendar size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-student-4.png",
       tags: ["Secure Messaging", "Visit Scheduling", "Owner Contact"]
     },
     {
       title: "Complete Booking Process",
       description: "Once you've found the perfect boarding, complete the booking process through our secure platform. Review and sign the rental agreement digitally.",
       icon: <ClipboardList size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-student-5.png",
       tags: ["Digital Agreement", "Secure Payment", "Booking Confirmation"]
     },
     {
       title: "Move In & Leave Review",
       description: "Move into your new accommodation and start your university journey. After your stay, leave a review to help other students find great boarding options.",
       icon: <HomeIcon size={32} strokeWidth={1.5} />,
-      image: "https://images.pexels.com/photos/101808/pexels-photo-101808.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=800",
+      image: "/images/bedroom.png",
       tags: ["Move-in Support", "Review System", "Ongoing Support"]
     }
   ];
@@ -56,42 +56,42 @@ const HowItWorks = () => {
       title: "Create Owner Account",
       description: "Register as a boarding owner with your personal and property details. Complete identity verification for security purposes.",
       icon: <UserCircle size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-owner-1.png",
       tags: ["Identity Check", "Owner Dashboard", "Secure Registration"]
     },
     {
       title: "List Your Property",
       description: "Add detailed information about your boarding facility including photos, amenities, pricing, availability, and house rules.",
       icon: <Building size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-owner-2.png",
       tags: ["Property Details", "Photo Upload", "Pricing Control"]
     },
     {
       title: "Verification Process",
       description: "Our team will contact you to schedule a physical verification of your property to ensure safety and quality standards.",
       icon: <ShieldCheck size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-owner-3.png",
       tags: ["Site Visit", "Safety Inspection", "Certified Badge"]
     },
     {
       title: "Receive Student Inquiries",
       description: "Start receiving inquiries from verified university students looking for accommodation near their campus.",
       icon: <Search size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-owner-4.png",
       tags: ["Verified Students", "Lead Generation", "Instant Alerts"]
     },
     {
       title: "Manage Bookings",
       description: "Use our dashboard to manage bookings, schedule visits, communicate with students, and update availability.",
       icon: <ClipboardList size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/how-owner-5.png",
       tags: ["Booking Calendar", "In-app Chat", "Availability Toggle"]
     },
     {
       title: "Secure Payments",
       description: "Receive payments through our secure payment system with transparent fees and automated reminders.",
       icon: <CreditCard size={32} strokeWidth={1.5} />,
-      image: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      image: "/images/house_orange.png",
       tags: ["Direct Payouts", "Transaction History", "Invoice Generation"]
     }
   ];
@@ -99,9 +99,9 @@ const HowItWorks = () => {
   const currentSteps = activeTab === 'student' ? studentSteps : ownerSteps;
 
   return (
-    <div className="pb-24 bg-[#F8F8F8]">
+    <div className="pb-24 bg-white">
       {/* Header */}
-      <section className="px-6 mb-20 text-center">
+      <section className="px-4 sm:px-6 mb-10 sm:mb-20 text-center">
         <div className="max-w-4xl mx-auto space-y-6">
            <motion.p 
              initial={{ opacity: 0, y: 10 }}
@@ -132,7 +132,7 @@ const HowItWorks = () => {
       </section>
 
       {/* Tab Selection */}
-      <section className="px-6 mb-24">
+      <section className="px-4 sm:px-6 mb-12 sm:mb-24">
         <div className="max-w-md mx-auto bg-gray-50 p-2 rounded-full flex relative overflow-hidden">
            <motion.div 
              className="absolute inset-y-2 rounded-full bg-black shadow-lg shadow-black/20"
@@ -156,7 +156,7 @@ const HowItWorks = () => {
       </section>
 
       {/* Steps Content */}
-      <section className="px-6 space-y-32">
+      <section className="px-4 sm:px-6 space-y-16 sm:space-y-32">
         <AnimatePresence mode="wait">
           <motion.div 
             key={activeTab}
@@ -164,39 +164,80 @@ const HowItWorks = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.5 }}
-            className="max-w-7xl mx-auto space-y-40"
+            className="max-w-7xl mx-auto space-y-16 sm:space-y-40"
           >
             {currentSteps.map((step, idx) => (
-              <div key={idx} className={`flex flex-col lg:flex-row items-center gap-12 lg:gap-32 ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
-                <div className="flex-1 space-y-8">
-                  <div className="flex items-center gap-6">
-                    <span className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center font-display text-2xl font-bold shadow-xl shadow-black/10">
-                      {idx + 1}
-                    </span>
-                    <div className="text-accent-orange">
-                       {step.icon}
-                    </div>
+              <div key={idx} className="relative">
+                {idx > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scaleY: 0 }}
+                    whileInView={{ opacity: 1, scaleY: 1 }}
+                    viewport={{ once: true }}
+                    className="absolute -top-20 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent via-gray-200 to-transparent hidden lg:block"
+                  />
+                )}
+                <div className={`flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-32 ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
+                  <div className="flex-1 space-y-6 sm:space-y-8">
+                    <motion.div
+                      initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6 }}
+                      className="flex items-center gap-6"
+                    >
+                      <span className="w-16 h-16 bg-black text-white rounded-2xl flex items-center justify-center font-display text-2xl font-bold shadow-xl shadow-black/10">
+                        {idx + 1}
+                      </span>
+                      <div className="text-accent-orange">
+                         {step.icon}
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.1 }}
+                      className="space-y-4"
+                    >
+                      <h3 className="font-display text-4xl text-black tracking-tight">{step.title}</h3>
+                      <p className="text-gray-400 text-lg leading-relaxed max-w-xl">{step.description}</p>
+                      <div className="flex flex-wrap gap-3 pt-4">
+                         {step.tags?.map((tag, tIdx) => (
+                            <motion.span
+                              key={tIdx}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              whileInView={{ opacity: 1, scale: 1 }}
+                              viewport={{ once: true }}
+                              transition={{ delay: 0.2 + tIdx * 0.05 }}
+                              whileHover={{ scale: 1.05, backgroundColor: '#f3f4f6' }}
+                              className="bg-gray-50 text-gray-500 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-gray-100 cursor-default"
+                            >
+                               {tag}
+                            </motion.span>
+                         ))}
+                      </div>
+                    </motion.div>
                   </div>
-                  <div className="space-y-4">
-                    <h3 className="font-display text-4xl text-black tracking-tight">{step.title}</h3>
-                    <p className="text-gray-400 text-lg leading-relaxed max-w-xl">{step.description}</p>
-                    <div className="flex flex-wrap gap-3 pt-4">
-                       {step.tags?.map((tag, tIdx) => (
-                          <span key={tIdx} className="bg-gray-50 text-gray-500 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-gray-100">
-                             {tag}
-                          </span>
-                       ))}
-                    </div>
+                  <div className="flex-1 w-full">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8 }}
+                      className="aspect-[16/10] rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-gray-100 to-gray-200 relative group"
+                    >
+                      <img
+                        src={step.image}
+                        alt={step.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-y-2 group-hover:translate-y-0">
+                        <span className="text-sm font-bold text-black">{idx + 1}</span>
+                      </div>
+                    </motion.div>
                   </div>
-                </div>
-                <div className="flex-1 w-full">
-                  <motion.div 
-                    whileInView={{ scale: 1.05 }}
-                    transition={{ duration: 1 }}
-                    className="aspect-[16/10] rounded-[3rem] overflow-hidden shadow-2xl bg-gray-100"
-                  >
-                    <img src={step.image} alt={step.title} className="w-full h-full object-cover" />
-                  </motion.div>
                 </div>
               </div>
             ))}
@@ -205,9 +246,9 @@ const HowItWorks = () => {
       </section>
 
       {/* Verification Process Detail */}
-      <section className="bg-gray-50 py-16 sm:py-32 mt-20 sm:mt-40 rounded-[2rem] sm:rounded-[4rem] mx-4 sm:mx-6">
-         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-            <div className="space-y-10">
+      <section className="bg-gray-50 py-10 sm:py-32 mt-12 sm:mt-40 rounded-[2rem] sm:rounded-[4rem] mx-4 sm:mx-6">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-20 items-center">
+            <div className="space-y-6 sm:space-y-10">
                <div className="space-y-4">
                   <h2 className="text-4xl md:text-5xl font-display text-black tracking-tight">Our Verification Process</h2>
                   <p className="text-gray-400 text-lg">Every boarding facility listed on 2nd Home goes through a thorough physical verification process to ensure student safety and comfort.</p>
@@ -231,7 +272,7 @@ const HowItWorks = () => {
                </div>
             </div>
             <div className="hidden md:block">
-               <div className="aspect-square bg-white rounded-[2rem] sm:rounded-[3rem] shadow-sm flex items-center justify-center p-8 sm:p-12">
+               <div className="aspect-square bg-white rounded-[2rem] sm:rounded-[3rem] shadow-sm flex items-center justify-center p-4 sm:p-12">
                   <div className="relative">
                      <SearchCheck size={200} strokeWidth={0.5} className="text-accent-orange/10" />
                      <motion.div 
@@ -248,8 +289,8 @@ const HowItWorks = () => {
       </section>
 
       {/* CTA */}
-      <section className="px-6 pt-32">
-        <div className="max-w-7xl mx-auto bg-black rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-12 md:p-24 text-center space-y-10 relative overflow-hidden">
+      <section className="px-4 sm:px-6 pt-16 sm:pt-32">
+        <div className="max-w-7xl mx-auto bg-black rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-12 md:p-16 text-center space-y-6 sm:space-y-10 relative overflow-hidden">
           <div className="absolute inset-0 opacity-20 pointer-events-none">
              <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent-orange rounded-full blur-[120px]" />
              <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-accent-orange rounded-full blur-[120px]" />

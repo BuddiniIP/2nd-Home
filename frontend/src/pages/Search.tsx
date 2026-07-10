@@ -50,7 +50,7 @@ const Search = () => {
             id: boarding.id,
             title: boarding.title,
             location: boarding.location?.address || boarding.address || 'Unknown location',
-            image: imagePath ? (imagePath.startsWith('http') ? imagePath : `${apiBase}${imagePath}`) : '/images/house_orange.jpg',
+            image: imagePath ? (imagePath.startsWith('http') ? imagePath : `${apiBase}${imagePath}`) : '/images/house_orange.png',
             rating: 4.5, // TODO: replace with real rating from API
             type: boarding.capacity > 1 ? 'double' : 'single',
             currentOccupants: Number(boarding.currentOccupants || 0),
@@ -149,7 +149,7 @@ const Search = () => {
   ];
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header & Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12">
@@ -219,7 +219,7 @@ const Search = () => {
                     <select 
                       value={filters.university}
                       onChange={(e) => handleFilterChange('university', e.target.value)}
-                      className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
                     >
                       <option value="">All Universities</option>
                       {universities.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
@@ -235,7 +235,7 @@ const Search = () => {
                     <select 
                       value={filters.faculty}
                       onChange={(e) => handleFilterChange('faculty', e.target.value)}
-                      className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
                     >
                       <option value="">All Faculties</option>
                       {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
@@ -253,14 +253,14 @@ const Search = () => {
                       placeholder="Min"
                       value={filters.minPrice}
                       onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                      className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-4 py-4 text-sm outline-none"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-4 py-4 text-sm outline-none"
                     />
                     <input 
                       type="number" 
                       placeholder="Max"
                       value={filters.maxPrice}
                       onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                      className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-4 py-4 text-sm outline-none"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-4 py-4 text-sm outline-none"
                     />
                   </div>
                 </div>
@@ -273,7 +273,7 @@ const Search = () => {
                       <button 
                         key={g}
                         onClick={() => toggleCheckbox('gender', g)}
-                        className={`px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filters.gender.includes(g) ? 'bg-black text-white border-black' : 'bg-[#F8F8F8] text-gray-400 border-transparent hover:border-gray-200'}`}
+                        className={`px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filters.gender.includes(g) ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'}`}
                       >
                         {g}
                       </button>
@@ -289,7 +289,7 @@ const Search = () => {
                       <button 
                         key={r}
                         onClick={() => toggleCheckbox('roomType', r)}
-                        className={`px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filters.roomType.includes(r) ? 'bg-black text-white border-black' : 'bg-[#F8F8F8] text-gray-400 border-transparent hover:border-gray-200'}`}
+                        className={`px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filters.roomType.includes(r) ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'}`}
                       >
                         {r}
                       </button>
@@ -451,7 +451,7 @@ const Search = () => {
                  </p>
                  <div className="pt-2 space-y-3">
                     {filteredProperties.slice(0, 3).map(p => (
-                       <div key={p.id} className="flex items-center gap-3 p-3 bg-[#F8F8F8] rounded-2xl">
+                       <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
                           <img src={p.image} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover shrink-0" />
                           <div className="min-w-0 flex-1">
                              <p className="text-xs font-bold truncate">{p.title}</p>

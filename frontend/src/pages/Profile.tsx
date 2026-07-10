@@ -108,7 +108,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="pb-24 px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-6 bg-white min-h-screen">
       <div className="max-w-2xl mx-auto space-y-12">
         <div className="space-y-4">
           <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
@@ -151,23 +151,23 @@ const Profile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">First Name</label>
-              <input name="firstName" value={form.firstName} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+              <input name="firstName" value={form.firstName} onChange={handleChange} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Last Name</label>
-              <input name="lastName" value={form.lastName} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+              <input name="lastName" value={form.lastName} onChange={handleChange} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Email</label>
-              <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+              <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Phone</label>
-              <input name="phone" value={form.phone} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+              <input name="phone" value={form.phone} onChange={handleChange} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400">University</label>
-              <input name="university" value={form.university} onChange={handleChange} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+              <input name="university" value={form.university} onChange={handleChange} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
             </div>
           </div>
 

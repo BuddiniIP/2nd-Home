@@ -80,7 +80,7 @@ const Chat = () => {
   };
 
   return (
-    <div className="pb-24 px-4 sm:px-6 bg-[#F8F8F8] min-h-screen">
+    <div className="pb-24 px-4 sm:px-6 bg-white min-h-screen">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         <div className="flex items-center gap-4">
           <button onClick={goBack} className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-accent-orange transition-colors uppercase tracking-widest">
@@ -157,7 +157,7 @@ const Chat = () => {
                   <div ref={msgsEnd} />
                 </div>
                 <form onSubmit={handleSend} className="p-3 sm:p-4 border-t border-gray-50 flex gap-3">
-                  <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-4 sm:px-6 py-3 text-sm outline-none" />
+                  <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-4 sm:px-6 py-3 text-sm outline-none" />
                   <button type="submit" disabled={sending || !newMessage.trim()} className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center hover:bg-accent-orange transition-all disabled:opacity-50 shrink-0">
                     <Send size={16} />
                   </button>
@@ -241,7 +241,7 @@ const Chat = () => {
                     <div ref={msgsEnd} />
                   </div>
                   <form onSubmit={handleSend} className="p-4 border-t border-gray-50 flex gap-3">
-                    <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-3 text-sm outline-none" />
+                    <input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Type a message..." className="flex-1 bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-3 text-sm outline-none" />
                     <button type="submit" disabled={sending || !newMessage.trim()} className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center hover:bg-accent-orange transition-all disabled:opacity-50">
                       <Send size={16} />
                     </button>

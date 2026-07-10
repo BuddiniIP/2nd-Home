@@ -104,24 +104,24 @@ const Signup = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8] px-6 pb-24">
-      <div className="flex bg-white rounded-[2rem] sm:rounded-[3.5rem] shadow-sm overflow-hidden max-w-6xl w-full min-h-0 sm:min-h-[700px]">
-        {/* Left Side: Image (Dynamic based on role) */}
-        <div className="hidden lg:block w-1/3 relative">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 sm:px-6 pb-16 sm:pb-24">
+      <div className="flex flex-col lg:flex-row bg-white rounded-[2rem] sm:rounded-[3.5rem] shadow-sm overflow-hidden max-w-6xl w-full min-h-0 sm:min-h-[700px]">
+        {/* Image Banner - compact top on mobile, left panel on desktop */}
+        <div className="relative w-full lg:w-1/3 h-44 lg:h-auto overflow-hidden flex-shrink-0">
            <img 
              src={role === 'student' 
-               ? "/images/house_white.jpg" 
-               : "/images/house_orange.jpg"
+? "/images/house_white.png" 
+                : "/images/house_orange.png"
              } 
              alt="Sign up theme" 
              className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
            />
            <div className="absolute inset-0 bg-black/40" />
-           <div className="absolute top-12 left-12 right-12 text-white">
-              <h2 className="font-display text-3xl font-bold mb-4">
+           <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-12 text-white">
+              <h2 className="font-display text-xl lg:text-3xl font-bold mb-1 lg:mb-4">
                 {step === 'role' ? 'Start your journey.' : (role === 'student' ? 'Join as a Student.' : 'Join as an Owner.')}
               </h2>
-              <p className="text-white/70 text-sm leading-relaxed">
+              <p className="text-white/70 text-xs lg:text-sm leading-relaxed">
                 {role === 'student' 
                   ? 'Join thousands of students finding verified accommodations.' 
                   : 'List your property and reach university students across the country.'}
@@ -138,7 +138,7 @@ const Signup = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col justify-center space-y-12"
+                className="h-full flex flex-col justify-center space-y-8 sm:space-y-12"
               >
                 <div className="space-y-4">
                   <h1 className="font-display text-4xl font-bold tracking-tight text-black text-center lg:text-left">Create Account</h1>
@@ -148,7 +148,7 @@ const Signup = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <button 
                      onClick={() => handleRoleSelect('student')}
-                     className="flex flex-col items-center justify-center p-12 border-2 border-gray-50 rounded-[3rem] hover:border-accent-orange hover:bg-accent-orange/5 transition-all group gap-6"
+                     className="flex flex-col items-center justify-center p-6 sm:p-12 border-2 border-gray-50 rounded-[3rem] hover:border-accent-orange hover:bg-accent-orange/5 transition-all group gap-6"
                    >
                       <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-accent-orange group-hover:text-white transition-colors">
                          <User size={40} strokeWidth={1.5} />
@@ -160,7 +160,7 @@ const Signup = () => {
                    </button>
                    <button 
                      onClick={() => handleRoleSelect('owner')}
-                     className="flex flex-col items-center justify-center p-12 border-2 border-gray-50 rounded-[3rem] hover:border-accent-orange hover:bg-accent-orange/5 transition-all group gap-6"
+                     className="flex flex-col items-center justify-center p-6 sm:p-12 border-2 border-gray-50 rounded-[3rem] hover:border-accent-orange hover:bg-accent-orange/5 transition-all group gap-6"
                    >
                       <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-accent-orange group-hover:text-white transition-colors">
                          <HomeIcon size={40} strokeWidth={1.5} />
@@ -184,7 +184,7 @@ const Signup = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-10"
+                className="space-y-6 sm:space-y-10"
               >
                 <button 
                   onClick={() => setStep('role')}
@@ -206,7 +206,7 @@ const Signup = () => {
                   <div className="space-y-4">
                      <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Profile Picture</label>
                      <div 
-                       className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-100 rounded-[2.5rem] hover:border-accent-orange transition-all cursor-pointer bg-[#F8F8F8]/50 group"
+                       className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-100 rounded-[2.5rem] hover:border-accent-orange transition-all cursor-pointer bg-gray-50/50 group"
                        onClick={() => document.getElementById('profilePic')?.click()}
                      >
                         <Camera className="text-gray-300 group-hover:text-accent-orange transition-colors mb-2" size={32} />
@@ -218,29 +218,29 @@ const Signup = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">First Name</label>
-                      <input type="text" placeholder="John" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <input type="text" placeholder="John" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Last Name</label>
-                      <input type="text" placeholder="Doe" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <input type="text" placeholder="Doe" value={lastName} onChange={e => setLastName(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Email Address</label>
-                      <input type="email" placeholder="john@example.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <input type="email" placeholder="john@example.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Confirm Password</label>
-                      <input type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                      <input type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Password</label>
-                      <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required minLength={6} />
+                      <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required minLength={6} />
                     </div>
                   </div>
 
@@ -250,7 +250,7 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Gender</label>
-                          <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select Gender</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -258,24 +258,24 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University Email</label>
-                        <input type="email" placeholder="name@university.edu" value={universityEmail} onChange={e => setUniversityEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                        <input type="email" placeholder="name@university.edu" value={universityEmail} onChange={e => setUniversityEmail(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University</label>
-                          <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             {universities.map(u => <option key={u} value={u.toLowerCase()}>{u}</option>)}
                           </select>
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Year</label>
-                          <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             <option value="1">Year 1</option>
                             <option value="2">Year 2</option>
@@ -286,7 +286,7 @@ const Signup = () => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Faculty</label>
-                          <select value={faculty} onChange={e => setFaculty(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                          <select value={faculty} onChange={e => setFaculty(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
                             <option value="">Select</option>
                             {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
                           </select>
@@ -301,21 +301,21 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">NIC Number</label>
-                          <input type="text" placeholder="XXXXXXXXXV / 20XXXXXXXXX" value={nicNumber} onChange={e => setNicNumber(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="text" placeholder="XXXXXXXXXV / 20XXXXXXXXX" value={nicNumber} onChange={e => setNicNumber(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={phone} onChange={e => setPhone(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">WhatsApp Number</label>
-                          <input type="tel" placeholder="+94 7X XXX XXXX" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
+                          <input type="tel" placeholder="+94 7X XXX XXXX" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" required />
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Recovery Email</label>
-                          <input type="email" placeholder="owner_recovery@email.com" value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} className="w-full bg-[#F8F8F8] border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
+                          <input type="email" placeholder="owner_recovery@email.com" value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none" />
                         </div>
                       </div>
                     </>

@@ -36,22 +36,32 @@ const Features = () => {
 };
 
 const PopularUniversities = () => {
+  const [totalBoardings, setTotalBoardings] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+    fetch(`${apiBase}/api/boardings/count`)
+      .then(r => r.json())
+      .then(d => setTotalBoardings(d.total))
+      .catch(() => {});
+  }, []);
+
   const universities = [
-    { title: "University of Colombo", count: 42, image: "/images/uni_green.jpg" },
-    { title: "University of Peradeniya", count: 35, image: "/images/unii.jpg" },
-    { title: "University of Moratuwa", count: 28, image: "/images/uniii.jpg" },
-    { title: "University of Kelaniya", count: 19, image: "/images/town.jpg" },
-    { title: "University of Sri Jayewardenepura", count: 31, image: "/images/house_orange.jpg" },
-    { title: "University of Ruhuna", count: 24, image: "/images/house_white.jpg" },
-    { title: "University of Jaffna", count: 15, image: "/images/room1.jpg" },
-    { title: "Rajarata University", count: 12, image: "/images/bedroom.jpg" },
+    { title: "University of Colombo", image: "/images/university-of-colombo.jpg" },
+    { title: "University of Peradeniya", image: "/images/university-of-peradeniya.jpg" },
+    { title: "University of Moratuwa", image: "/images/university-of-moratuwa.jpg" },
+    { title: "University of Kelaniya", image: "/images/university-of-kelaniya.jpg" },
+    { title: "University of Sri Jayewardenepura", image: "/images/university-of-sri-jayewardenepura.jpg" },
+    { title: "University of Ruhuna", image: "/images/university-of-ruhuna.png" },
+    { title: "University of Jaffna", image: "/images/university-of-jaffna.png" },
+    { title: "Rajarata University", image: "/images/university-of-rajarata.jpg" },
   ];
 
   const duplicatedUniversities = [...universities, ...universities];
 
   return (
-    <section className="py-16 sm:py-32 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 mb-16">
+    <section className="py-10 sm:py-32 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-10 sm:mb-16">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -62,6 +72,9 @@ const PopularUniversities = () => {
           <div className="space-y-4">
              <p className="text-accent-orange text-[10px] font-bold uppercase tracking-[0.3em]">Location Based Search</p>
              <h2 className="font-display text-4xl md:text-5xl tracking-tight">Popular Universities</h2>
+             {totalBoardings !== null && (
+               <p className="text-black/40 text-xs font-bold uppercase tracking-widest">{totalBoardings} Registered Boardings</p>
+             )}
           </div>
           <p className="text-gray-400 max-w-md text-sm leading-relaxed">
             Discover the best student accommodations strategically located around the most prestigious universities in the country.
@@ -93,7 +106,6 @@ const PopularUniversities = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                 <div className="absolute bottom-8 left-8 text-white whitespace-normal">
                   <h3 className="text-xl font-bold mb-1">{uni.title}</h3>
-                  <p className="text-[10px] uppercase tracking-widest opacity-80">{uni.count} BOARDINGS</p>
                 </div>
               </div>
             </Link>
@@ -106,14 +118,14 @@ const PopularUniversities = () => {
 
 const HighlightSection = () => {
   return (
-    <section className="py-16 sm:py-32 px-6 bg-white">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+    <section className="py-10 sm:py-32 px-4 sm:px-6 bg-white">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-20">
         <motion.div 
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="flex-1 space-y-10"
+          className="flex-1 space-y-6 sm:space-y-10"
         >
           <div className="space-y-6">
             <p className="text-[11px] uppercase tracking-[0.3em] font-extrabold text-accent-orange">SECURE STUDENT LIVING</p>
@@ -147,7 +159,7 @@ const HighlightSection = () => {
             className="aspect-[16/10] rounded-[3rem] overflow-hidden shadow-2xl"
           >
             <img 
-              src="/images/house_orange.jpg" 
+              src="/images/house_orange.png" 
               alt="Safe Student Housing"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" 
             />
@@ -185,15 +197,15 @@ const Home = () => {
       
       <ScrollExpandMedia
         mediaType="image"
-        mediaSrc="/images/bedroom.jpg"
-        bgImageSrc="/images/home screen background.jpg"
+        mediaSrc="/images/bedroom.png"
+        bgImageSrc="/images/house_white.png"
         title="Your University Home"
         date="WELCOME TO 2nd HOME"
         scrollToExpand="SCROLL TO EXPLORE"
         textBlend
       >
         <div className="max-w-7xl mx-auto w-full">
-           <div className="mb-20 text-center space-y-6">
+           <div className="mb-10 sm:mb-20 text-center space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-8xl font-display tracking-tight text-black leading-none">Find Your Perfect Boarding</h1>
                <p className="text-gray-400 text-sm sm:text-lg max-w-2xl mx-auto font-light px-4">
                  Secure, verified, and comfortable student accommodations near leading universities across Sri Lanka.

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, MapPin, X } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, X, ChevronDown } from 'lucide-react';
 
 const universities = ["University of Colombo", "University of Peradeniya", "University of Moratuwa", "University of Kelaniya", "University of Sri Jayewardenepura"];
 const faculties = ["Computing", "Technology", "Engineering", "Medicine", "Science", "Arts", "Law", "Management"];
@@ -109,21 +109,30 @@ const SearchBoardings = () => {
           >
             <div className="bg-white rounded-[2rem] p-6 border border-gray-50 shadow-sm space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <select value={filters.university} onChange={e => setFilters(f => ({ ...f, university: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
-                  <option value="">All Universities</option>
-                  {universities.map(u => <option key={u} value={u}>{u.split(' ').pop()}</option>)}
-                </select>
-                <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
-                  <option value="">Any Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="mixed">Mixed</option>
-                </select>
-                <select value={filters.roomType} onChange={e => setFilters(f => ({ ...f, roomType: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all cursor-pointer">
-                  <option value="">Any Room</option>
-                  <option value="single">Single</option>
-                  <option value="double">Double</option>
-                </select>
+                <div className="relative">
+                  <select value={filters.university} onChange={e => setFilters(f => ({ ...f, university: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
+                    <option value="">All Universities</option>
+                    {universities.map(u => <option key={u} value={u}>{u.split(' ').pop()}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
+                <div className="relative">
+                  <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
+                    <option value="">Any Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
+                <div className="relative">
+                  <select value={filters.roomType} onChange={e => setFilters(f => ({ ...f, roomType: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
+                    <option value="">Any Room</option>
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                </div>
                 <input type="number" placeholder="Min Price" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
                 <input type="number" placeholder="Max Price" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
               </div>

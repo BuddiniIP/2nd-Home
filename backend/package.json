@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "sync-indexes": "node --loader ts-node/esm src/scripts/syncIndexes.ts",
+    "sync-indexes": "tsx src/scripts/syncIndexes.ts",
     "build": "tsc"
   },
   "dependencies": {

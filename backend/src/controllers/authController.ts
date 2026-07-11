@@ -64,9 +64,9 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
+      return;
     }
   } catch (error: any) {
-    console.error("REGISTRATION ERROR", error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -103,9 +103,9 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
+      return;
     }
   } catch (error: any) {
-    console.error("LOGIN ERROR", error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -149,7 +149,6 @@ export const uploadProfilePicture = async (req: Request, res: Response): Promise
       await deleteCloudinaryImage(currentUser.profilePicture);
     }
     await User.findByIdAndUpdate(req.user.id, { profilePicture: url });
-    console.log(`[Cloudinary] Profile picture saved for user ${req.user.id}: ${url}`);
     res.json({ url, path: url });
   } catch (error: any) {
     console.error("UPLOAD PROFILE PIC ERROR", error);
@@ -179,7 +178,6 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     await sendResetCode(email, code);
 
     if (NODE_ENV !== 'production') {
-      console.log(`[Dev] Reset code for ${email}: ${code}`);
     }
 
     res.json({ message: 'An 8-digit reset code has been sent to your email.' });

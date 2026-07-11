@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SearchBoardings from '../components/SearchBoardings';
+import Toast from '../components/Toast';
 import { 
   LayoutDashboard, 
   Home as HomeIcon, 
@@ -21,6 +22,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [savedListings, setSavedListings] = useState<any[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
@@ -280,10 +282,10 @@ const StudentDashboard = () => {
         sessionStorage.setItem('paymentReturn', 'true');
         window.location.href = data.url;
       } else {
-        alert(data.message || 'Failed to create payment');
+        setToast({ message: data.message || 'Failed to create payment', type: 'error' });
       }
     } catch {
-      alert('Payment failed. Please try again.');
+      setToast({ message: 'Payment failed. Please try again.', type: 'error' });
     } finally {
       setPayLoading(false);
     }
@@ -316,10 +318,10 @@ const StudentDashboard = () => {
         }));
         setActiveTab('payments');
       } else {
-        alert(data.message || 'Failed to book');
+        setToast({ message: data.message || 'Failed to book', type: 'error' });
       }
     } catch {
-      alert('Failed to create booking');
+      setToast({ message: 'Failed to create booking', type: 'error' });
     } finally {
       setBookLoading(null);
     }
@@ -337,7 +339,7 @@ const StudentDashboard = () => {
       if (res.ok) {
         setSavedListings(prev => prev.filter(s => s._id !== savedId));
       } else {
-        alert(data.message || 'Cannot remove saved listing');
+        setToast({ message: data.message || 'Cannot remove saved listing', type: 'error' });
       }
     } catch { /* ignore */ }
   };
@@ -367,9 +369,9 @@ const StudentDashboard = () => {
     finally { setRemoveLoading(false); setConfirmRemove(null); }
   };
 
-  const handleRemindOwner = () => {
-    alert("Reminder sent to owner: 'Please update the payment' via WhatsApp and Email.");
-  };
+const handleRemindOwner = () => {
+  setToast({ message: "Reminder sent to owner", type: 'success' });
+};
 
   return (
     <div className="pb-16 sm:pb-24 px-4 sm:px-6 bg-white min-h-screen">
@@ -804,7 +806,7 @@ const StudentDashboard = () => {
                             <h4 className="font-bold text-lg">{listing.title || 'Untitled Listing'}</h4>
                             <p className="text-sm text-gray-500 mt-2">{listing.location?.address || listing.address || ''}</p>
                             <div className="mt-4 flex gap-2 flex-wrap">
-                              <Link to={`/boarding/${lid}`} className="px-3 py-2 bg-black text-white rounded-full text-[10px] font-bold">View</Link>
+                              <Link to={`/boarding/${lid}`} className="px-3 py-2 bg-black text-white rounded-full text-[10px] font-bold hover:bg-gray-800 transition-all">View</Link>
                               {(!status || status === 'cancelled') ? (
                                 <button
                                   onClick={() => handleBookNow(lid, listing.price || 0)}
@@ -862,7 +864,7 @@ const StudentDashboard = () => {
                          </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Profile Photo</h4>
-                            <p className="text-xs text-gray-400 max-w-[200px]">Update your profile picture for better identification in the boarding house.</p>
+                            <p className="text-xs text-gray-400 max-w-[200px] sm:max-w-none">Update your profile picture for better identification in the boarding house.</p>
                          </div>
                       </div>
 
@@ -892,6 +894,7 @@ const StudentDashboard = () => {
           </AnimatePresence>
         </div>
       </div>
+      <Toast message={toast?.message || null} type={toast?.type || 'info'} onClose={() => setToast(null)} />
     </div>
   );
 };

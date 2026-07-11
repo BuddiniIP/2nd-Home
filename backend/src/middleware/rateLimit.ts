@@ -7,11 +7,14 @@ export const rateLimit = (
   res: Response,
   next: NextFunction
 ) => {
+  // Don't count CORS preflight requests
+  if (req.method === 'OPTIONS') return next();
+
   const ip = req.ip || "unknown";
   const now = Date.now();
 
   const windowMs = 15 * 60 * 1000; // 15 mins
-  const maxRequests = 100;
+  const maxRequests = 200;
 
   const current = requests.get(ip);
 

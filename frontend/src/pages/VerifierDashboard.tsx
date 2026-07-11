@@ -17,6 +17,7 @@ import {
   Image as ImageIcon,
   Check
 } from 'lucide-react';
+import Toast from '../components/Toast';
 
 const VerifierDashboard = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const VerifierDashboard = () => {
   const [userName, setUserName] = useState('Verifier');
   const [userProfile, setUserProfile] = useState<any>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; action: () => void; isRedFlag?: boolean } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   // Form State
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
@@ -107,7 +109,7 @@ const VerifierDashboard = () => {
 
   const handleInspectionSubmit = async () => {
     if (!selfieFile) {
-      alert("Please upload a selfie at the boarding location first.");
+      setToast({ message: "Please upload a selfie at the boarding location first.", type: 'error' });
       return;
     }
     setIsSubmitting(true);
@@ -142,16 +144,16 @@ const VerifierDashboard = () => {
         setPendingVerifications(prev => prev.filter((a: any) => a._id !== inspectionModal._id));
         setIsSubmitted(true);
       } else {
-        const data = await res.json();
-        alert(data.message || 'Failed to submit inspection');
-      }
-    } catch {
-      alert('Failed to submit inspection. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      const data = await res.json();
+      setToast({ message: data.message || 'Failed to submit inspection', type: 'error' });
     }
-  };
-
+  } catch {
+    setToast({ message: 'Failed to submit inspection. Please try again.', type: 'error' });
+  }
+  finally {
+    setIsSubmitting(false);
+  }
+};
   const handleVerifierProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -307,9 +309,9 @@ const VerifierDashboard = () => {
                                 if (res.ok) {
                                   const data = await res.json();
                                   setPendingVerifications(prev => prev.map(t => t._id === task._id ? { ...t, status: 'accepted', verifierAccepted: true } : t));
-                                  alert('You have accepted the assignment! You can now start the inspection.');
-                                } else { const d = await res.json(); alert(d.message || 'Failed'); }
-                              } catch { alert('Failed to accept'); }
+                                  setToast({ message: 'You have accepted the assignment! You can now start the inspection.', type: 'success' });
+                                } else { const d = await res.json(); setToast({ message: d.message || 'Failed to accept', type: 'error' }); }
+                              } catch { setToast({ message: 'Failed to accept assignment', type: 'error' }); }
                             }} className="flex-1 py-3 bg-green-600 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-green-700 transition-all">Accept</button>
                             <button onClick={() => setConfirmDialog({ message: 'Reject this verification assignment?', action: async () => {
                               try {
@@ -321,9 +323,9 @@ const VerifierDashboard = () => {
                                 });
                                 if (res.ok) {
                                   setPendingVerifications(prev => prev.filter(t => t._id !== task._id));
-                                  alert('Assignment rejected.');
-                                } else { const d = await res.json(); alert(d.message || 'Failed'); }
-                              } catch { alert('Failed to reject'); }
+                                  setToast({ message: 'Assignment rejected.', type: 'info' });
+                                } else { const d = await res.json(); setToast({ message: d.message || 'Failed to reject', type: 'error' }); }
+                              } catch { setToast({ message: 'Failed to reject assignment', type: 'error' }); }
                             }})} className="flex-1 py-3 bg-red-50 text-red-600 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Reject</button>
                           </div>
                         </div>
@@ -348,9 +350,9 @@ const VerifierDashboard = () => {
                               });
                               if (res.ok) {
                                 setPendingVerifications(prev => prev.filter(t => t._id !== task._id));
-                                alert('Assignment cancelled. A red flag has been recorded.');
-                              } else { const d = await res.json(); alert(d.message || 'Failed'); }
-                            } catch { alert('Failed to cancel'); }
+                                setToast({ message: 'Assignment cancelled. A red flag has been recorded.', type: 'error' });
+                              } else { const d = await res.json(); setToast({ message: d.message || 'Failed to cancel', type: 'error' }); }
+                            } catch { setToast({ message: 'Failed to cancel assignment', type: 'error' }); }
                           }})} className="w-full py-3 bg-red-50 text-red-500 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all border border-red-200">Cancel Assignment (Red Flag)</button>
                         </div>
                       )}
@@ -428,7 +430,7 @@ const VerifierDashboard = () => {
                          </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Profile Photo</h4>
-                            <p className="text-xs text-gray-400 max-w-[200px]">Update your verifier profile picture for official identification.</p>
+                            <p className="text-xs text-gray-400 max-w-[200px] sm:max-w-none">Update your verifier profile picture for official identification.</p>
                          </div>
                       </div>
 
@@ -668,6 +670,7 @@ const VerifierDashboard = () => {
           </div>
         )}
       </AnimatePresence>
+      <Toast message={toast?.message || null} type={toast?.type || 'info'} onClose={() => setToast(null)} />
     </div>
   );
 };

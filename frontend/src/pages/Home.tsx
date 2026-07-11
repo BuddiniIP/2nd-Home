@@ -182,10 +182,31 @@ const Home = () => {
   const [userRole, setUserRole] = React.useState('student');
 
   React.useEffect(() => {
-    const auth = localStorage.getItem('isLoggedIn');
-    const role = localStorage.getItem('userRole');
-    setIsLoggedIn(auth === 'true');
-    setUserRole(role || 'student');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoggedIn(false);
+      setUserRole('student');
+      return;
+    }
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
+    fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Invalid token');
+      })
+      .then(data => {
+        setIsLoggedIn(true);
+        setUserRole(data.role || 'student');
+      })
+      .catch(() => {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('profilePicture');
+        setIsLoggedIn(false);
+        setUserRole('student');
+      });
   }, []);
 
   return (

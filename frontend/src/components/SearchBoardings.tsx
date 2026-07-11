@@ -53,15 +53,19 @@ const SearchBoardings = () => {
       const desc = (b.description || '').toLowerCase();
       if (!title.includes(q) && !addr.includes(q) && !desc.includes(q)) return false;
     }
-    if (filters.university) {
-      const amenities = b.amenities || b.features || [];
-      const uniAmenity = (Array.isArray(amenities) ? amenities : []).find((a: any) =>
-        typeof a === 'string' ? a.toLowerCase().includes(filters.university.toLowerCase()) : false
-      );
-      if (!uniAmenity) return false;
+
+    const amenityList = (Array.isArray(b.amenities) ? b.amenities : []).map((a: any) => typeof a === 'string' ? a.toLowerCase() : '');
+
+    if (filters.university && !amenityList.some((a: string) => a.includes(filters.university.toLowerCase()))) return false;
+
+    if (filters.gender) {
+      const genderMap: Record<string, string> = { male: 'male only', female: 'female only', mixed: 'mixed' };
+      const searchFor = genderMap[filters.gender] || filters.gender;
+      if (!amenityList.some((a: string) => a.includes(searchFor))) return false;
     }
-    if (filters.gender && b.gender?.toLowerCase() !== filters.gender) return false;
-    if (filters.roomType && b.type?.toLowerCase() !== filters.roomType) return false;
+
+    if (filters.roomType && !amenityList.some((a: string) => a.includes(filters.roomType.toLowerCase()))) return false;
+
     if (filters.minPrice && (b.price || 0) < Number(filters.minPrice)) return false;
     if (filters.maxPrice && (b.price || 0) > Number(filters.maxPrice)) return false;
     return true;

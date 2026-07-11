@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Toast from '../components/Toast';
 import { 
   LayoutDashboard, 
   Home as HomeIcon, 
@@ -26,8 +27,9 @@ import {
   AlertCircle,
   MessageSquare,
   Phone,
-  Eye,
-  Check
+   Eye,
+   Check,
+   ChevronDown
 } from 'lucide-react';
 
 const OwnerDashboard = () => {
@@ -35,6 +37,7 @@ const OwnerDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
    const [userProfile, setUserProfile] = useState<any>(null);
+   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
    const authHeaders = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
@@ -252,16 +255,16 @@ const OwnerDashboard = () => {
           p._id === bookingId ? { ...p, paymentStatus: 'paid', status: 'Paid' } : p
         ));
       } else {
-        alert(data.message || 'Failed to confirm payment');
+        setToast({ message: data.message || 'Failed to confirm payment', type: 'error' });
       }
     } catch {
-      alert('Failed to confirm payment');
+      setToast({ message: 'Failed to confirm payment', type: 'error' });
     }
   };
 
-  const handleSendReminder = (name: string) => {
-    alert(`Reminder sent to ${name}: "Please pay the rent of the month".`);
-  };
+const handleSendReminder = (name: string) => {
+  setToast({ message: `Reminder sent to ${name}`, type: 'success' });
+};
 
   const [studentSearch, setStudentSearch] = useState('');
 
@@ -539,7 +542,7 @@ const OwnerDashboard = () => {
 
          setMyBoardings((current) => current.filter((boarding) => boarding.id !== boardingId));
       } catch (error: any) {
-         alert(error.message || 'Failed to delete boarding listing.');
+         setToast({ message: error.message || 'Failed to delete boarding listing.', type: 'error' });
       }
    };
 
@@ -1053,35 +1056,41 @@ const OwnerDashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                            <div className="space-y-2">
                               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest University</label>
-                              <select
-                                value={boardingUniversity}
-                                onChange={(e) => setBoardingUniversity(e.target.value)}
-                                className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
-                                required
-                              >
-                                <option value="">Select university</option>
-                                {universities.map((university) => (
-                                  <option key={university} value={university}>{university}</option>
-                                ))}
-                              </select>
+                              <div className="relative">
+                                 <select
+                                   value={boardingUniversity}
+                                   onChange={(e) => setBoardingUniversity(e.target.value)}
+                                   className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                   required
+                                 >
+                                   <option value="">Select university</option>
+                                   {universities.map((university) => (
+                                     <option key={university} value={university}>{university}</option>
+                                   ))}
+                                 </select>
+                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                               </div>
                            </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
-                              <select
-                                value={boardingFaculty}
-                                onChange={(e) => setBoardingFaculty(e.target.value)}
-                                className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
-                                required
-                              >
-                                <option value="">Select faculty</option>
-                                {faculties.map((faculty) => (
-                                  <option key={faculty} value={faculty}>{faculty}</option>
-                                ))}
-                              </select>
-                           </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Nearest Faculty</label>
+                               <div className="relative">
+                                  <select
+                                    value={boardingFaculty}
+                                    onChange={(e) => setBoardingFaculty(e.target.value)}
+                                    className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer"
+                                    required
+                                  >
+                                    <option value="">Select faculty</option>
+                                    {faculties.map((faculty) => (
+                                      <option key={faculty} value={faculty}>{faculty}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                </div>
+                             </div>
                         </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                           <div className="space-y-2">
                              <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Monthly Rent (LKR)</label>
                              <input
@@ -1247,7 +1256,7 @@ const OwnerDashboard = () => {
                             {isCancellable && (
                               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                                 <div className="flex items-center gap-2 text-amber-600 text-[10px] sm:text-[11px] font-bold"><Clock size={14} className="shrink-0" /> <span>Cancellation window: {expiresMins}m remaining</span></div>
-                                <button onClick={() => setConfirmDialog({ message: 'Cancel this verification request?', action: async () => { try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/cancel-request`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); alert(d.message || 'Cancel failed'); } } catch { alert('Cancel failed'); } } })} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-700 border border-red-200 px-4 py-2 rounded-full shrink-0">Cancel</button>
+                                <button onClick={() => setConfirmDialog({ message: 'Cancel this verification request?', action: async () => { try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/cancel-request`, { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); setToast({ message: d.message || 'Cancel failed', type: 'error' }); } } catch { setToast({ message: 'Cancel failed', type: 'error' }); } } })} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-700 border border-red-200 px-4 py-2 rounded-full shrink-0">Cancel</button>
                               </div>
                             )}
                             {showAvailFormNow && (
@@ -1257,7 +1266,7 @@ const OwnerDashboard = () => {
                                   <input type="date" value={availForm.dateAvailable} onChange={e => setAvailForm({ ...availForm, dateAvailable: e.target.value })} className="w-full bg-white border border-blue-200 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs outline-none focus:border-blue-500" />
                                   <input type="text" placeholder="Time (e.g. 10AM-12PM)" value={availForm.timeSlot} onChange={e => setAvailForm({ ...availForm, timeSlot: e.target.value })} className="w-full bg-white border border-blue-200 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs outline-none focus:border-blue-500" />
                                 </div>
-                                <button onClick={async () => { if (!availForm.dateAvailable) { alert('Please select a date'); return; } setIsSettingAvail(true); try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/set-availability`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ dateAvailable: availForm.dateAvailable, timeSlot: availForm.timeSlot, notes: '' }) }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); alert(d.message || 'Failed'); } } catch { alert('Failed'); } finally { setIsSettingAvail(false); } }} disabled={isSettingAvail} className="w-full sm:w-auto bg-blue-600 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all text-center">{isSettingAvail ? 'Submitting...' : 'Submit'}</button>
+                                <button onClick={async () => { if (!availForm.dateAvailable) { setToast({ message: 'Please select a date', type: 'error' }); return; } setIsSettingAvail(true); try { const res = await fetch(`${apiBase}/api/verifications/${v._id}/set-availability`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ dateAvailable: availForm.dateAvailable, timeSlot: availForm.timeSlot, notes: '' }) }); if (res.ok) { setOwnerVerifRefresh(k => k + 1); } else { const d = await res.json(); setToast({ message: d.message || 'Failed', type: 'error' }); } } catch { setToast({ message: 'Failed to set availability', type: 'error' }); } finally { setIsSettingAvail(false); } }} disabled={isSettingAvail} className="w-full sm:w-auto bg-blue-600 text-white px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all text-center">{isSettingAvail ? 'Submitting...' : 'Submit'}</button>
                               </div>
                             )}
                             {v.ownerAvailabilitySubmitted && v.status === 'ready-for-assignment' && (
@@ -1346,7 +1355,7 @@ const OwnerDashboard = () => {
                           </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Official Profile Picture</h4>
-                            <p className="text-xs text-gray-400 max-w-[200px]">This photo will be visible to students when they view your boardings.</p>
+                            <p className="text-xs text-gray-400 max-w-[200px] sm:max-w-none">This photo will be visible to students when they view your boardings.</p>
                          </div>
                       </div>
 
@@ -1418,8 +1427,8 @@ const OwnerDashboard = () => {
                           body: JSON.stringify({ listingId: showVerifyModal.id }),
                         });
                         if (res.ok) setVerifySuccess(true);
-                        else { const d = await res.json(); alert(d.message || 'Verification request failed'); }
-                      } catch { alert('Verification request failed'); }
+                        else { const d = await res.json(); setToast({ message: d.message || 'Verification request failed', type: 'error' }); }
+                      } catch { setToast({ message: 'Verification request failed', type: 'error' }); }
                       finally { setIsVerifying(false); }
                     }} disabled={isVerifying} className="w-full bg-black text-white py-6 rounded-full font-bold text-xs uppercase tracking-[0.2em] hover:bg-accent-orange transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-4">
                       {isVerifying ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Send Verification Request'}
@@ -1454,6 +1463,7 @@ const OwnerDashboard = () => {
           </div>
         )}
       </AnimatePresence>
+      <Toast message={toast?.message || null} type={toast?.type || 'info'} onClose={() => setToast(null)} />
     </div>
   );
 };

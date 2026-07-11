@@ -10,14 +10,11 @@ const Header = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const auth = localStorage.getItem('isLoggedIn');
-    const role = localStorage.getItem('userRole');
-    setIsLoggedIn(auth === 'true');
-    setUserRole(role);
     setMobileOpen(false);
     const updateProfilePic = () => {
       const pic = localStorage.getItem('profilePicture');
@@ -25,22 +22,47 @@ const Header = () => {
     };
     updateProfilePic();
     window.addEventListener('profile-pic-updated', updateProfilePic);
+
     const token = localStorage.getItem('token');
     const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
-    const fetchProfile = async () => {
-      if (!token) return;
+
+    const restoreSession = async () => {
+      if (!token) {
+        setIsLoggedIn(false);
+        setUserRole(null);
+        return;
+      }
       try {
         const res = await fetch(`${apiBase}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
+          setIsLoggedIn(true);
+          setUserRole(data.role || localStorage.getItem('userRole'));
           if (data.profilePicture) {
             localStorage.setItem('profilePicture', data.profilePicture);
             setProfilePic(data.profilePicture);
           }
+          const notifRes = await fetch(`${apiBase}/api/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+          if (notifRes.ok) {
+            const notifData = await notifRes.json();
+            setUnreadCount(notifData.unreadCount || 0);
+          }
+        } else {
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('profilePicture');
+          setIsLoggedIn(false);
+          setUserRole(null);
         }
-      } catch { /* ignore */ }
+      } catch {
+        setIsLoggedIn(false);
+        setUserRole(null);
+      }
     };
-    if (auth === 'true') fetchProfile();
+
+    restoreSession();
     return () => window.removeEventListener('profile-pic-updated', updateProfilePic);
   }, [location]);
 
@@ -109,11 +131,13 @@ const Header = () => {
           {isLoggedIn ? (
             <>
               <div className="relative mr-2">
-                 <Link to="/notifications" className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-black hover:text-accent-orange transition-colors relative">
-                    <Bell size={18} />
-                    <span className="absolute top-0 right-0 w-3 h-3 bg-accent-orange border-2 border-white rounded-full" />
-                 </Link>
-              </div>
+                  <Link to="/notifications" className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-black hover:text-accent-orange transition-colors relative">
+                     <Bell size={18} />
+                     {unreadCount > 0 && (
+                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-bold">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                     )}
+                  </Link>
+               </div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
                   to={dashboardPath}
@@ -123,12 +147,12 @@ const Header = () => {
                 </Link>
               </motion.div>
               <div className="flex items-center gap-4 pl-4 border-l border-gray-100">
-                <button 
-                  onClick={handleLogout}
-                  className="text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
-                >
-                  Logout
-                </button>
+                  <button 
+                    onClick={handleLogout}
+                    className="px-5 py-2 bg-gray-50 text-gray-500 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    Logout
+                  </button>
                 <Link to={profilePath}>
                   <motion.div 
                     whileHover={{ scale: 1.1 }}
@@ -169,7 +193,7 @@ const Header = () => {
               const path = item === 'Home' ? '/' : (item === 'Search' ? (isLoggedIn ? '/search' : '/login') : `/${item.toLowerCase().replace(/\s+/g, '-')}`);
               const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
               return (
-                <Link key={item} to={path} className={`block text-sm font-bold transition-colors ${isActive ? 'text-accent-orange' : 'text-black hover:text-accent-orange'}`}>
+                <Link key={item} to={path} onClick={() => setMobileOpen(false)} className={`block text-sm font-bold transition-colors ${isActive ? 'text-accent-orange' : 'text-black hover:text-accent-orange'}`}>
                   {item}
                 </Link>
               );
@@ -177,13 +201,13 @@ const Header = () => {
             <hr className="border-gray-100" />
             {isLoggedIn ? (
               <>
-                <Link to={dashboardPath} className="block text-sm font-bold text-black hover:text-accent-orange">Dashboard</Link>
-                <button onClick={handleLogout} className="block text-sm font-bold text-gray-400 hover:text-black">Logout</button>
+                <Link to={dashboardPath} onClick={() => setMobileOpen(false)} className="block text-sm font-bold text-black hover:text-accent-orange">Dashboard</Link>
+                <button onClick={() => { setMobileOpen(false); handleLogout(); }} className="block text-sm font-bold px-4 py-2 bg-gray-50 rounded-full text-gray-500 hover:bg-red-500 hover:text-white transition-all">Logout</button>
               </>
             ) : (
               <>
-                <Link to="/login" className="block text-sm font-bold text-black hover:text-accent-orange">Login</Link>
-                <Link to="/signup" className="block text-sm font-bold text-accent-orange">Sign Up</Link>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="block text-sm font-bold text-black hover:text-accent-orange">Login</Link>
+                <Link to="/signup" onClick={() => setMobileOpen(false)} className="block text-sm font-bold text-accent-orange">Sign Up</Link>
               </>
             )}
           </motion.div>
@@ -214,7 +238,7 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">For Students</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/how-it-works" className="hover:text-accent-orange transition-colors">How it Works</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Safety Tips</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Safety Tips</Link></li>
             </ul>
           </div>
 
@@ -222,8 +246,8 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">For Owners</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/login" className="hover:text-accent-orange transition-colors">List Your Property</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Verification Process</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Owner Guidelines</Link></li>
+              <li><Link to="/how-it-works" className="hover:text-accent-orange transition-colors">Verification Process</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Owner Guidelines</Link></li>
             </ul>
           </div>
 
@@ -231,8 +255,8 @@ const Footer = () => {
             <h4 className="text-xs uppercase font-extrabold tracking-[0.2em] mb-6">Support</h4>
             <ul className="space-y-3 text-gray-500 text-sm font-medium">
               <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Contact Us</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">FAQ</Link></li>
-              <li><Link to="#" className="hover:text-accent-orange transition-colors">Terms of Service</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-orange transition-colors">FAQ</Link></li>
+              <li><Link to="/contact" className="hover:text-accent-orange transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
@@ -240,9 +264,9 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 text-[10px] uppercase tracking-[0.3em] font-extrabold">
            <span>© {currentYear} 2nd HOME. All rights reserved.</span>
            <div className="flex gap-12">
-             <a href="#" className="hover:text-white">Privacy</a>
-             <a href="#" className="hover:text-white">Terms</a>
-             <a href="#" className="hover:text-white">Cookies</a>
+              <Link to="/contact" className="hover:text-white">Privacy</Link>
+              <Link to="/contact" className="hover:text-white">Terms</Link>
+              <Link to="/contact" className="hover:text-white">Cookies</Link>
            </div>
         </div>
       </div>

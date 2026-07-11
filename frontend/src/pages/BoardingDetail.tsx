@@ -514,7 +514,7 @@ const BoardingDetail = () => {
                       type="button"
                       disabled={actionLoading}
                       onClick={handleRequestViewing}
-                      className="w-full rounded-full bg-accent-orange text-white py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full rounded-full bg-accent-orange text-white py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent-orange/90 transition-all"
                     >
                       {actionLoading ? 'Sending request...' : 'Request viewing'}
                     </button>
@@ -522,7 +522,7 @@ const BoardingDetail = () => {
                       type="button"
                       disabled={actionLoading}
                       onClick={handleSaveListing}
-                      className={`w-full rounded-full py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed ${isAlreadySaved ? 'bg-accent-orange text-white' : 'bg-white text-black'}`}
+                      className={`w-full rounded-full py-4 font-bold text-sm uppercase tracking-[0.25em] disabled:opacity-50 disabled:cursor-not-allowed transition-all ${isAlreadySaved ? 'bg-accent-orange text-white hover:bg-accent-orange/90' : 'bg-white text-black hover:bg-gray-50'}`}
                     >
                       {actionLoading ? 'Processing...' : isAlreadySaved ? 'Saved' : 'Save listing'}
                     </button>

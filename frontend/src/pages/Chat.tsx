@@ -125,7 +125,7 @@ const Chat = () => {
             ) : (
               <div className="h-full bg-white rounded-[2.5rem] shadow-sm border border-gray-50 flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-gray-50 flex items-center gap-4">
-                  <button onClick={() => setShowSidebar(true)}>
+                  <button onClick={() => setShowSidebar(true)} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-all">
                     <ArrowLeft size={18} />
                   </button>
                   <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">

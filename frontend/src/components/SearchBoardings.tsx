@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, MapPin, X, ChevronDown } from 'lucide-react';
@@ -67,6 +67,64 @@ const SearchBoardings = () => {
     return true;
   });
 
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openDropdown]);
+
+  const SelectDropdown = ({ field, label, options }: { field: string; label: string; options: { value: string; label: string }[] }) => {
+    const value = (filters as any)[field] || '';
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setOpenDropdown(openDropdown === field ? null : field)}
+          className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all flex items-center justify-between gap-2 hover:border-gray-200"
+        >
+          <span className={value ? 'text-black' : 'text-gray-400'}>{value ? options.find(o => o.value === value)?.label || value : label}</span>
+          <ChevronDown size={14} className={`text-gray-400 transition-transform ${openDropdown === field ? 'rotate-180' : ''}`} />
+        </button>
+        <AnimatePresence>
+          {openDropdown === field && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="absolute left-0 top-full mt-1 w-full min-w-[180px] bg-white rounded-2xl shadow-xl shadow-black/10 border border-gray-100 overflow-hidden z-50"
+            >
+              <div className="p-1.5">
+                <button
+                  onClick={() => { setFilters((f: any) => ({ ...f, [field]: '' })); setOpenDropdown(null); }}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${!value ? 'bg-gray-50 text-black' : 'text-gray-400 hover:bg-gray-50 hover:text-black'}`}
+                >
+                  {label}
+                </button>
+                {options.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setFilters((f: any) => ({ ...f, [field]: opt.value })); setOpenDropdown(null); }}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${value === opt.value ? 'bg-accent-orange/10 text-accent-orange' : 'text-gray-600 hover:bg-gray-50 hover:text-black'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   const clearFilters = () => setFilters({ university: '', faculty: '', minPrice: '', maxPrice: '', gender: '', roomType: '' });
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
@@ -105,34 +163,25 @@ const SearchBoardings = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            className=""
           >
-            <div className="bg-white rounded-[2rem] p-6 border border-gray-50 shadow-sm space-y-4">
+            <div className="bg-white rounded-[2rem] p-6 border border-gray-50 shadow-sm space-y-4" ref={dropdownRef}>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="relative">
-                  <select value={filters.university} onChange={e => setFilters(f => ({ ...f, university: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
-                    <option value="">All Universities</option>
-                    {universities.map(u => <option key={u} value={u}>{u.split(' ').pop()}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                </div>
-                <div className="relative">
-                  <select value={filters.gender} onChange={e => setFilters(f => ({ ...f, gender: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
-                    <option value="">Any Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="mixed">Mixed</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                </div>
-                <div className="relative">
-                  <select value={filters.roomType} onChange={e => setFilters(f => ({ ...f, roomType: e.target.value }))} className="w-full bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all appearance-none cursor-pointer">
-                    <option value="">Any Room</option>
-                    <option value="single">Single</option>
-                    <option value="double">Double</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                </div>
+                <SelectDropdown
+                  field="university"
+                  label="All Universities"
+                  options={universities.map(u => ({ value: u, label: u.split(' ').pop() || u }))}
+                />
+                <SelectDropdown
+                  field="gender"
+                  label="Any Gender"
+                  options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }, { value: 'mixed', label: 'Mixed' }]}
+                />
+                <SelectDropdown
+                  field="roomType"
+                  label="Any Room"
+                  options={[{ value: 'single', label: 'Single' }, { value: 'double', label: 'Double' }]}
+                />
                 <input type="number" placeholder="Min Price" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
                 <input type="number" placeholder="Max Price" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} className="bg-gray-50 rounded-full px-4 py-3 text-xs font-bold outline-none border border-transparent focus:border-accent-orange transition-all" />
               </div>

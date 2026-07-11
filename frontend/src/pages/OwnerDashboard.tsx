@@ -1344,15 +1344,9 @@ const handleSendReminder = (name: string) => {
                    <h3 className="text-2xl font-display font-bold mb-6 sm:mb-10">Owner Settings</h3>
                    <form className="space-y-6 sm:space-y-8">
                       <div className="flex flex-col items-center sm:flex-row gap-4 sm:gap-8 pb-6 sm:pb-10 border-b border-gray-50 mb-6 sm:mb-10">
-                          <div className="relative group">
-                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
-                                <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
-                             </div>
-                             <button type="button" onClick={() => document.getElementById('owner-profile-upload')?.click()} className="absolute bottom-0 right-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg">
-                                <Camera size={16} />
-                             </button>
-                             <input type="file" id="owner-profile-upload" className="hidden" accept="image/*" onChange={handleOwnerProfileUpload} />
-                          </div>
+                           <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-xl">
+                              <img src={userProfile?.profilePicture ? (userProfile.profilePicture.startsWith('http') ? userProfile.profilePicture : `${apiBase}${userProfile.profilePicture}`) : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+                           </div>
                          <div className="space-y-2 text-center sm:text-left">
                             <h4 className="font-bold text-black">Official Profile Picture</h4>
                             <p className="text-xs text-gray-400 max-w-[200px] sm:max-w-none">This photo will be visible to students when they view your boardings.</p>

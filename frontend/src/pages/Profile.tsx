@@ -131,15 +131,17 @@ const Profile = () => {
         ) : (
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-50 space-y-8">
             <div className="flex items-center gap-6 pb-8 border-b border-gray-50">
-              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative overflow-hidden">
-                {(previewUrl || form.profilePicture) ? (
-                  <img src={previewUrl || (form.profilePicture.startsWith('http') ? form.profilePicture : `${apiBase}${form.profilePicture}`)} className="w-full h-full object-cover" />
-                ) : (
-                  <User size={32} />
-                )}
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 relative shrink-0">
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  {(previewUrl || form.profilePicture) ? (
+                    <img src={previewUrl || (form.profilePicture.startsWith('http') ? form.profilePicture : `${apiBase}${form.profilePicture}`)} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><User size={32} /></div>
+                  )}
+                </div>
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePictureSelect} className="hidden" />
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute -bottom-1 -right-1 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center hover:bg-accent-orange transition-colors">
-                  <Camera size={12} />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute -bottom-0.5 -right-0.5 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center border-4 border-white hover:bg-accent-orange transition-colors shadow-lg z-10">
+                  <Camera size={16} />
                 </button>
               </div>
             <div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { 
@@ -72,6 +72,8 @@ const AdminDashboard = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [verifications, setVerifications] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [openAssignDropdown, setOpenAssignDropdown] = useState<string | null>(null);
+  const assignDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchBoardingReports();
@@ -334,6 +336,17 @@ const AdminDashboard = () => {
        console.error("Error fetching verifications:", error);
      }
    };
+
+  useEffect(() => {
+    if (!openAssignDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
+        setOpenAssignDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openAssignDropdown]);
 
   const fetchBoardingReports = async () => {
     try {
@@ -964,24 +977,51 @@ const AdminDashboard = () => {
                                      </div>
                                    </div>
                                  </div>
-                                 <div className="flex gap-2 shrink-0">
-                                  <div className="relative">
-                                    <select
-                                      onChange={e => {
-                                        if (e.target.value) {
-                                          const v = verifiers.find((v: any) => v.id === e.target.value);
-                                          if (v) setAssignmentModal({ ...v, requestId: req._id, listingId: listing._id });
-                                        }
-                                        e.target.value = '';
-                                      }}
-                                      className="bg-gray-50 border border-gray-200 rounded-full px-5 py-3 text-[10px] font-bold outline-none appearance-none cursor-pointer hover:border-accent-orange transition-all pr-10"
-                                    >
-                                      <option value="">Assign Verifier...</option>
-                                      {verifiers.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                                  </div>
-                                 </div>
+                                   <div className="relative shrink-0" ref={assignDropdownRef}>
+                                      <button
+                                        onClick={() => setOpenAssignDropdown(openAssignDropdown === req._id ? null : req._id)}
+                                        className="bg-gradient-to-r from-black to-gray-800 text-white border-2 border-transparent rounded-full px-6 py-4 text-[10px] font-bold uppercase tracking-widest hover:from-accent-orange hover:to-orange-600 hover:border-accent-orange transition-all pr-12 shadow-lg shadow-black/10 flex items-center gap-2"
+                                      >
+                                        <UserCheck size={14} />
+                                        Assign
+                                        <ChevronDown size={14} className={`transition-transform ${openAssignDropdown === req._id ? 'rotate-180' : ''}`} />
+                                      </button>
+                                      <AnimatePresence>
+                                        {openAssignDropdown === req._id && (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                                            className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden z-50"
+                                          >
+                                            <div className="p-2">
+                                              <p className="px-4 py-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">Select a verifier</p>
+                                              {verifiers.length === 0 ? (
+                                                <p className="px-4 py-3 text-xs text-gray-400">No verifiers available</p>
+                                              ) : (
+                                                verifiers.map((v: any) => (
+                                                  <button
+                                                    key={v.id}
+                                                    onClick={() => {
+                                                      setAssignmentModal({ ...v, requestId: req._id, listingId: listing._id });
+                                                      setOpenAssignDropdown(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-xs font-bold hover:bg-gray-50 hover:text-accent-orange transition-all group"
+                                                  >
+                                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-black group-hover:bg-accent-orange group-hover:text-white transition-all text-[10px] font-bold">{v.name?.charAt(0) || '?'}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <p className="text-sm font-bold text-black truncate">{v.name}</p>
+                                                      <p className="text-[10px] text-gray-400 truncate">{v.email}</p>
+                                                    </div>
+                                                  </button>
+                                                ))
+                                              )}
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                   </div>
                                </div>
                              );
                            })}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Home as HomeIcon, Camera, ChevronLeft } from 'lucide-react';
+import { User, Home as HomeIcon, Camera, ChevronLeft, ChevronDown } from 'lucide-react';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -250,11 +250,14 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Gender</label>
-                          <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                          </select>
+                          <div className="relative">
+                            <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                              <option value="">Select Gender</option>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Contact Number</label>
@@ -268,28 +271,37 @@ const Signup = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">University</label>
-                          <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
-                            <option value="">Select</option>
-                            {universities.map(u => <option key={u} value={u.toLowerCase()}>{u}</option>)}
-                          </select>
+                          <div className="relative">
+                            <select value={university} onChange={e => setUniversity(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                              <option value="">Select</option>
+                              {universities.map(u => <option key={u} value={u.toLowerCase()}>{u}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Year</label>
-                          <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
-                            <option value="">Select</option>
-                            <option value="1">Year 1</option>
-                            <option value="2">Year 2</option>
-                            <option value="3">Year 3</option>
-                            <option value="4">Year 4</option>
-                            <option value="postgrad">Postgrad</option>
-                          </select>
+                          <div className="relative">
+                            <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                              <option value="">Select</option>
+                              <option value="1">Year 1</option>
+                              <option value="2">Year 2</option>
+                              <option value="3">Year 3</option>
+                              <option value="4">Year 4</option>
+                              <option value="postgrad">Postgrad</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 px-4">Faculty</label>
-                          <select value={faculty} onChange={e => setFaculty(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
-                            <option value="">Select</option>
-                            {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
-                          </select>
+                          <div className="relative">
+                            <select value={faculty} onChange={e => setFaculty(e.target.value)} className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer">
+                              <option value="">Select</option>
+                              {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                          </div>
                         </div>
                       </div>
                     </>

@@ -30,7 +30,6 @@ const ensureCloudinary = () => {
       cloudName = parsed.cloud_name;
       apiKey = parsed.api_key;
       apiSecret = parsed.api_secret;
-      console.log(`[Cloudinary] Parsed from CLOUDINARY_URL → cloud: ${cloudName}`);
     } else {
       console.warn(`[Cloudinary] CLOUDINARY_URL could not be parsed (starts with: ${rawUrl.slice(0, 25)}...)`);
     }
@@ -41,7 +40,6 @@ const ensureCloudinary = () => {
     apiKey = (process.env.CLOUDINARY_API_KEY || '').trim();
     apiSecret = (process.env.CLOUDINARY_API_SECRET || '').trim();
     if (cloudName) {
-      console.log('[Cloudinary] Using individual CLOUDINARY_CLOUD_NAME vars');
     }
   }
 
@@ -60,11 +58,9 @@ const ensureCloudinary = () => {
 
   const maskedKey = apiKey.slice(0, 4) + '****' + apiKey.slice(-4);
   const maskedSecret = apiSecret.slice(0, 2) + '****' + apiSecret.slice(-2);
-  console.log(`[Cloudinary] Configured — cloud: ${cloudName}, key: ${maskedKey}, secret: ${maskedSecret}`);
 
   // Test the connection immediately
   cloudinary.api.ping()
-    .then((res: any) => console.log(`[Cloudinary] Connection OK — ${res.status || res.message || 'ping successful'}`))
     .catch((err: any) => {
       console.error(`[Cloudinary] Connection FAILED (${err.http_code}): ${err.message}`);
       console.error(`[Cloudinary] The credentials above are REJECTED by Cloudinary's API.`);
@@ -92,7 +88,6 @@ const cloudinaryStorage = (folder: string): StorageEngine => ({
             return;
           }
           const url = result?.secure_url || result?.url;
-          console.log(`[Cloudinary] Uploaded to ${result?.public_id} — ${url}`);
           cb(null, {
             path: url,
             filename: result?.public_id,
@@ -127,7 +122,6 @@ export const deleteCloudinaryImage = async (url: string | undefined) => {
     const publicId = match[1];
     try {
       await cloudinary.uploader.destroy(publicId);
-      console.log(`[Cloudinary] Deleted old image: ${publicId}`);
     } catch {
       // ignore if already gone
     }

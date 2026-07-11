@@ -29,11 +29,12 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
       
       next();
     } catch (error) {
-      console.error(error);
       res.status(401).json({ message: 'Not authorized, token failed' });
+      return;
     }
   } else {
     res.status(401).json({ message: 'Not authorized, no token' });
+    return;
   }
 };
 

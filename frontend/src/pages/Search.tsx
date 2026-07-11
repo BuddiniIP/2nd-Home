@@ -2,12 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MapPin, Star, Filter, Search as SearchIcon, X, ChevronDown, Check, Map as MapIcon, Grid, Navigation } from 'lucide-react';
+import Toast from '../components/Toast';
 
 const Search = () => {
   const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     university: "",
@@ -99,16 +101,15 @@ const Search = () => {
           setViewMode('map');
           setIsLocating(false);
         },
-        (error) => {
-          console.error(error);
-          setIsLocating(false);
-          alert("Unable to retrieve your location. Please check your browser permissions.");
-        }
+(error) => {
+  setIsLocating(false);
+  setToast({ message: "Unable to retrieve your location. Please check your browser permissions.", type: 'error' });
+}
       );
-    } else {
-      alert("Geolocation is not supported by your browser.");
-      setIsLocating(false);
-    }
+} else {
+  setToast({ message: "Geolocation is not supported by your browser.", type: 'error' });
+  setIsLocating(false);
+}
   };
 
   const filteredProperties = useMemo(() => {
@@ -219,7 +220,7 @@ const Search = () => {
                     <select 
                       value={filters.university}
                       onChange={(e) => handleFilterChange('university', e.target.value)}
-                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
                     >
                       <option value="">All Universities</option>
                       {universities.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
@@ -235,7 +236,7 @@ const Search = () => {
                     <select 
                       value={filters.faculty}
                       onChange={(e) => handleFilterChange('faculty', e.target.value)}
-                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-2xl px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
+                      className="w-full bg-gray-50 border border-transparent focus:border-accent-orange focus:bg-white transition-all rounded-full px-6 py-4 text-sm outline-none appearance-none cursor-pointer font-medium"
                     >
                       <option value="">All Faculties</option>
                       {faculties.map(f => <option key={f} value={f.toLowerCase()}>{f}</option>)}
@@ -358,7 +359,7 @@ const Search = () => {
         {error && !loading && (
           <div className="text-center py-20">
             <p className="text-red-500 font-bold mb-4">{error}</p>
-            <button onClick={() => window.location.reload()} className="px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest">Retry</button>
+            <button onClick={() => window.location.reload()} className="px-6 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-all">Retry</button>
           </div>
         )}
 
@@ -488,6 +489,7 @@ const Search = () => {
           </motion.div>
         )}
       </div>
+      <Toast message={toast?.message || null} type={toast?.type || 'info'} onClose={() => setToast(null)} />
     </div>
   );
 };

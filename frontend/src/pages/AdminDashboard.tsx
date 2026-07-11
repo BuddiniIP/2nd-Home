@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
 import { 
@@ -30,8 +30,10 @@ import {
    ShieldCheck,
    ShieldAlert,
    Check,
-   User
+    User,
+    ChevronDown
 } from 'lucide-react';
+import Toast from '../components/Toast';
 
 const AdminDashboard = () => {
    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000';
@@ -56,7 +58,7 @@ const AdminDashboard = () => {
    const [boardingActionError, setBoardingActionError] = useState('');
    const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
    const [showNotifications, setShowNotifications] = useState(false);
- 
+   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
    const [assignVisitDate, setAssignVisitDate] = useState('');
 
   const UNIVERSITIES = [
@@ -70,6 +72,8 @@ const AdminDashboard = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [verifications, setVerifications] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [openAssignDropdown, setOpenAssignDropdown] = useState<string | null>(null);
+  const assignDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchBoardingReports();
@@ -183,15 +187,15 @@ const AdminDashboard = () => {
       if (response.ok) {
         setUsers(prev => prev.filter((u: any) => u.id !== deleteConfirm.id));
         setDeleteConfirm(null);
-      } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to delete user');
-        setDeleteConfirm(null);
-      }
-    } catch {
-      alert('Failed to delete user');
-      setDeleteConfirm(null);
-    }
+} else {
+  const data = await response.json();
+  setToast({ message: data.message || 'Failed to delete user', type: 'error' });
+  setDeleteConfirm(null);
+}
+} catch {
+  setToast({ message: 'Failed to delete user', type: 'error' });
+  setDeleteConfirm(null);
+}
   };
 
   const normalizeBoardingImage = (imagePath: string) => {
@@ -333,6 +337,17 @@ const AdminDashboard = () => {
      }
    };
 
+  useEffect(() => {
+    if (!openAssignDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
+        setOpenAssignDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openAssignDropdown]);
+
   const fetchBoardingReports = async () => {
     try {
          const response = await fetch(`${apiBase}/api/admin/reports`, {
@@ -370,10 +385,10 @@ const AdminDashboard = () => {
 
    const handleBoardingDelete = async (boardingId: string) => {
       const token = localStorage.getItem('token');
-      if (!token) {
-         alert('Please log in again as admin to perform this action.');
-         return;
-      }
+  if (!token) {
+    setToast({ message: 'Please log in again as admin to perform this action.', type: 'error' });
+    return;
+  }
 
       const confirmed = window.confirm('Delete this boarding listing? This cannot be undone.');
       if (!confirmed) return;
@@ -393,9 +408,9 @@ const AdminDashboard = () => {
 
          setSelectedBoarding(null);
          await fetchBoardings();
-      } catch (error: any) {
-         alert(error?.message || 'Failed to delete boarding.');
-      }
+} catch (error: any) {
+  setToast({ message: error?.message || 'Failed to delete boarding.', type: 'error' });
+}
    };
 
    const handleBoardingSave = async (event: React.FormEvent) => {
@@ -474,8 +489,8 @@ const AdminDashboard = () => {
     if (action === 'remove') message = "Review has been removed from the platform.";
     if (action === 'warn') message = "Warning issued to the student. Review remains under monitoring.";
     
-    alert(message);
-    setReports(reports.filter(r => r.id !== id));
+  setToast({ message, type: 'success' });
+  setReports(reports.filter(r => r.id !== id));
   };
 
   const handleBoardingAction = async (id: number, action: 'warn' | 'remove') => {
@@ -501,14 +516,13 @@ const AdminDashboard = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`Report ${action === 'warn' ? 'warning issued' : 'action completed'}`);
-        fetchBoardingReports(); // Refresh the list
-      } else {
-        alert("Action failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error performing action:", error);
-      alert("An error occurred. Please try again.");
+    setToast({ message: `Report ${action === 'warn' ? 'warning issued' : 'action completed'}`, type: 'success' });
+    fetchBoardingReports();
+  } else {
+    setToast({ message: "Action failed. Please try again.", type: 'error' });
+  }
+} catch (error) {
+  setToast({ message: "An error occurred. Please try again.", type: 'error' });
     }
   };
 
@@ -911,12 +925,12 @@ const AdminDashboard = () => {
                             
                             {msg.type === 'verification' && (
                               <div className="flex gap-4 pt-6 border-t border-gray-100">
-                                 <button onClick={() => alert('Boarding Verified!')} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
-                                    Approve & Verify
-                                 </button>
-                                 <button onClick={() => alert('Rejection sent to owner')} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
-                                    Reject
-                                 </button>
+                                  <button onClick={() => setToast({ message: 'Boarding Verified! Owner will be notified.', type: 'success' })} className="flex-1 bg-green-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-green-600 transition-all">
+                                     Approve & Verify
+                                  </button>
+                                  <button onClick={() => setToast({ message: 'Rejection sent to owner.', type: 'info' })} className="flex-1 bg-red-500 text-white py-4 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all">
+                                     Reject
+                                  </button>
                               </div>
                             )}
                          </div>
@@ -963,21 +977,51 @@ const AdminDashboard = () => {
                                      </div>
                                    </div>
                                  </div>
-                                 <div className="flex gap-2 shrink-0">
-                                   <select
-                                     onChange={e => {
-                                       if (e.target.value) {
-                                         const v = verifiers.find((v: any) => v.id === e.target.value);
-                                         if (v) setAssignmentModal({ ...v, requestId: req._id, listingId: listing._id });
-                                       }
-                                       e.target.value = '';
-                                     }}
-                                     className="bg-gray-50 border border-gray-200 rounded-full px-5 py-3 text-[10px] font-bold outline-none appearance-none cursor-pointer hover:border-accent-orange transition-all"
-                                   >
-                                     <option value="">Assign Verifier...</option>
-                                     {verifiers.map((v: any) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                   </select>
-                                 </div>
+                                   <div className="relative shrink-0" ref={assignDropdownRef}>
+                                      <button
+                                        onClick={() => setOpenAssignDropdown(openAssignDropdown === req._id ? null : req._id)}
+                                        className="bg-gradient-to-r from-black to-gray-800 text-white border-2 border-transparent rounded-full px-6 py-4 text-[10px] font-bold uppercase tracking-widest hover:from-accent-orange hover:to-orange-600 hover:border-accent-orange transition-all pr-12 shadow-lg shadow-black/10 flex items-center gap-2"
+                                      >
+                                        <UserCheck size={14} />
+                                        Assign
+                                        <ChevronDown size={14} className={`transition-transform ${openAssignDropdown === req._id ? 'rotate-180' : ''}`} />
+                                      </button>
+                                      <AnimatePresence>
+                                        {openAssignDropdown === req._id && (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                                            className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden z-50"
+                                          >
+                                            <div className="p-2">
+                                              <p className="px-4 py-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">Select a verifier</p>
+                                              {verifiers.length === 0 ? (
+                                                <p className="px-4 py-3 text-xs text-gray-400">No verifiers available</p>
+                                              ) : (
+                                                verifiers.map((v: any) => (
+                                                  <button
+                                                    key={v.id}
+                                                    onClick={() => {
+                                                      setAssignmentModal({ ...v, requestId: req._id, listingId: listing._id });
+                                                      setOpenAssignDropdown(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-xs font-bold hover:bg-gray-50 hover:text-accent-orange transition-all group"
+                                                  >
+                                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-black group-hover:bg-accent-orange group-hover:text-white transition-all text-[10px] font-bold">{v.name?.charAt(0) || '?'}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <p className="text-sm font-bold text-black truncate">{v.name}</p>
+                                                      <p className="text-[10px] text-gray-400 truncate">{v.email}</p>
+                                                    </div>
+                                                  </button>
+                                                ))
+                                              )}
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                   </div>
                                </div>
                              );
                            })}
@@ -1010,12 +1054,11 @@ const AdminDashboard = () => {
                                </div>
                                <div className="flex gap-2 shrink-0">
                                  <button onClick={async () => {
-                                   if (!confirm(`Unassign ${vName} from this task?`)) return;
-                                   try {
-                                     const res = await fetch(`${apiBase}/api/verifications/admin/unassign/${v._id}`, { method: 'POST', headers: getAdminHeaders() });
-                                     if (res.ok) { fetchVerifications(); alert('Verifier unassigned'); }
-                                     else { const d = await res.json(); alert(d.message || 'Failed'); }
-                                   } catch { alert('Failed'); }
+                                    try {
+                                      const res = await fetch(`${apiBase}/api/verifications/admin/unassign/${v._id}`, { method: 'POST', headers: getAdminHeaders() });
+                                      if (res.ok) { fetchVerifications(); setToast({ message: 'Verifier unassigned', type: 'success' }); }
+                                      else { const d = await res.json(); setToast({ message: d.message || 'Failed', type: 'error' }); }
+                                    } catch { setToast({ message: 'Failed to unassign verifier', type: 'error' }); }
                                  }} className="px-4 py-2.5 bg-red-50 text-red-600 rounded-full text-[9px] font-bold uppercase tracking-widest hover:bg-red-100 transition-all">Unassign</button>
                                </div>
                              </div>
@@ -1143,15 +1186,15 @@ const AdminDashboard = () => {
                                   <div className="flex gap-2">
                                     <button 
                                        onClick={() => handleBoardingAction(report._id || report.id, 'warn')}
-                                       className="px-6 py-2 bg-yellow-100 text-yellow-600 rounded-full text-[9px] font-bold uppercase hover:bg-yellow-200"
-                                     >
-                                        Warn
+className="px-6 py-2 bg-yellow-100 text-yellow-600 rounded-full text-[9px] font-bold uppercase hover:bg-yellow-200 transition-all"
+                                      >
+                                         Warn
                                     </button>
                                     <button 
                                        onClick={() => handleBoardingAction(report._id || report.id, 'remove')}
-                                       className="px-6 py-2 bg-red-100 text-red-600 rounded-full text-[9px] font-bold uppercase hover:bg-red-200"
-                                     >
-                                        Remove Boarding
+className="px-6 py-2 bg-red-100 text-red-600 rounded-full text-[9px] font-bold uppercase hover:bg-red-200 transition-all"
+                                      >
+                                         Remove Boarding
                                      </button>
                                   </div>
                                </div>
@@ -1587,8 +1630,8 @@ const AdminDashboard = () => {
                       const listingId = assignmentModal.listingId;
                       const verifierId = assignmentModal.id;
                       const visitDate = assignVisitDate;
-                      if (!listingId) { alert('Property not found'); return; }
-                      if (!verifierId) { alert('Verifier not found'); return; }
+                      if (!listingId) { setToast({ message: 'Property not found', type: 'error' }); return; }
+                      if (!verifierId) { setToast({ message: 'Verifier not found', type: 'error' }); return; }
                       try {
                         const res = await fetch(`${apiBase}/api/verifications/assign`, {
                           method: 'POST',
@@ -1596,12 +1639,12 @@ const AdminDashboard = () => {
                           body: JSON.stringify({ verifierId, listingId, visitDate: visitDate || undefined }),
                         });
                         if (res.ok) {
-                          alert('Verifier assigned successfully! They have 15 minutes to respond.');
+                          setToast({ message: 'Verifier assigned successfully! They have 15 minutes to respond.', type: 'success' });
                           setAssignmentModal(null);
                           setAssignVisitDate('');
                           fetchVerifications();
-                        } else { const d = await res.json(); alert(d.message || 'Assignment failed'); }
-                      } catch { alert('Assignment failed'); }
+                        } else { const d = await res.json(); setToast({ message: d.message || 'Assignment failed', type: 'error' }); }
+                      } catch { setToast({ message: 'Assignment failed', type: 'error' }); }
                     }} className="w-full py-5 rounded-full font-bold text-xs uppercase tracking-[0.2em] transition-all shadow-xl bg-black text-white hover:bg-accent-orange shadow-black/10">
                       Confirm Assignment
                     </button>
@@ -1880,6 +1923,7 @@ const AdminDashboard = () => {
                </div>
             )}
          </AnimatePresence>
+      <Toast message={toast?.message || null} type={toast?.type || 'info'} onClose={() => setToast(null)} />
     </div>
   );
 };

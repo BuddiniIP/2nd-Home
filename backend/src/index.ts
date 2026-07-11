@@ -19,7 +19,6 @@ import { FRONTEND_URL, PORT } from './config/env.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
 import { rateLimit } from "./middleware/rateLimit.js";
 import { inputSanitize } from "./middleware/inputSanitize.js";
-// Add namespace so typescript gets req.user
 import './types/express.d.ts';
 
 // Connect to MongoDB
@@ -45,7 +44,7 @@ app.use(cors({
       return;
     }
 
-    callback(new Error(`Not allowed by CORS: ${origin}`));
+    callback(null, false);
   },
   credentials: true,
 }));
@@ -76,4 +75,7 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+}).on('error', (err: any) => {
+  console.error(`Failed to start server on port ${PORT}:`, err.message);
+  process.exit(1);
 });
